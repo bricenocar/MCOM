@@ -1,0 +1,12 @@
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\bin\Release\net6.0\MCOM.Models.deps.json
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\bin\Release\net6.0\MCOM.Models.dll
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\bin\Release\net6.0\ref\MCOM.Models.dll
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\bin\Release\net6.0\MCOM.Models.pdb
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\obj\Release\net6.0\MCOM.Models.csproj.AssemblyReference.cache
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\obj\Release\net6.0\MCOM.Models.GeneratedMSBuildEditorConfig.editorconfig
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\obj\Release\net6.0\MCOM.Models.AssemblyInfoInputs.cache
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\obj\Release\net6.0\MCOM.Models.AssemblyInfo.cs
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\obj\Release\net6.0\MCOM.Models.csproj.CoreCompileInputs.cache
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\obj\Release\net6.0\MCOM.Models.dll
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\obj\Release\net6.0\ref\MCOM.Models.dll
+C:\Dev\Enterprise-Information-Management\src\MCOM\MCOM.Models\obj\Release\net6.0\MCOM.Models.pdb

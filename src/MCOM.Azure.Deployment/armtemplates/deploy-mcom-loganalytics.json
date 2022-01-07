@@ -1,0 +1,58 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "environment": {
+        "type": "string",
+        "metadata": {
+          "description": "MCOM environment."
+        }
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]",
+        "metadata": {
+          "description": "Location for all resources."
+        }
+      },  
+      // Log analytics workspace
+      "logAnalyticsWorkspace": {
+        "type": "string",
+        "defaultValue": "log-mcom",
+        "metadata": {
+          "description": "Location for Application Insights"
+        }
+      }
+    },
+    "variables": {
+      "logAnalyticsWorkspaceName": "[concat(parameters('logAnalyticsWorkspace'), '-', parameters('environment'))]"
+    },
+    "resources": [
+      // Log analytics workspace
+      {
+        "type": "microsoft.operationalinsights/workspaces",
+        "apiVersion": "2020-10-01",
+        "name": "[variables('logAnalyticsWorkspaceName')]",
+        "location": "norwayeast",
+        "properties": {
+          "sku": {
+            "name": "pergb2018"
+          },
+          "retentionInDays": 30,
+          "features": {
+            "legacy": 0,
+            "searchVersion": 1,
+            "enableLogAccessUsingOnlyResourcePermissions": true
+          },
+          "workspaceCapping": {
+            "dailyQuotaGb": -1
+          },
+          "publicNetworkAccessForIngestion": "Enabled",
+          "publicNetworkAccessForQuery": "Enabled"
+        }
+      }
+    ],
+  
+    "outputs": {}
+  }
+  

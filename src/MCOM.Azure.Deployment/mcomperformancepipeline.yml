@@ -1,0 +1,53 @@
+# ASP.NET
+# Build and test ASP.NET projects.
+# Add steps that publish symbols, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
+
+trigger:
+  branches:
+      include:
+          - master
+          - ArchivingAPIDev
+  paths:
+      include:
+          - src/MCOM/MCOM.PerformanceTests
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: 'src/MCOM/MCOM.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+steps:
+
+- task: UseDotNet@2
+  displayName: Use Dot Net 6.0.x
+  inputs:
+    packageType: 'sdk'
+    version: '6.0.x'
+
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'build'
+    projects: 'src\MCOM\MCOM.PerformanceTests\MCOM.PerformanceTests.csproj'
+    
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: 'src\MCOM\MCOM.PerformanceTests\MCOM.PerformanceTests.csproj'
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)/Output'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/Output'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'

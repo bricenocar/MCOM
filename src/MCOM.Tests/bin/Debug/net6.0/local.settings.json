@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "AzureWebJobsBlobStorageConnectionString": "UseDevelopmentStorage=true",
+    "AzureWebJobsQueueConnectionString": "UseDevelopmentStorage=true",
+    "BlobStorageAccountName": "steimarchstgareadev",
+    "APPINSIGHTS_CONNECTION_STRING": "InstrumentationKey=73e0226c-725d-493e-8cf1-57aeb7230178;IngestionEndpoint=https://norwayeast-0.in.applicationinsights.azure.com/"
+  }
+}

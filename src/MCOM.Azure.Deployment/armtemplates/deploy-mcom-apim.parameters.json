@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": { 
+    "environment" : {
+      "value": ""
+    },
+    "location": {
+      "value": "norwayeast"
+    },
+    "apimName": {
+      "value": "apim-mcom"
+    },
+    "organizationName": {
+      "value": "Equinor"
+    },
+    "adminEmail": {
+      "value": "cabri@equinor.com"
+    },
+    "tier": {
+      "value": "Developer"
+    },
+    "capacity": {
+      "value": "1"
+    },
+    "identity": {
+      "value": {
+        "type": "None"
+      }
+    },    
+    "apimTags": {
+      "value": {}
+    }
+  }
+}

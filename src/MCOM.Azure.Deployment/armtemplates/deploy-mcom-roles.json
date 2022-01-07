@@ -1,0 +1,114 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment": {
+            "type": "string",
+            "metadata": {
+                "description": "MCOM environment."
+            }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Authorization/roleDefinitions",
+            "apiVersion": "2018-01-01-preview",
+            "name": "363e37ab-11ae-4f4c-b205-34fcc51875f8",
+            "properties": {
+                "roleName": "MCOM-Deployer",
+                "description": "Role defined to deploy and configure resources needed for MCOM solution",
+                "assignableScopes": [
+                    "[subscription().id]"
+                ],
+                "type": "customRole",
+                "isCustom": true,
+                "permissions": [
+                    {
+                        "actions": [
+                            "Microsoft.EventGrid/EventSubscriptions/Read",
+                            "Microsoft.EventGrid/EventSubscriptions/Write",
+                            "microsoft.insights/components/read",
+                            "Microsoft.Resources/deployments/operationStatuses/read",
+                            "Microsoft.Resources/subscriptions/resourceGroups/read",
+                            "Microsoft.Resources/deployments/read",
+                            "Microsoft.Resources/deployments/write",
+                            "Microsoft.Resources/deployments/validate/action",
+                            "Microsoft.Resources/deployments/whatIf/action",
+                            "Microsoft.Authorization/roleAssignments/write",
+                            "Microsoft.Storage/storageAccounts/*",
+                            "Microsoft.Storage/storageAccounts/listKeys/action",
+                            "Microsoft.Web/serverfarms/read",
+                            "Microsoft.Web/serverfarms/write",
+                            "Microsoft.Web/sites/read",
+                            "Microsoft.Web/sites/write",
+                            "Microsoft.Web/sites/publishxml/action",
+                            "Microsoft.Web/sites/functions/listkeys/action",
+                            "Microsoft.Web/sites/host/listkeys/action",
+                            "Microsoft.Web/sites/config/list/action",
+                            "Microsoft.Web/sites/config/read",
+                            "Microsoft.Web/sites/config/write",
+                            "Microsoft.Insights/components/read",
+                            "Microsoft.Insights/components/write",
+                            "microsoft.insights/components/Annotations/write",
+                            "microsoft.operationalinsights/workspaces/read",
+                            "Microsoft.OperationalInsights/workspaces/write",                            
+                            "Microsoft.DataFactory/factories/read",
+                            "Microsoft.DataFactory/factories/write",
+                            "Microsoft.DataFactory/factories/linkedServices/read",
+                            "Microsoft.DataFactory/factories/datasets/read",
+                            "Microsoft.DataFactory/factories/pipelines/read",
+                            "Microsoft.DataFactory/factories/dataflows/read",
+                            "Microsoft.DataFactory/factories/integrationRuntimes/read",
+                            "Microsoft.DataFactory/factories/triggers/read",
+                            "Microsoft.DataFactory/factories/triggers/stop/action",
+                            "Microsoft.DataFactory/factories/triggers/start/action",
+                            "Microsoft.DataFactory/factories/triggers/subscribeToEvents/action",
+                            "Microsoft.DataFactory/factories/triggers/getEventSubscriptionStatus/action",
+                            "Microsoft.DataFactory/factories/triggers/unsubscribeFromEvents/action",
+                            "Microsoft.DataFactory/factories/triggers/delete",
+                            "Microsoft.ApiManagement/service/read",
+                            "Microsoft.ApiManagement/service/products/read",
+                            "Microsoft.ApiManagement/service/products/groups/read",
+                            "Microsoft.ApiManagement/service/products/apis/read",
+                            "Microsoft.ApiManagement/service/tags/read",
+                            "Microsoft.ApiManagement/service/notifications/read",
+                            "Microsoft.ApiManagement/service/apis/read",
+                            "Microsoft.ApiManagement/service/apis/operations/read",
+                            "Microsoft.ApiManagement/service/apis/operations/policies/read",
+                            "Microsoft.ApiManagement/service/backends/read",
+                            "Microsoft.ApiManagement/service/namedValues/read",
+                            "Microsoft.ApiManagement/service/operationresults/read",
+                            "Microsoft.DataFactory/factories/linkedServices/write",
+                            "Microsoft.DataFactory/factories/datasets/write",
+                            "Microsoft.DataFactory/factories/pipelines/write",
+                            "Microsoft.DataFactory/factories/dataflows/write",
+                            "Microsoft.DataFactory/factories/integrationRuntimes/write",
+                            "Microsoft.DataFactory/factories/triggers/write",
+                            "Microsoft.ApiManagement/service/write",
+                            "Microsoft.ApiManagement/service/products/write",
+                            "Microsoft.ApiManagement/service/products/groups/write",
+                            "Microsoft.ApiManagement/service/products/apis/write",
+                            "Microsoft.ApiManagement/service/tags/write",
+                            "Microsoft.ApiManagement/service/notifications/write",
+                            "Microsoft.ApiManagement/service/apis/write",
+                            "Microsoft.ApiManagement/service/apis/operations/write",
+                            "Microsoft.ApiManagement/service/apis/operations/policies/write",
+                            "Microsoft.ApiManagement/service/backends/write",
+                            "Microsoft.ApiManagement/service/namedValues/write",
+                            "Microsoft.ApiManagement/service/apiVersionSets/write",
+                            "Microsoft.Logic/workflows/write",
+                            "Microsoft.Logic/workflows/enable/action",
+                            "Microsoft.Logic/workflows/disable/action",
+                            "Microsoft.Web/connections/*"
+                        ],
+                        "dataActions": [
+                            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/*"
+                        ],
+                        "notActions": []
+                    }
+                ]
+            }
+        }
+    ]
+}

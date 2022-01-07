@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Graph" Version="4.11.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MCOM.Extensions\MCOM.Extensions.csproj" />
+    <ProjectReference Include="..\MCOM.Models\MCOM.Models.csproj" />
+    <ProjectReference Include="..\MCOM.Utilities\MCOM.Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

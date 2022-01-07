@@ -1,0 +1,64 @@
+trigger:
+  branches:
+      include:
+          - master
+          - ArchivingAPIDev
+  paths:
+      include:
+          - src/MCOM/*
+          
+pool:
+  vmImage: 'windows-latest'
+
+stages:
+    - stage: BuildArtifacts
+      displayName: Build Artifacts
+      jobs:
+          - job: BuildAF
+            displayName: Build azure function
+            steps:
+            - task: UseDotNet@2
+              displayName: Use Dot Net Core 6.0
+              inputs:
+                packageType: 'sdk'
+                version: '6.0.x'
+            - task: DotNetCoreCLI@2
+              displayName: 'Restore project dependencies'
+              inputs:
+                command: 'restore'
+                projects: 'src/MCOM/**/*.csproj'
+
+            - task: DotNetCoreCLI@2
+              displayName: 'Build the project - $(buildConfiguration)'
+              inputs:
+                command: 'build'
+                arguments: '--no-restore --configuration $(buildConfiguration)'
+                projects: 'src/MCOM/**/*.csproj'
+            - task: DotNetCoreCLI@2
+              displayName: 'Run Unit tests'
+              inputs:
+                command: 'test'
+                projects: 'src/MCOM/MCOM.Tests/*.csproj'
+                publishTestResults: true
+                testRunTitle: 'MCOM Tests'
+            - task: DotNetCoreCLI@2
+              displayName: 'Publish the project - $(buildConfiguration)'
+              inputs:
+                command: 'publish'
+                projects: 'src/MCOM/MCOM.Functions/*.csproj'
+                publishWebProjects: false
+                arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
+                zipAfterPublish: true
+            - publish: '$(Build.ArtifactStagingDirectory)'
+              artifact: dropazfunc          
+          - job: BuildDS
+            displayName: Build deployment script
+            steps:            
+            - task: CopyFiles@2
+              displayName: Copy deployment files
+              inputs:
+                SourceFolder: 'src/MCOM/MCOM.Azure.Deployment'
+                Contents: '**'
+                TargetFolder: '$(Build.ArtifactStagingDirectory)'
+            - publish: '$(Build.ArtifactStagingDirectory)'
+              artifact: dropdeploymentscripts

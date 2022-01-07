@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": ""
+    },
+    "location": {
+      "value": "norwayeast"
+    },
+    "paramDataFactoryName": {
+      "value": "adf-mcom"
+    },
+    "stgAreaConnectionString": {
+      "value": ""
+    },
+    "triggerParam_SourceContainer": {
+      "value": "@triggerBody().folderPath"
+    },
+    "triggerParam_SourceFilename": {
+      "value": "@triggerBody().fileName"
+    },
+    "triggerScope": {
+      "value": ""
+    },
+    "adfFunctionResourceId": {
+      "value": "string"
+    }
+  }
+}

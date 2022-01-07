@@ -1,0 +1,10 @@
+{
+  "FunctionUrl": "<#--DevOpsVariable_FunctionUrl--#>",
+  "PerformanceCount": "<#--DevOpsVariable_PerformanceCount--#>",
+  "Instance": "<#--DevOpsVariable_Instance--#>",
+  "ApiUrl": "<#--DevOpsVariable_ApiUrl--#>",
+  "Tenant": "<#--DevOpsVariable_Tenant--#>",
+  "ClientId": "<#--DevOpsVariable_ClientId--#>",
+  "ClientSecret": "<#--DevOpsVariable_ClientSecret--#>",
+  "CertificateName": "<#--DevOpsVariable_CertificateName--#>"
+}

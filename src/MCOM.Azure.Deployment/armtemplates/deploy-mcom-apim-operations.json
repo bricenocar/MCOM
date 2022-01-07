@@ -1,0 +1,331 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"environment": {
+			"type": "string",
+			"metadata": {
+				"description": "MCOM environment."
+			}
+		},
+		"versionSet": {
+			"type": "string",
+			"defaultValue": "MCOMVersionSet",
+			"metadata": {
+				"description": "Version set name for API."
+			}
+		},
+		"apimName": {
+			"type": "string",
+			"defaultValue": "apim-mcom"
+		},
+		"appName": {
+			"type": "string",
+			"defaultValue": "function-mcom",
+			"metadata": {
+				"description": "The name of the function app that you wish to create."
+			}
+		},
+		"functionAppId": {
+			"type": "string",
+			"metadata": {
+				"description": "Id of the function app."
+			}
+		}
+	},
+	"variables": {
+		"ApiName": "[concat(parameters('appName'), '-', parameters('environment'))]",
+		"functionAppName": "[concat(parameters('appName'), '-', parameters('environment'))]",
+		"archivingFunctionAppName": "[concat(parameters('appName'), '-archiving-', parameters('environment'))]",		
+		"apiManagementName": "[concat(parameters('apimName'), '-', parameters('environment'))]"
+	},
+	"resources": [
+		{
+			"type": "Microsoft.ApiManagement/service/apis",
+			"apiVersion": "2020-12-01",
+			"name": "[concat(variables('apiManagementName'), '/', variables('ApiName'))]",
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service/apiVersionSets', variables('apiManagementName'), parameters('versionSet'))]"
+			],
+			"properties": {
+				"displayName": "MCOM APIs",
+				"apiRevision": "1",
+				"description": "APIs for interacting with M365 Corporate middleware",
+				"subscriptionRequired": false,
+				"path": "[variables('ApiName')]",
+				"protocols": [
+					"https"
+				],
+				"isCurrent": true,
+				"apiVersion": "v1",
+				"apiVersionSetId": "[resourceId('Microsoft.ApiManagement/service/apiVersionSets', variables('apiManagementName'), parameters('versionSet'))]"
+			},
+			"resources": [
+				{
+					"type": "Microsoft.ApiManagement/service/apis/operations",
+					"apiVersion": "2020-12-01",
+					"name": "[concat(variables('apiManagementName'), '/', variables('ApiName'), '/post-file')]",
+					"dependsOn": [
+						"[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementName'), variables('ApiName'))]"
+					],
+					"properties": {
+						"displayName": "File",
+						"method": "POST",
+						"urlTemplate": "/PostFile",
+						"templateParameters": [],
+						"description": "Use this endpoint to send files to archive process",
+						"request": {
+							"description": "The body of the request will be a multipart form data, the document metadata will be all key-Value properties of type \"Text\", while the file will be of type \"File\"",
+							"queryParameters": [],
+							"headers": [
+								{
+									"name": "Ocp-Apim-Subscription-Key",
+									"description": "This is the key provided by your API subscription",
+									"type": "string",
+									"required": true,
+									"values": []
+								}
+							],
+							"representations": [
+								{
+									"contentType": "multipart/form-data"
+								}
+							]
+						},
+						"responses": [
+							{
+								"statusCode": 200,
+								"description": "The response will return the same values provided for the metadata in JSON format. In addition, a new value is added with key \"result\", indicating if the call succeeded or not",
+								"representations": [],
+								"headers": []
+							},
+							{
+								"statusCode": 500,
+								"description": "An internal error occurred",
+								"representations": [],
+								"headers": []
+							},
+							{
+								"statusCode": 400,
+								"description": "Bad request due to lack of metadata related to the file or bad format in one of the fields",
+								"representations": [],
+								"headers": []
+							}
+						]
+					}
+				},
+				{
+					"type": "Microsoft.ApiManagement/service/apis/operations",
+					"apiVersion": "2021-01-01-preview",
+					"name": "[concat(variables('apiManagementName'), '/', variables('ApiName'), '/get-file')]",
+					"dependsOn": [
+						"[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementName'), variables('ApiName'))]"
+					],
+					"properties": {
+						"displayName": "File",
+						"method": "GET",
+						"urlTemplate": "/GetFile",
+						"templateParameters": [],
+						"description": "Use this endpoint to get file or status from archive",
+						"request": {
+							"queryParameters": [],
+							"headers": [
+								{
+									"name": "Ocp-Apim-Subscription-Key",
+									"description": "This is the key provided by your API subscription",
+									"type": "string",
+									"required": true,
+									"values": [],
+									"typeName": "GetFileGetRequest"
+								}
+							],
+							"representations": []
+						},
+						"responses": [
+							{
+								"statusCode": 200,
+								"description": "This response means that the file is successfully created and uploaded to the archive hub, the result is the file returned",
+								"representations": [],
+								"headers": []
+							},
+							{
+								"statusCode": 202,
+								"description": "This response means that the file is not yet in archive hub, the file status is returned",
+								"representations": [],
+								"headers": []
+							},
+							{
+								"statusCode": 400,
+								"description": "Bad request",
+								"representations": [],
+								"headers": []
+							},
+							{
+								"statusCode": 500,
+								"description": "An internal error occurred",
+								"representations": [],
+								"headers": []
+							}
+						]
+					}
+				},
+				{
+					"type": "Microsoft.ApiManagement/service/apis/operations",
+					"apiVersion": "2021-01-01-preview",
+					"name": "[concat(variables('apiManagementName'), '/', variables('ApiName'), '/post-getfile')]",
+					"dependsOn": [
+						"[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementName'), variables('ApiName'))]"
+					],
+					"properties": {
+						"displayName": "GetFile",
+						"method": "POST",
+						"urlTemplate": "/GetFile",
+						"templateParameters": [],
+						"description": "Use this endpoint to get file or status from archive",
+						"request": {
+							"queryParameters": [],
+							"headers": [],
+							"representations": []
+						},
+						"responses": [
+							{
+								"statusCode": 200,
+								"description": "This response means that the file is successfully created and uploaded to the archive hub, the result is the file returned",
+								"representations": [],
+								"headers": []
+							},
+							{
+								"statusCode": 202,
+								"description": "This response means that the file is not yet in archive hub, the file status is returned",
+								"representations": [],
+								"headers": []
+							},
+							{
+								"statusCode": 400,
+								"description": "Bad request",
+								"representations": [],
+								"headers": []
+							},
+							{
+								"statusCode": 500,
+								"description": "An internal error occurred",
+								"representations": [],
+								"headers": []
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/apis/operations/policies",
+			"apiVersion": "2021-01-01-preview",
+			"name": "[concat(variables('apiManagementName'), '/', variables('ApiName'), '/get-file/policy')]",
+			"dependsOn": [				
+				"[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementName'), variables('ApiName'))]",
+				"[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementName'), variables('ApiName'), 'get-file')]",
+				"[resourceId('Microsoft.ApiManagement/service/backends', variables('apiManagementName'), variables('functionAppName'))]"
+			],
+			"properties": {
+				"value": "[concat('<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"', variables('functionAppName'), '\"\r\n /> \r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>')]",
+				"format": "xml"
+			}
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/apis/operations/policies",
+			"apiVersion": "2021-01-01-preview",
+			"name": "[concat(variables('apiManagementName'), '/', variables('ApiName'), '/post-getfile/policy')]",
+			"dependsOn": [				
+				"[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementName'), variables('ApiName'))]",
+				"[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementName'), variables('ApiName'), 'post-getfile')]",
+				"[resourceId('Microsoft.ApiManagement/service/backends', variables('apiManagementName'), variables('functionAppName'))]"
+			],
+			"properties": {
+				"value": "[concat('<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"', variables('functionAppName'), '\"\r\n /> \r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>')]",
+				"format": "xml"
+			}
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/apis/operations/policies",
+			"apiVersion": "2020-12-01",
+			"name": "[concat(variables('apiManagementName'), '/', variables('ApiName'), '/post-file/policy')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service/apis', variables('apiManagementName'), variables('ApiName'))]",
+				"[resourceId('Microsoft.ApiManagement/service/backends', variables('apiManagementName'), variables('archivingFunctionAppName'))]",
+				"[resourceId('Microsoft.ApiManagement/service/apis/operations', variables('apiManagementName'), variables('ApiName'), 'post-file')]"
+			],
+			"properties": {
+				"value": "[concat('<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"', variables('archivingFunctionAppName'), '\"\r\n />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>')]",
+				"format": "xml"
+			}
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/products",
+			"apiVersion": "2020-12-01",
+			"name": "[concat(variables('apiManagementName'), '/mcom-apis')]",			
+			"properties": {
+				"displayName": "MCOM",
+				"description": "These are the published APIs for developers to consume to integrate with the MCOM solution.",
+				"subscriptionRequired": true,
+				"approvalRequired": true,
+				"state": "published"
+			}
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/products/groups",
+			"apiVersion": "2020-12-01",
+			"name": "[concat(variables('apiManagementName'), '/mcom-apis/administrators')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service/products', variables('apiManagementName'), 'mcom-apis')]"
+			]
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/products/groups",
+			"apiVersion": "2020-12-01",
+			"name": "[concat(variables('apiManagementName'), '/mcom-apis/developers')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service/products', variables('apiManagementName'), 'mcom-apis')]"
+			]
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/products/apis",
+			"apiVersion": "2021-01-01-preview",
+			"name": "[concat(variables('apiManagementName'), '/mcom-apis/', variables('ApiName'))]",
+			"dependsOn": [
+				"[resourceId('Microsoft.ApiManagement/service/products', variables('apiManagementName'), 'mcom-apis')]"
+			]
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/backends",
+			"apiVersion": "2020-12-01",
+			"name": "[concat(variables('apiManagementName'), '/', variables('functionAppName'))]",
+			"properties": {
+				"description": "[variables('functionAppName')]",
+				"url": "[concat('https://', variables('functionAppName') ,'.azurewebsites.net/api')]",
+				"protocol": "http",
+				"resourceId": "[parameters('functionAppId')]"
+			}
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/backends",
+			"apiVersion": "2020-12-01",
+			"name": "[concat(variables('apiManagementName'), '/', variables('archivingFunctionAppName'))]",
+			"properties": {
+				"description": "[variables('archivingFunctionAppName')]",
+				"url": "[concat('https://', variables('archivingFunctionAppName') ,'.azurewebsites.net/api')]",
+				"protocol": "http",
+				"resourceId": "[resourceId('Microsoft.Web/sites', variables('archivingFunctionAppName'))]"
+			}
+		},
+		{
+			"type": "Microsoft.ApiManagement/service/apiVersionSets",
+			"apiVersion": "2021-04-01-preview",
+			"name": "[concat(variables('apiManagementName'), '/', parameters('versionSet'))]",
+			"properties": {
+				"displayName": "MCOM Archive",
+				"versioningScheme": "Segment"
+			}
+		}
+	],
+	"outputs": {}
+}

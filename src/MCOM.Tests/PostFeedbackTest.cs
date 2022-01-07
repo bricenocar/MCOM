@@ -1,0 +1,194 @@
+﻿using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Newtonsoft.Json;
+using Xunit;
+using MCOM.Models;
+using MCOM.Archiving.Functions;
+using MCOM.Services;
+
+namespace MCOM.Tests
+{
+    public class PostFeedbackTest
+    {
+        #region Tests
+
+        [Fact]
+        public async Task When_The_Function_Runs_Ok()
+        {
+            // Mock return values
+            var queueItem = JsonConvert.SerializeObject(new
+            {
+                ResponseUrl = "https://test.com",
+                Item = new FeedbackItem() { DocumentId = $"DocumentId", DriveId = $"DriveId" }
+            });
+            var response = new HttpResponseMessage()
+            {
+                Content = new StringContent("Test response"),
+                StatusCode = System.Net.HttpStatusCode.OK
+            };
+
+            // Mock function parameters
+            var mockFunctionContext = GetFunctionParams();
+
+            // Getting mock config variables
+            var mockQueueService = MockConfiguration(response);
+
+            // Build azure function
+            var postFeedback = new PostFeedback(mockQueueService.Object);
+
+            // Run function
+            await postFeedback.RunAsync(queueItem, mockFunctionContext.Object);
+        }
+
+        [Fact]
+        public async Task When_The_QueItem_Is_Not_Well_Formed()
+        {
+            try
+            {
+                // Mock return values
+                var queueItem = JsonConvert.SerializeObject(new // WE ARE SENDING HERE A WRONG OBJECT
+                {
+                    Test = "https://test.com",
+                    Testing = "Test"
+                });
+                var response = new HttpResponseMessage()
+                {
+                    Content = new StringContent("Test response"),
+                    StatusCode = System.Net.HttpStatusCode.OK
+                };
+
+                // Mock function parameters
+                var mockFunctionContext = GetFunctionParams();
+
+                // Getting mock config variables
+                var mockQueueService = MockConfiguration(response);
+
+                // Build azure function
+                var postFeedback = new PostFeedback(mockQueueService.Object);
+
+                // Run function
+                await postFeedback.RunAsync(queueItem, mockFunctionContext.Object);
+            }
+            catch (Exception ex)
+            {
+                Assert.Equal("Error when deserializing the object into a QueueItem", ex.Message);
+            }
+        }
+
+        [Fact]
+        public async Task When_The_QueItem_Value_Is_Null()
+        {
+            try
+            {
+                // Mock return values
+                var queueItem = JsonConvert.SerializeObject(new // WE ARE SENDING HERE A WRONG OBJECT
+                {
+                    ResponseUrl = "https://test.com",
+                    Item = new FeedbackItem() { DocumentId = "00000000-0000-0000-0000-000000000000", DriveId = "00000000-0000-0000-0000-000000000000" }
+                });
+                var response = new HttpResponseMessage()
+                {
+                    Content = new StringContent("Test response"),
+                    StatusCode = System.Net.HttpStatusCode.OK
+                };
+
+                // Mock function parameters
+                var mockFunctionContext = GetFunctionParams();
+
+                // Getting mock config variables
+                var mockQueueService = MockConfiguration(response);
+
+                // Build azure function
+                var postFeedback = new PostFeedback(mockQueueService.Object);
+
+                // Run function
+                await postFeedback.RunAsync(queueItem, mockFunctionContext.Object);
+            }
+            catch (Exception ex)
+            {
+                Assert.Equal("Got null guid", ex.Message);
+            }
+        }
+
+        [Fact]
+        public async Task When_The_Http_Response_Is_Not_Ok()
+        {
+            try
+            {
+                // Mock return values
+                var queueItem = JsonConvert.SerializeObject(new QueueItem()
+                {
+                    ResponseUrl = "https://test.com",
+                    Item = new FeedbackItem() { DocumentId = "DocumentId", DriveId = "DriveId" }
+                });
+                var response = new HttpResponseMessage()
+                {
+                    Content = new StringContent("Test response"),
+                    StatusCode = System.Net.HttpStatusCode.BadRequest
+                };
+
+                // Mock function parameters
+                var mockFunctionContext = GetFunctionParams();
+
+                // Getting mock config variables
+                var mockQueueService = MockConfiguration(response);
+
+                // Build azure function
+                var postFeedback = new PostFeedback(mockQueueService.Object);
+
+                // Run function
+                await postFeedback.RunAsync(queueItem, mockFunctionContext.Object);
+            }
+            catch (Exception ex)
+            {
+                Assert.Equal("Bad Request", ex.Message);
+            }
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Get function params. These are just default to run the Azure Function
+        /// </summary>
+        /// <returns></returns>
+        private static Mock<FunctionContext> GetFunctionParams()
+        {
+            // Mock function parameters            
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddScoped<ILoggerFactory, LoggerFactory>();
+
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+            var mockFunctionContext = new Mock<FunctionContext>();
+            mockFunctionContext.SetupProperty(c => c.InstanceServices, serviceProvider);            
+
+            return mockFunctionContext;
+        }
+
+        /// <summary>
+        /// Mocking services and configuration
+        /// </summary>
+        /// <param name="messages"></param>
+        /// <param name="responseMessage"></param>
+        /// <returns></returns>
+        private static Mock<IQueueService> MockConfiguration(HttpResponseMessage responseMessage)
+        {
+            // Mock variables
+            var mockQueueService = new Mock<IQueueService>();
+
+            // Mock configuration
+            mockQueueService.SetupAllProperties();
+            mockQueueService.Setup(x => x.PostFeedbackAsync(It.IsAny<QueueItem>())).ReturnsAsync(responseMessage);
+
+            return mockQueueService;
+        }
+
+        #endregion
+    }
+}

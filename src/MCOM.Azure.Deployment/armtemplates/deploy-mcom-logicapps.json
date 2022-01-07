@@ -1,0 +1,365 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment": {
+            "type": "string",
+            "metadata": {
+                "description": "MCOM environment."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "logicappname": {
+            "type": "string",
+            "defaultValue": "logic-mcom",
+            "metadata": {
+                "description": "Name of the logic app without environment sufix."
+            }
+        },
+        "logworkspacename": {
+            "type": "string",
+            "defaultValue": "log-mcom",
+            "metadata": {
+                "description": "Name of log workspace to query against."
+            }
+        },
+        "appInsightsName": {
+            "type": "string",
+            "defaultValue": "appi-mcom",
+            "metadata": {
+                "description": "Location for Application Insights"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "stmcom",
+            "metadata": {
+                "description": "Name for storage account"
+            }
+        },
+        "azuretablename": {
+            "type": "string",
+            "defaultValue": "LogArchive",
+            "metadata": {
+                "description": "Name of log workspace to query against."
+            }
+        },
+        "logworkspaceconnectionname": {
+            "type": "string",
+            "defaultValue": "con-logwsmcom",
+            "metadata": {
+                "description": "Name of log workspace to query against."
+            }
+        },
+        "azuretableconnectionname": {
+            "type": "string",
+            "defaultValue": "con-logtablemcom",
+            "metadata": {
+                "description": "Name of log workspace to query against."
+            }
+        },        
+        "tenantId": {
+            "type": "string",
+            "defaultValue": "3aa4a235-b6e2-48d5-9195-7fcf05b459b0",
+            "metadata": {
+                "description": "client id of app that will deploy the resource."
+            }
+        },
+        "appclientid": {
+            "type": "string",
+            "metadata": {
+                "description": "client id of app that will deploy the resource."
+            }
+        },
+        "appsecret": {
+            "type": "string",
+            "metadata": {
+                "description": "secret of app that will deploy the resource"
+            }
+        }        
+    },
+    "variables": {
+        "loggingStorageAccountName": "[concat(parameters('storageAccountName'), 'logs', parameters('environment'))]",
+        "logicappname": "[concat(parameters('logicappname'), '-', parameters('environment'))]",
+        "azuretablename": "[concat(parameters('azuretablename'), '-', parameters('environment'))]",
+        "logworkspacename": "[concat(parameters('logworkspacename'), '-', parameters('environment'))]",
+        "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]",
+        "logworkspaceconnectionname": "[concat(parameters('logworkspaceconnectionname'), '-', parameters('environment'))]",
+        "azuretableconnectionname": "[concat(parameters('azuretableconnectionname'), '-', parameters('environment'))]",
+        "resourcegroupname": "[resourceGroup().name]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[variables('logicappname')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/connections', variables('logworkspaceconnectionname'))]",
+                "[resourceId('Microsoft.Web/connections', variables('azuretableconnectionname'))]"
+            ],
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "Recurrence": {
+                            "recurrence": {
+                                "frequency": "Hour",
+                                "interval": 1
+                            },
+                            "evaluatedRecurrence": {
+                                "frequency": "Hour",
+                                "interval": 1
+                            },
+                            "type": "Recurrence"
+                        }
+                    },
+                    "actions": {
+                        "For_each": {
+                            "foreach": "@body('Parse_JSON')?['value']",
+                            "actions": {
+                                "Insert_Entity": {
+                                    "runAfter": {},
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "body": {
+                                            "AppName": "@{items('For_each')?['appName']}",
+                                            "BlobFilePath": "@{items('For_each')?['customDimensions_BlobFilePath']}",
+                                            "DocumentId": "@{items('For_each')?['customDimensions_DocumentId']}",
+                                            "DriveId": "@{items('For_each')?['customDimensions_DriveId']}",
+                                            "ExcecutionDuration": "@{items('For_each')?['customDimensions_executionDuration']}",
+                                            "LogLevel": "@{items('For_each')?['customDimensions_LogLevel']}",
+                                            "Message": "@{items('For_each')?['message']}",
+                                            "OperationName": "@{items('For_each')?['operation_Name']}",
+                                            "PartitionKey": "@{items('For_each')?['Partition']}",
+                                            "RowKey": "@{guid()}",
+                                            "SPPath": "@{items('For_each')?['customDimensions_SPPath']}",
+                                            "TimeGenerated": "@{items('For_each')?['timestamp']}"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                            }
+                                        },
+                                        "method": "post",
+                                        "path": "[concat('/Tables/@{encodeURIComponent(''', parameters('azuretablename'), ''')}/entities')]"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Parse_JSON": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Foreach"
+                        },
+                        "Parse_JSON": {
+                            "runAfter": {
+                                "Run_query_and_list_results": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "ParseJson",
+                            "inputs": {
+                                "content": "@body('Run_query_and_list_results')",
+                                "schema": {
+                                    "properties": {
+                                        "value": {
+                                            "items": {
+                                                "properties": {
+                                                    "appName": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "customDimensions_LogLevel": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "customDimensions_BlobFilePath": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "customDimensions_DocumentId": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "customDimensions_DriveId": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "customDimensions_SPPath": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "customDimensions_executionDuration": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "message": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "operation_Name": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "timestamp": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    },
+                                                    "Partition": {
+                                                        "type": [
+                                                            "string",
+                                                            "null"
+                                                        ]
+                                                    }
+                                                },
+                                                "required": [
+                                                    "Partition",
+                                                    "timestamp",
+                                                    "appName",
+                                                    "operation_Name",
+                                                    "message",
+                                                    "customDimensions_LogLevel",
+                                                    "customDimensions_executionDuration",
+                                                    "customDimensions_DocumentId",
+                                                    "customDimensions_DriveId",
+                                                    "customDimensions_SPPath",
+                                                    "customDimensions_BlobFilePath"
+                                                ],
+                                                "type": "object"
+                                            },
+                                            "type": "array"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "Run_query_and_list_results": {
+                            "runAfter": {},
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "body": "let dt = now();\nlet year = datetime_part('year', dt);\nlet month = datetime_part('month', dt);\nlet day = datetime_part('day', dt);\nlet hour = datetime_part('hour', dt);\nlet startTime = make_datetime(year, month, day, hour, 0) - 1h;\nlet endTime = startTime + 1h - 1tick;\ntraces\n| where ingestion_time() between(startTime..endTime) and isnotempty(operation_Name)\n| order by timestamp desc\n| project Partition = strcat(operation_Name,'_',datetime_part('month', dt),datetime_part('year', dt)), timestamp, appName, operation_Name, message, customDimensions[\"LogLevel\"], customDimensions[\"executionDuration\"], customDimensions[\"DocumentId\"], customDimensions[\"DriveId\"], customDimensions[\"SPPath\"], customDimensions[\"BlobFilePath\"]",
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['azuremonitorlogs']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "path": "/queryData",
+                                "queries": {
+                                    "resourcegroups": "[resourceGroup().name]",
+                                    "resourcename": "[variables('applicationInsightsName')]",
+                                    "resourcetype": "Application Insights",
+                                    "subscriptions": "[subscription().subscriptionId]",
+                                    "timerange": "Last 4 hours"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "azuremonitorlogs": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('logworkspaceconnectionname'))]",
+                                "connectionName": "[variables('logworkspaceconnectionname')]",
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'),'/managedApis/azuremonitorlogs')]"
+                            },
+                            "azuretables": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('azuretableconnectionname'))]",
+                                "connectionName": "[variables('azuretableconnectionname')]",
+                                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'),'/managedApis/azuretables')]"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[variables('logworkspaceconnectionname')]",
+            "location": "[parameters('location')]",
+            "kind": "V1",
+            "properties": {
+                "displayName": "LogWorkspaceConnector",
+                "parameterValues": {
+                    "token:clientId": "[parameters('appclientid')]",
+                    "token:clientSecret": "[parameters('appsecret')]",
+                    "token:TenantId": "[parameters('tenantId')]",
+                    "token:grantType": "client_credentials"
+                },
+                "api": {
+                    "name": "[variables('logworkspaceconnectionname')]",
+                    "displayName": "Azure Monitor Logs",
+                    "description": "Use this connector to query your Azure Monitor Logs across Log Analytics workspace and Application Insights component, to list or visualize results.",
+                    "iconUri": "[concat('https://connectoricons-prod.azureedge.net/releases/v1.0.1520/1.0.1520.2571/', variables('logworkspaceconnectionname'), '/icon.png')]",
+                    "brandColor": "#0072C6",
+                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuremonitorlogs')]",
+                    "type": "Microsoft.Web/locations/managedApis"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[variables('azuretableconnectionname')]",
+            "location": "[parameters('location')]",
+            "kind": "V1",
+            "properties": {
+                "displayName": "LogArchiveConnector",
+                "api": {
+                    "name": "[variables('azuretableconnectionname')]",
+                    "displayName": "Azure Table Storage",
+                    "description": "Azure Table storage is a service that stores structured NoSQL data in the cloud, providing a key/attribute store with a schemaless design. Sign into your Storage account to create, update, and query tables and more.",
+                    "iconUri": "[concat('https://connectoricons-prod.azureedge.net/releases/v1.0.1479/1.0.1479.2452/' , variables('azuretableconnectionname'), '/icon.png')]",
+                    "brandColor": "#804998",
+                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azuretables')]",
+                    "type": "Microsoft.Web/locations/managedApis"
+                },
+                "parameterValues": {
+                    "storageaccount": "[variables('loggingStorageAccountName')]",
+                    "sharedkey": "[listKeys(resourceId(variables('resourcegroupname'),'Microsoft.Storage/storageAccounts', variables('loggingStorageAccountName')), '2018-02-01').keys[0].value]"
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}

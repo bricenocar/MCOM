@@ -1,0 +1,11 @@
+{
+  "fileName": "test.json",
+  "source": "test",
+  "fileTitle": "test",
+  "blobFilePath": "test",
+  "driveID": "test",
+  "documentId": "test",
+  "feedBackUrl": "https://test.com",
+  "useCSOM": true,
+  "setMetadata": true
+}

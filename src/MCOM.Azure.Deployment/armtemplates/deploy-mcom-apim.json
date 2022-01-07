@@ -1,0 +1,155 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "metadata": {
+        "description": "MCOM environment."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    // API management
+    "apimName": {
+      "type": "string"
+    },
+    "organizationName": {
+      "type": "string"
+    },
+    "adminEmail": {
+      "type": "string"
+    },
+    "tier": {
+      "type": "string",
+      "defaultValue": "1"
+    },
+    "capacity": {
+      "type": "string"
+    },
+    "identity": {
+      "type": "object"
+    },
+    "apimTags": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "apiManagementName": "[parameters('apimName')]"
+  },
+  "resources": [
+    // API management
+    {
+      "type": "Microsoft.ApiManagement/service",
+      "apiVersion": "2019-01-01",
+      "name": "[variables('apiManagementName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('tier')]",
+        "capacity": "[parameters('capacity')]"
+      },
+      "identity": "[parameters('identity')]",
+      "tags": "[if(contains(parameters('apimTags'), 'Microsoft.ApiManagement/service'), parameters('apimTags')['Microsoft.ApiManagement/service'], json('{}')) ]",
+      "properties": {
+        "publisherEmail": "[parameters('adminEmail')]",
+        "publisherName": "[parameters('organizationName')]",
+        "notificationSenderEmail": "apimgmt-noreply@mail.windowsazure.com",
+        "hostnameConfigurations": [
+          {
+            "type": "Proxy",
+            "hostName": "[concat(variables('apiManagementName'), '.azure-api.net')]",
+            "negotiateClientCertificate": false,
+            "defaultSslBinding": true
+          }
+        ],
+        "customProperties": {
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Ciphers.TripleDes168": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Ssl30": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": "false",
+          "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": "false"
+        },
+        "virtualNetworkType": "None",
+        "disableGateway": false,
+        "apiVersionConstraint": {}
+      }
+    },    
+    {
+      "type": "Microsoft.ApiManagement/service/tags",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(variables('apiManagementName'), '/postfile')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementName'))]"
+      ],
+      "properties": {
+        "displayName": "PostFile"
+      }
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/notifications",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(variables('apiManagementName'), '/AccountClosedPublisher')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/notifications",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(variables('apiManagementName'), '/BCC')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/notifications",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(variables('apiManagementName'), '/NewApplicationNotificationMessage')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/notifications",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(variables('apiManagementName'), '/NewIssuePublisherNotificationMessage')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/notifications",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(variables('apiManagementName'), '/PurchasePublisherNotificationMessage')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/notifications",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(variables('apiManagementName'), '/QuotaLimitApproachingPublisherNotificationMessage')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.ApiManagement/service/notifications",
+      "apiVersion": "2020-12-01",
+      "name": "[concat(variables('apiManagementName'), '/RequestPublisherNotificationMessage')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.ApiManagement/service', variables('apiManagementName'))]"
+      ]
+    }
+  ],
+
+  "outputs": {}
+}
