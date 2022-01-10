@@ -13,7 +13,6 @@ C:\Dev\MCOM\MCOM\src\MCOM.Models\bin\Debug\net6.0\MCOM.Models.deps.json
 C:\Dev\MCOM\MCOM\src\MCOM.Models\bin\Debug\net6.0\MCOM.Models.dll
 C:\Dev\MCOM\MCOM\src\MCOM.Models\bin\Debug\net6.0\ref\MCOM.Models.dll
 C:\Dev\MCOM\MCOM\src\MCOM.Models\bin\Debug\net6.0\MCOM.Models.pdb
-C:\Dev\MCOM\MCOM\src\MCOM.Models\obj\Debug\net6.0\MCOM.Models.csproj.AssemblyReference.cache
 C:\Dev\MCOM\MCOM\src\MCOM.Models\obj\Debug\net6.0\MCOM.Models.GeneratedMSBuildEditorConfig.editorconfig
 C:\Dev\MCOM\MCOM\src\MCOM.Models\obj\Debug\net6.0\MCOM.Models.AssemblyInfoInputs.cache
 C:\Dev\MCOM\MCOM\src\MCOM.Models\obj\Debug\net6.0\MCOM.Models.AssemblyInfo.cs
