@@ -7,16 +7,15 @@ trigger:
   branches:
       include:
           - master
-          - ArchivingAPIDev
   paths:
       include:
-          - src/MCOM/MCOM.PerformanceTests
+          - src/MCOM.PerformanceTests
 
 pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: 'src/MCOM/MCOM.sln'
+  solution: 'src/MCOM.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -37,13 +36,13 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
-    projects: 'src\MCOM\MCOM.PerformanceTests\MCOM.PerformanceTests.csproj'
+    projects: 'src\MCOM.PerformanceTests\MCOM.PerformanceTests.csproj'
     
 - task: DotNetCoreCLI@2
   inputs:
     command: 'publish'
     publishWebProjects: false
-    projects: 'src\MCOM\MCOM.PerformanceTests\MCOM.PerformanceTests.csproj'
+    projects: 'src\MCOM.PerformanceTests\MCOM.PerformanceTests.csproj'
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)/Output'
 
 - task: PublishBuildArtifacts@1

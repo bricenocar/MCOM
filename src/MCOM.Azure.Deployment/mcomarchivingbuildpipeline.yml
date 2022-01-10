@@ -2,10 +2,9 @@ trigger:
   branches:
       include:
           - master
-          - ArchivingAPIDev
   paths:
       include:
-          - src/MCOM/*
+          - src/*
           
 pool:
   vmImage: 'windows-latest'
@@ -26,26 +25,26 @@ stages:
               displayName: 'Restore project dependencies'
               inputs:
                 command: 'restore'
-                projects: 'src/MCOM/**/*.csproj'
+                projects: 'src/**/*.csproj'
 
             - task: DotNetCoreCLI@2
               displayName: 'Build the project - $(buildConfiguration)'
               inputs:
                 command: 'build'
                 arguments: '--no-restore --configuration $(buildConfiguration)'
-                projects: 'src/MCOM/**/*.csproj'
+                projects: 'src/**/*.csproj'
             - task: DotNetCoreCLI@2
               displayName: 'Run Unit tests'
               inputs:
                 command: 'test'
-                projects: 'src/MCOM/MCOM.Tests/*.csproj'
+                projects: 'src/MCOM.Tests/*.csproj'
                 publishTestResults: true
                 testRunTitle: 'MCOM Tests'
             - task: DotNetCoreCLI@2
               displayName: 'Publish the project - $(buildConfiguration)'
               inputs:
                 command: 'publish'
-                projects: 'src/MCOM/MCOM.Archiving.Functions/*.csproj'
+                projects: 'src/MCOM.Archiving.Functions/*.csproj'
                 publishWebProjects: false
                 arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
                 zipAfterPublish: true
