@@ -1,2 +1,5 @@
 # MCOM project
 **/Files/PostFileTest/config.local.json
+
+# MCOM All project Objects (bin)
+obj/Debug
