@@ -211,6 +211,10 @@
             {
               "name": "QueuePoisonName",
               "value": "[concat(parameters('queueName'), '-poison')]"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "1"
             }
           ]
         }
@@ -312,6 +316,10 @@
             {
               "name": "QueuePoisonName",
               "value": "[concat(parameters('queueName'), '-poison')]"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "1"
             }
           ]
         }
