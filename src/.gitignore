@@ -2,4 +2,10 @@
 **/Files/PostFileTest/config.local.json
 
 # MCOM All project Objects (bin)
-obj/Debug
+*/bin/Debug
+*/bin/Release
+*/obj/Debug
+*/obj/Release
+
+# MCOM all .sdf files
+*.sdf

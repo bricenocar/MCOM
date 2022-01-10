@@ -20,3 +20,4 @@ C:\Dev\MCOM\MCOM\src\MCOM.Extensions\obj\Debug\net6.0\MCOM.Extensions.csproj.Cor
 C:\Dev\MCOM\MCOM\src\MCOM.Extensions\obj\Debug\net6.0\MCOM.Extensions.dll
 C:\Dev\MCOM\MCOM\src\MCOM.Extensions\obj\Debug\net6.0\ref\MCOM.Extensions.dll
 C:\Dev\MCOM\MCOM\src\MCOM.Extensions\obj\Debug\net6.0\MCOM.Extensions.pdb
+C:\Dev\MCOM\MCOM\src\MCOM.Extensions\obj\Debug\net6.0\MCOM.Extensions.csproj.AssemblyReference.cache
