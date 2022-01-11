@@ -151,9 +151,9 @@ az apim wait --created --name $apimName
 # Deploy api management apis and operations
 Write-Host "##[command] Running deployment of api management operations template..."
 if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-apim-operations" --template-uri $apimOperationsTemplateFile --parameters environment=$Environment functionAppId=$functionAppId | ConvertFrom-Json #principalId=$principalId
+    $result = az deployment group create --name "$DeploymentName-apim-operations" --template-uri $apimOperationsTemplateFile --parameters environment=$Environment | ConvertFrom-Json #principalId=$principalId
 } else {
-    $result = az deployment group create --name "$DeploymentName-apim-operations" --template-file $apimOperationsTemplateFile --parameters environment=$Environment functionAppId=$functionAppId | ConvertFrom-Json #principalId=$principalId
+    $result = az deployment group create --name "$DeploymentName-apim-operations" --template-file $apimOperationsTemplateFile --parameters environment=$Environment | ConvertFrom-Json #principalId=$principalId
 }
 
 # Evaluate result from deployment
