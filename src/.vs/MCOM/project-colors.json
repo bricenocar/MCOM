@@ -1,0 +1,41 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "7ab5ac8e-1ef0-4006-8f7c-de723d811826": {
+      "ProjectGuid": "7ab5ac8e-1ef0-4006-8f7c-de723d811826",
+      "DisplayName": "MCOM.Tests",
+      "ColorIndex": 0
+    },
+    "7d5a391e-6166-4d18-acc8-2fbae56a3c02": {
+      "ProjectGuid": "7d5a391e-6166-4d18-acc8-2fbae56a3c02",
+      "DisplayName": "MCOM.Archiving.Functions",
+      "ColorIndex": 1
+    },
+    "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3": {
+      "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
+      "DisplayName": "Miscellaneous Files",
+      "ColorIndex": -1
+    },
+    "aaaa095b-5abb-4a89-a4b0-b20be4c424b2": {
+      "ProjectGuid": "aaaa095b-5abb-4a89-a4b0-b20be4c424b2",
+      "DisplayName": "MCOM.ScanOnDemand.Functions",
+      "ColorIndex": 2
+    },
+    "3ad60b1e-dbf6-49f9-bc18-69dfe7f0997c": {
+      "ProjectGuid": "3ad60b1e-dbf6-49f9-bc18-69dfe7f0997c",
+      "DisplayName": "MCOM.Functions",
+      "ColorIndex": 3
+    },
+    "cf3a69fe-98d5-4631-ae01-37778df5250a": {
+      "ProjectGuid": "cf3a69fe-98d5-4631-ae01-37778df5250a",
+      "DisplayName": "MCOM.Models",
+      "ColorIndex": 4
+    },
+    "98d32a89-506d-40a2-bb35-e7bfc03ed003": {
+      "ProjectGuid": "98d32a89-506d-40a2-bb35-e7bfc03ed003",
+      "DisplayName": "MCOM.ScanOnDemand.Functions",
+      "ColorIndex": 5
+    }
+  },
+  "NextColorIndex": 6
+}
