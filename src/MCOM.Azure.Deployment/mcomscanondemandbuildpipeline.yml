@@ -44,7 +44,7 @@ stages:
               displayName: 'Publish the project - $(buildConfiguration)'
               inputs:
                 command: 'publish'
-                projects: 'src/MCOM.Archiving.Functions/*.csproj'
+                projects: 'src/MCOM.ScanOnDemand.Functions/*.csproj'
                 publishWebProjects: false
                 arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
                 zipAfterPublish: true
