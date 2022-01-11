@@ -43,8 +43,8 @@ Write-Host "##[debug]Location of RBAC arm template: $rbacTemplateFile"
 
 # Prepare parameters
 if($runLocally -eq $false) {
-    $funcParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-func.parameters.json"
-    $storageParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-storage.parameters.json"
+    $funcParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-func.parameters.json"
+    $storageParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-storage.parameters.json"
 } else {
     $funcParametersFile = "$($blobStorageUrl)deploy-mcom-func.parameters.json"
     $storageParametersFile = "$($blobStorageUrl)deploy-mcom-storage.parameters.json"
