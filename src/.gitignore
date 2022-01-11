@@ -4,4 +4,4 @@ bin
 obj
 config
 **/*.sdf
-**/.suo
+**/*.suo
