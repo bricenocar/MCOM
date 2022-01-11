@@ -51,10 +51,10 @@ Write-Host "##[debug]Location of azure Logic App arm template: $logicappsTemplat
 
 # Define parameters for provisioning
 if($runLocally -eq $false) {
-    $apimParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-apim.parameters.json"
-    $adfParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-adf.parameters.json"
-    $loganalyticsParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-loganalytics.parameters.json"
-    $logicappsParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-logicapps.parameters.json"
+    $apimParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-apim.parameters.json"
+    $adfParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-adf.parameters.json"
+    $loganalyticsParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-loganalytics.parameters.json"
+    $logicappsParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-logicapps.parameters.json"
 } else {
     $apimParametersFile = "$($blobStorageUrl)deploy-mcom-apim.parameters.json"
     $adfParametersFile = "$($blobStorageUrl)deploy-mcom-adf.parameters.json"
