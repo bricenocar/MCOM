@@ -1,10 +1,7 @@
 # MCOM project
 **/Files/PostFileTest/config.local.json
-
-# MCOM All project Objects (bin)
 bin
 obj
 config
-
-# MCOM all .sdf files
 **/*.sdf
+**/.suo
