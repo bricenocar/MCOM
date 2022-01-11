@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31727.386
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Functions", "MCOM.Functions\MCOM.Functions.csproj", "{3AD60B1E-DBF6-49F9-BC18-69DFE7F0997C}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Services", "MCOM.Services\MCOM.Services.csproj", "{17DE7131-CA29-4781-9859-44A339EBD33E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Extensions", "MCOM.Extensions\MCOM.Extensions.csproj", "{7A1A16AA-956D-49C2-8D60-100C0277880B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCOM.ScanOnDemand.Functions", "MCOM.ScanOnDemand.Functions\MCOM.ScanOnDemand.Functions.csproj", "{98D32A89-506D-40A2-BB35-E7BFC03ED003}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{7A1A16AA-956D-49C2-8D60-100C0277880B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A1A16AA-956D-49C2-8D60-100C0277880B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A1A16AA-956D-49C2-8D60-100C0277880B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98D32A89-506D-40A2-BB35-E7BFC03ED003}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98D32A89-506D-40A2-BB35-E7BFC03ED003}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98D32A89-506D-40A2-BB35-E7BFC03ED003}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98D32A89-506D-40A2-BB35-E7BFC03ED003}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

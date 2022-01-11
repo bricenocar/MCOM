@@ -51,10 +51,10 @@ Write-Host "##[debug]Location of azure Logic App arm template: $logicappsTemplat
 
 # Define parameters for provisioning
 if($runLocally -eq $false) {
-    $apimParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-apim.parameters.json"
-    $adfParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-adf.parameters.json"
-    $loganalyticsParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-loganalytics.parameters.json"
-    $logicappsParametersFile = "_equinor.Enterprise-Information-Management/dropdeploymentscripts/armtemplates/deploy-mcom-logicapps.parameters.json"
+    $apimParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-apim.parameters.json"
+    $adfParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-adf.parameters.json"
+    $loganalyticsParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-loganalytics.parameters.json"
+    $logicappsParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-logicapps.parameters.json"
 } else {
     $apimParametersFile = "$($blobStorageUrl)deploy-mcom-apim.parameters.json"
     $adfParametersFile = "$($blobStorageUrl)deploy-mcom-adf.parameters.json"
@@ -151,9 +151,9 @@ az apim wait --created --name $apimName
 # Deploy api management apis and operations
 Write-Host "##[command] Running deployment of api management operations template..."
 if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-apim-operations" --template-uri $apimOperationsTemplateFile --parameters environment=$Environment functionAppId=$functionAppId | ConvertFrom-Json #principalId=$principalId
+    $result = az deployment group create --name "$DeploymentName-apim-operations" --template-uri $apimOperationsTemplateFile --parameters environment=$Environment | ConvertFrom-Json #principalId=$principalId
 } else {
-    $result = az deployment group create --name "$DeploymentName-apim-operations" --template-file $apimOperationsTemplateFile --parameters environment=$Environment functionAppId=$functionAppId | ConvertFrom-Json #principalId=$principalId
+    $result = az deployment group create --name "$DeploymentName-apim-operations" --template-file $apimOperationsTemplateFile --parameters environment=$Environment | ConvertFrom-Json #principalId=$principalId
 }
 
 # Evaluate result from deployment

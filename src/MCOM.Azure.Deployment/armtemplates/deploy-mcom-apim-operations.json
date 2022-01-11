@@ -25,12 +25,6 @@
 			"metadata": {
 				"description": "The name of the function app that you wish to create."
 			}
-		},
-		"functionAppId": {
-			"type": "string",
-			"metadata": {
-				"description": "Id of the function app."
-			}
 		}
 	},
 	"variables": {
@@ -303,7 +297,7 @@
 				"description": "[variables('functionAppName')]",
 				"url": "[concat('https://', variables('functionAppName') ,'.azurewebsites.net/api')]",
 				"protocol": "http",
-				"resourceId": "[parameters('functionAppId')]"
+				"resourceId": "[concat('https://management.azure.com', resourceId('Microsoft.Web/sites', variables('functionAppName')))]"
 			}
 		},
 		{
@@ -314,7 +308,7 @@
 				"description": "[variables('archivingFunctionAppName')]",
 				"url": "[concat('https://', variables('archivingFunctionAppName') ,'.azurewebsites.net/api')]",
 				"protocol": "http",
-				"resourceId": "[resourceId('Microsoft.Web/sites', variables('archivingFunctionAppName'))]"
+				"resourceId": "[concat('https://management.azure.com', resourceId('Microsoft.Web/sites', variables('archivingFunctionAppName')))]"
 			}
 		},
 		{
