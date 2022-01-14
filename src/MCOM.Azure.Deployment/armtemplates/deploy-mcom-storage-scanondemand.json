@@ -1,0 +1,102 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "metadata": {
+        "description": "MCOM environment."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    // Storage account
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "stmcom",
+      "metadata": {
+        "description": "Name for storage account"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    }
+  },
+  "variables": {
+    "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'scanfunc', parameters('environment'))]"
+  },
+  "resources": [
+    // Storage account
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-01-01",
+      "name": "[variables('functionStorageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]",
+        "tier": "Standard"
+      },
+      "kind": "StorageV2",
+      "resources": [
+        {
+          "type": "Microsoft.Storage/storageAccounts/blobServices",
+          "apiVersion": "2021-04-01",
+          "name": "[concat(variables('functionStorageAccountName'), '/default')]",
+          "sku": {
+            "name": "Standard_LRS",
+            "tier": "Standard"
+          },
+          "properties": {
+            "cors": {
+              "corsRules": []
+            },
+            "deleteRetentionPolicy": {
+              "enabled": false
+            }
+          }
+        },
+        {
+          "type": "Microsoft.Storage/storageAccounts/tableServices",
+          "apiVersion": "2021-04-01",
+          "name": "[concat(variables('functionStorageAccountName'), '/default/')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]"
+          ],
+          "properties": {
+            "cors": {
+              "corsRules": []
+            }
+          }
+        },
+        {
+          "type": "Microsoft.Storage/storageAccounts/queueServices",
+          "apiVersion": "2021-04-01",
+          "name": "[concat(variables('functionStorageAccountName'), '/default')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]"
+          ],
+          "properties": {
+            "cors": {
+              "corsRules": []
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {}
+}
