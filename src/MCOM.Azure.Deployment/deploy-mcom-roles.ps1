@@ -21,6 +21,8 @@ Write-Host "##[debug]Run locally: $runLocally"
 az account set -s $SubscriptionId
 Write-Host "##[debug]Subscription Id: $SubscriptionId"
 
+az configure --defaults group=$RGName
+
 if($runLocally -eq $true) {
     $blobStorageUrl = "./armtemplates/"
 }
@@ -41,6 +43,7 @@ Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
 
 # Check existence of MCOM-Deployer role definition
+########CHANGE TO az deployment sub IN PRODUCTION##################
 Write-Host "##[command] Running deployment of roles template..."
 if($runLocally -eq $false) {
     az deployment sub create --name "$DeploymentName-roles" --template-uri $rolesTemplateFile --parameters $rolesParametersFile environment=$Environment
@@ -60,7 +63,7 @@ if($roleDef.Length -gt 0 -and $roleDef.roleDefinitionName -eq "MCOM-Deployer") {
         $roleId = $roleDef.name
         Write-Host "##[command] Assigning role $roleId to service principal $servicePrincipalAppId in subscription $SubscriptionId."
         az role assignment create --role $roleId --assignee $servicePrincipalAppId --scope "/subscriptions/$SubscriptionId"
-    }    
+    }
 }
 
 # Register reqiured service providers
