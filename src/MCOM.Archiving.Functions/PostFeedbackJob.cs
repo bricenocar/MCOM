@@ -29,7 +29,7 @@ namespace MCOM.Archiving.Functions
             }
             catch (Exception e)
             {
-                Global.Log.LogError("Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
+                Global.Log.LogError(e, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
                 throw;
             }
 
@@ -58,14 +58,14 @@ namespace MCOM.Archiving.Functions
                         // Validate object
                         if (queueObject.ResponseUrl == null || queueObject.Item == null)
                         {
-                            Global.Log.LogError($"Error: Error when deserializing the object into a QueueItem");
+                            Global.Log.LogError(e, $"Error: Error when deserializing the object into a QueueItem");
                             throw new Exception("Error when deserializing the object into a QueueItem");
                         }
 
                         // Validate null guid
                         if (queueObject.Item.DocumentId.Equals("00000000-0000-0000-0000-000000000000"))
                         {
-                            Global.Log.LogError("Error: Got null guid");
+                            Global.Log.LogError(e, "Error: Got null guid");
                             throw new Exception("Got null guid");
                         }
 
@@ -78,7 +78,7 @@ namespace MCOM.Archiving.Functions
                         }
                         else
                         {
-                            Global.Log.LogError($"Error: {response.ReasonPhrase}. Message: {responseContent}");
+                            Global.Log.LogError(e, $"Error: {response.ReasonPhrase}. Message: {responseContent}");
                             //throw new Exception(response.ReasonPhrase);
                         }
                     }
@@ -86,7 +86,7 @@ namespace MCOM.Archiving.Functions
                 catch (Exception e)
                 {
                     // log to analytics
-                    Global.Log.LogError($"Exception: {e.Message}");
+                    Global.Log.LogError(e, $"Exception: {e.Message}");
                     throw;
                 }
             }

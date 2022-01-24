@@ -38,7 +38,7 @@ namespace MCOM.Functions
             }
             catch (Exception e)
             {
-                Global.Log.LogError("An error occured when setting environmental variables", e);
+                Global.Log.LogError(e, "An error occured when setting environmental variables", e);
                 var resp = req.CreateResponse(HttpStatusCode.InternalServerError);
                 resp.WriteString("Config values missing or bad formatted in app config");
                 return resp;
@@ -68,7 +68,7 @@ namespace MCOM.Functions
 
                 if (string.IsNullOrEmpty(webUrl))
                 {
-                    Global.Log.LogError("Parameter 'webUrl' is expected but not received in body");
+                    Global.Log.LogError(new NullReferenceException(), "Parameter 'webUrl' is expected but not received in body");
                     response = req.CreateResponse(HttpStatusCode.BadRequest);
                     response.WriteString("Parameter 'web' is expected but not received in body");
                     return response;
@@ -93,7 +93,7 @@ namespace MCOM.Functions
                     var groups = termStore.Groups.Where(g => g.Name.Equals(termGroup));
                     if (!groups.Any())
                     {
-                        Global.Log.LogError("No groups found with the specified name");
+                        Global.Log.LogError(new NullReferenceException(), "No groups found with the specified name");
                         response = req.CreateResponse(HttpStatusCode.BadRequest);
                         response.WriteString("No groups found with the specified name");
                         return response;
@@ -105,7 +105,7 @@ namespace MCOM.Functions
                         var termSets = _sharePointService.GetTermSets(group, termSetName);
                         if (!termSets.Any())
                         {
-                            Global.Log.LogError("No termset found with the specified name");
+                            Global.Log.LogError(new NullReferenceException(), "No termset found with the specified name");
                             response = req.CreateResponse(HttpStatusCode.BadRequest);
                             response.WriteString("No termset found with the specified name");
                             return response;
@@ -157,7 +157,7 @@ namespace MCOM.Functions
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogError("Unhandled exception found: {ErrorMessage}", ex.Message);
+                    Global.Log.LogError(ex, "Unhandled exception found: {ErrorMessage}", ex.Message);
                     response = req.CreateResponse(HttpStatusCode.InternalServerError);
                     response.WriteString(ex.Message);
                     return response;
