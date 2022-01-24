@@ -19,8 +19,7 @@ namespace MCOM.Archiving.Functions
                 })
                 .ConfigureLogging((context, builder) =>
                 {
-                    builder.SetMinimumLevel(LogLevel.Information);
-                    builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_CONNECTION_STRING"]);
+                    builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
                 }).Build();
 
             host.Run();

@@ -35,7 +35,12 @@
       "ProjectGuid": "98d32a89-506d-40a2-bb35-e7bfc03ed003",
       "DisplayName": "MCOM.ScanOnDemand.Functions",
       "ColorIndex": 5
+    },
+    "d6ae9ee4-2d97-43c3-b122-d26ca0c23c00": {
+      "ProjectGuid": "d6ae9ee4-2d97-43c3-b122-d26ca0c23c00",
+      "DisplayName": "MCOM.PerformanceTests",
+      "ColorIndex": 6
     }
   },
-  "NextColorIndex": 6
+  "NextColorIndex": 7
 }
