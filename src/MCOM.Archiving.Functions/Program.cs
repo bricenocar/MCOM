@@ -16,6 +16,8 @@ namespace MCOM.Archiving.Functions
                     s.AddScoped<IGraphService, GraphService>();
                     s.AddScoped<IBlobService, BlobService>();
                     s.AddScoped<IAppInsightsService, AppInsightsService>();
+                    s.AddScoped<ISharePointService, SharePointService>();
+                    s.AddScoped<IAzureService, AzureService>();
                 })
                 .ConfigureLogging((context, builder) =>
                 {
