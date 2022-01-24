@@ -1,11 +1,8 @@
-using MCOM.Models;
-using MCOM.Services;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.ApplicationInsights;
+using MCOM.Services;
 
 namespace MCOM.Functions
 {
