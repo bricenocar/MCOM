@@ -47,14 +47,14 @@ namespace MCOM.Archiving.Functions
                     // Validate object
                     if (queueObject.ResponseUrl == null || queueObject.Item == null)
                     {
-                        Global.Log.LogError(e, $"Error: Error when deserializing the object into a QueueItem");
+                        Global.Log.LogError(new NullReferenceException(), $"Error: Error when deserializing the object into a QueueItem");
                         throw new Exception("Error when deserializing the object into a QueueItem");
                     }
 
                     // Validate null guid
                     if (queueObject.Item.DocumentId.Equals("00000000-0000-0000-0000-000000000000"))
                     {
-                        Global.Log.LogError(e, "Error: Got null guid");
+                        Global.Log.LogError(new NullReferenceException(), "Error: Got null guid");
                         throw new Exception("Got null guid");
                     }
 
@@ -67,7 +67,7 @@ namespace MCOM.Archiving.Functions
                     }
                     else
                     {
-                        Global.Log.LogError(e, "Error trying to send feedback response. Message: {ErrorMessage}. DocumentId: {DocumentId}.", responseContent, queueObject.Item.DocumentId);
+                        Global.Log.LogError(new NullReferenceException(), "Error trying to send feedback response. Message: {ErrorMessage}. DocumentId: {DocumentId}.", responseContent, queueObject.Item.DocumentId);
                         throw new Exception(response.ReasonPhrase);
                     }
                 }

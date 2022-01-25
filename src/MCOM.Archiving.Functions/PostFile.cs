@@ -62,7 +62,7 @@ namespace MCOM.Archiving.Functions
                     // Validate if file exists in request          
                     if (parsedFormBody.Files.Count > 1)
                     {
-                        Global.Log.LogError(e, "Too many files ({FileCount}) included in the POST request", parsedFormBody.Files.Count);
+                        Global.Log.LogError(new NullReferenceException(), "Too many files ({FileCount}) included in the POST request", parsedFormBody.Files.Count);
                         response = req.CreateResponse(HttpStatusCode.BadRequest);
                         response.WriteString("You can only add 1 file per request with the key: 'File' ");
                         return response;
@@ -74,7 +74,7 @@ namespace MCOM.Archiving.Functions
                     // Validate if file is null
                     if (file == null)
                     {
-                        Global.Log.LogError(e, "File not included");
+                        Global.Log.LogError(new NullReferenceException(), "File not included");
                         response = req.CreateResponse(HttpStatusCode.BadRequest);
                         response.WriteString("You must send at least 1 file per request with the key: 'File'.");
                         return response;
@@ -94,7 +94,7 @@ namespace MCOM.Archiving.Functions
                     // Validate if file is empty
                     if (fileContent.Length == 0)
                     {
-                        Global.Log.LogError(e, "File has no content");
+                        Global.Log.LogError(new NullReferenceException(), "File has no content");
                         response = req.CreateResponse(HttpStatusCode.BadRequest);
                         response.WriteString("The file you sent has 0 bytes and has no content. Please upload a file that is not empty");
                         return response;
@@ -139,7 +139,7 @@ namespace MCOM.Archiving.Functions
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogError(e, "An error has ocurred when trying to extract properties from file: {DocumentId}. Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId.ToString(), ex.Message, ex.StackTrace);
+                    Global.Log.LogError(new NullReferenceException(), "An error has ocurred when trying to extract properties from file: {DocumentId}. Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId.ToString(), ex.Message, ex.StackTrace);
                     response = req.CreateResponse(HttpStatusCode.InternalServerError);
                     response.WriteString("Invalid form data. Check that the content type is multipart/form-data");
                     return response;
@@ -150,7 +150,7 @@ namespace MCOM.Archiving.Functions
                 {
                     if (!metadata.ValidateInput())
                     {
-                        Global.Log.LogError(e, "Mandatory metadata is missing ({missingMetadata}) for DocumentId: {DocumentId}", metadata.MissingMetadata, documentId.ToString());
+                        Global.Log.LogError(new NullReferenceException(), "Mandatory metadata is missing ({missingMetadata}) for DocumentId: {DocumentId}", metadata.MissingMetadata, documentId.ToString());
                         response = req.CreateResponse(HttpStatusCode.BadRequest);
                         response.WriteString($"Missing metadata for [{metadata.MissingMetadata}]");
                         return response;
@@ -158,7 +158,7 @@ namespace MCOM.Archiving.Functions
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogError(e, "An error has ocurred when trying to validate properties from DocumentId: {DocumentId}. Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId.ToString(), ex.Message, ex.StackTrace);
+                    Global.Log.LogError(new NullReferenceException(), "An error has ocurred when trying to validate properties from DocumentId: {DocumentId}. Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId.ToString(), ex.Message, ex.StackTrace);
                     response = req.CreateResponse(HttpStatusCode.InternalServerError);
                     response.WriteString("Missing mandatory metadata.");
                     return response;
@@ -220,7 +220,7 @@ namespace MCOM.Archiving.Functions
                     }
                     else
                     {
-                        Global.Log.LogError(, "A request failed exception occured. {ErrorMessage}", rEx.Message);
+                        Global.Log.LogError(rEx, "A request failed exception occured. {ErrorMessage}", rEx.Message);
                         response = req.CreateResponse(HttpStatusCode.InternalServerError);
                         response.WriteString($"ErrorCode: {rEx.ErrorCode}. ErrorMessage: {rEx.Message}");
                         return response;

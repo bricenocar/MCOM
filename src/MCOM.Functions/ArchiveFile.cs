@@ -99,7 +99,7 @@ namespace MCOM.Functions
                         }
                         catch (Exception uploadLargeFileEx)
                         {
-                            Global.Log.LogError(e, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadLargeFileEx.Message);
+                            Global.Log.LogError(uploadLargeFileEx, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadLargeFileEx.Message);
                             throw;
                         }
                     }

@@ -103,7 +103,7 @@ namespace MCOM.Archiving.Functions
                                         LogLevel = LogLevel.Error
                                     });
 
-                                    Global.Log.LogError(e, "Could not get drive with specified ID. DocumentId: {DocumentId}", fileData.DocumentId);
+                                    Global.Log.LogError(new NullReferenceException(), "Could not get drive with specified ID. DocumentId: {DocumentId}", fileData.DocumentId);
                                     continue;
                                 }
 
@@ -229,7 +229,7 @@ namespace MCOM.Archiving.Functions
                                 }                                    
                                 else
                                 {
-                                    Global.Log.LogError(e, $"The file {fileData.DocumentId} could not be deleted from staging area (output)");
+                                    Global.Log.LogError(new NullReferenceException(), $"The file {fileData.DocumentId} could not be deleted from staging area (output)");
                                     _logList.Add(new FakeLog()
                                     {
                                         Message = $"The file {fileData.DocumentId} could not be deleted from staging area (output)",
@@ -254,7 +254,7 @@ namespace MCOM.Archiving.Functions
                                 }
                                 else
                                 {
-                                    Global.Log.LogError(e, $"The file {filesBlobName} could not be deleted from container (files)");
+                                    Global.Log.LogError(new NullReferenceException(), $"The file {filesBlobName} could not be deleted from container (files)");
                                     _logList.Add(new FakeLog()
                                     {
                                         Message = $"The file {filesBlobName} could not be deleted from container (files)",

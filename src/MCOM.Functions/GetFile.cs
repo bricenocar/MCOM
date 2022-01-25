@@ -261,7 +261,7 @@ namespace MCOM.Functions
                 if (list.Fields.GetByInternalNameOrTitle(documentIdField) == null)
                 {
                     string msg = "The field specified does not exists in the library.";
-                    Global.Log.LogError(e, msg + ". File unique id: {DocumentId}.", documentId);
+                    Global.Log.LogError(new NullReferenceException(), msg + ". File unique id: {DocumentId}.", documentId);
                     response = req.CreateResponse(HttpStatusCode.NotFound);
                     response.WriteString(JsonConvert.SerializeObject(new
                     {
@@ -342,7 +342,7 @@ namespace MCOM.Functions
                     else
                     {
                         string msg = "Could not open file in binary stream.";
-                        Global.Log.LogError(e, msg + " File unique id: {DocumentId}.", documentId);
+                        Global.Log.LogError(new NullReferenceException(), msg + " File unique id: {DocumentId}.", documentId);
                         response = req.CreateResponse(HttpStatusCode.Conflict);
                         response.WriteString(JsonConvert.SerializeObject(new
                         {
@@ -381,7 +381,7 @@ namespace MCOM.Functions
 
         private async Task<HttpResponseData> GetEventsFromAppInsights(HttpRequestData req, string documentId)
         {
-            List<AppInsightsEvent> events = new List<AppInsightsEvent>();
+            var events = new List<AppInsightsEvent>();
 
             try
             {

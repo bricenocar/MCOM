@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Net;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -6,16 +5,16 @@ using Microsoft.Extensions.Logging;
 
 namespace MCOM.ScanOnDemand.Functions
 {
-    public class Function1
+    public class PostScanRequest
     {
         private readonly ILogger _logger;
 
-        public Function1(ILoggerFactory loggerFactory)
+        public PostScanRequest(ILoggerFactory loggerFactory)
         {
-            _logger = loggerFactory.CreateLogger<Function1>();
+            _logger = loggerFactory.CreateLogger<PostScanRequest>();
         }
 
-        [Function("Function1")]
+        [Function("PostScanRequest")]
         public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
