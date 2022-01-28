@@ -45,7 +45,7 @@ namespace MCOM.Functions
             }
             catch (Exception e)
             {
-                Global.Log.LogError("Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
+                Global.Log.LogError(e, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
                 throw;
             }
 
@@ -73,7 +73,7 @@ namespace MCOM.Functions
                 if (string.IsNullOrEmpty(documentId) || string.IsNullOrEmpty(documentIdField))
                 {
                     msg = $"Mandatory parameter not provided 'documentId' or 'documentIdField'";
-                    Global.Log.LogError(msg + ". DocumentId: {DocumentId}", documentId);
+                    Global.Log.LogError(new NullReferenceException(), msg + ". DocumentId: {DocumentId}", documentId);
                     response = req.CreateResponse(HttpStatusCode.BadRequest);
                     response.WriteString(JsonConvert.SerializeObject(new
                     {
@@ -130,7 +130,7 @@ namespace MCOM.Functions
                     driveObject = await _graphService.GetDriveAsync(driveId, "webUrl,sharepointIds");
                     if (driveObject == null)
                     {
-                        Global.Log.LogError("Could not find drive with specified ID. driveId: {DocumentId}", driveId);
+                        Global.Log.LogError(new NullReferenceException(), "Could not find drive with specified ID. driveId: {DocumentId}", driveId);
                         response = req.CreateResponse(HttpStatusCode.NotFound);
                         response.WriteString(JsonConvert.SerializeObject(new
                         {
@@ -142,7 +142,7 @@ namespace MCOM.Functions
                 }
                 catch (Exception e)
                 {
-                    Global.Log.LogError("Failed to get drive from SharePoint. DocumentId: {DocumentId}. DriveId: {DriveId}. Error: {ErrorMessage}", documentId, driveId, e.Message);
+                    Global.Log.LogError(e, "Failed to get drive from SharePoint. DocumentId: {DocumentId}. DriveId: {DriveId}. Error: {ErrorMessage}", documentId, driveId, e.Message);
                     response = req.CreateResponse(HttpStatusCode.InternalServerError);
                     response.WriteString(JsonConvert.SerializeObject(new
                     {
@@ -158,7 +158,7 @@ namespace MCOM.Functions
                     if (driveObject.WebUrl == null || driveObject.SharePointIds == null)
                     {
                         msg = "Could not retrieve web url or SharePoint list id from drive object";
-                        Global.Log.LogError(msg + ". DriveId: {DriveId.} DocumentId: {DocumentId}.", driveId, documentId);
+                        Global.Log.LogError(new NullReferenceException(), msg + ". DriveId: {DriveId.} DocumentId: {DocumentId}.", driveId, documentId);
                         response = req.CreateResponse(HttpStatusCode.NotFound);
                         response.WriteString(JsonConvert.SerializeObject(new
                         {
@@ -180,7 +180,7 @@ namespace MCOM.Functions
                 }
                 catch (Exception e)
                 {
-                    Global.Log.LogError("Failed to get item from SharePoint. DocumentId: {DocumentId}. Error: {ErrorMessage}", documentId, e.Message);
+                    Global.Log.LogError(e, "Failed to get item from SharePoint. DocumentId: {DocumentId}. Error: {ErrorMessage}", documentId, e.Message);
                     var exResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
                     exResponse.WriteString(JsonConvert.SerializeObject(new
                     {
@@ -238,7 +238,7 @@ namespace MCOM.Functions
             catch (Exception e)
             {
                 var msg = "Error trying to get items from Archive location";
-                Global.Log.LogError(msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId, e.Message, e.StackTrace);
+                Global.Log.LogError(e, msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId, e.Message, e.StackTrace);
                 var exResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
                 exResponse.WriteString(JsonConvert.SerializeObject(new
                 {
@@ -261,7 +261,7 @@ namespace MCOM.Functions
                 if (list.Fields.GetByInternalNameOrTitle(documentIdField) == null)
                 {
                     string msg = "The field specified does not exists in the library.";
-                    Global.Log.LogError(msg + ". File unique id: {DocumentId}.", documentId);
+                    Global.Log.LogError(new NullReferenceException(), msg + ". File unique id: {DocumentId}.", documentId);
                     response = req.CreateResponse(HttpStatusCode.NotFound);
                     response.WriteString(JsonConvert.SerializeObject(new
                     {
@@ -273,7 +273,7 @@ namespace MCOM.Functions
             }
             catch (ArgumentException e)
             {
-                Global.Log.LogError(e.Message + ". File unique id: {DocumentId}.", documentId);
+                Global.Log.LogError(e, e.Message + ". File unique id: {DocumentId}.", documentId);
                 response = req.CreateResponse(HttpStatusCode.InternalServerError);
                 response.WriteString(JsonConvert.SerializeObject(new
                 {
@@ -342,7 +342,7 @@ namespace MCOM.Functions
                     else
                     {
                         string msg = "Could not open file in binary stream.";
-                        Global.Log.LogError(msg + " File unique id: {DocumentId}.", documentId);
+                        Global.Log.LogError(new NullReferenceException(), msg + " File unique id: {DocumentId}.", documentId);
                         response = req.CreateResponse(HttpStatusCode.Conflict);
                         response.WriteString(JsonConvert.SerializeObject(new
                         {
@@ -355,7 +355,7 @@ namespace MCOM.Functions
                 else
                 {
                     string msg = "Could not retrieve file from item";
-                    Global.Log.LogError(msg + ". File unique id: {DocumentId}.", documentId);
+                    Global.Log.LogError(new NullReferenceException(), msg + ". File unique id: {DocumentId}.", documentId);
                     response = req.CreateResponse(HttpStatusCode.Conflict);
                     response.WriteString(JsonConvert.SerializeObject(new
                     {
@@ -368,7 +368,7 @@ namespace MCOM.Functions
             catch (Exception ex)
             {
                 var msg = "Error trying to get file from listitem";
-                Global.Log.LogError(msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}", documentId, ex.Message);
+                Global.Log.LogError(ex, msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}", documentId, ex.Message);
                 var exResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
                 exResponse.WriteString(JsonConvert.SerializeObject(new
                 {
@@ -381,7 +381,7 @@ namespace MCOM.Functions
 
         private async Task<HttpResponseData> GetEventsFromAppInsights(HttpRequestData req, string documentId)
         {
-            List<AppInsightsEvent> events = new List<AppInsightsEvent>();
+            var events = new List<AppInsightsEvent>();
 
             try
             {
@@ -391,7 +391,7 @@ namespace MCOM.Functions
             catch (Exception e)
             {
                 var msg = "Error trying to authenticate against App insights";
-                Global.Log.LogError(msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}", documentId, e.Message);
+                Global.Log.LogError(e, msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}", documentId, e.Message);
                 var exResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
                 exResponse.WriteString(JsonConvert.SerializeObject(new
                 {

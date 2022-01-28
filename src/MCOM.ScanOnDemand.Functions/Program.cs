@@ -1,7 +1,5 @@
-using Microsoft.Azure.Functions.Worker.Configuration;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace MCOM.ScanOnDemand.Functions
 {
@@ -11,7 +9,10 @@ namespace MCOM.ScanOnDemand.Functions
         {
             var host = new HostBuilder()
                 .ConfigureFunctionsWorkerDefaults()
-                .Build();
+                .ConfigureLogging((context, builder) =>
+                {
+                    builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
+                }).Build();
 
             host.Run();
         }

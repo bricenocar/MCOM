@@ -228,7 +228,7 @@ namespace MCOM.Services
             }
             catch (Exception itemUpdateException)
             {
-                Global.Log.LogError("Update of item metadata failed for {SPPath}. {ErrorMessage}", extendedItem.WebUrl, itemUpdateException.Message);
+                Global.Log.LogError(itemUpdateException, "Update of item metadata failed for {SPPath}. {ErrorMessage}", extendedItem.WebUrl, itemUpdateException.Message);
                 throw;
             }
         }
@@ -275,7 +275,7 @@ namespace MCOM.Services
                     if (returnValue.HasException)
                     {
                         hasMetadataError = true;
-                        Global.Log.LogError("An error occured when updating metadata field {MetadataField} with value {MetadataValue}. {ErrorCode} - {ErrorMessage}", returnValue.FieldName, returnValue.FieldValue, returnValue.ErrorCode, returnValue.ErrorMessage);
+                        Global.Log.LogError(new NullReferenceException(), "An error occured when updating metadata field {MetadataField} with value {MetadataValue}. {ErrorCode} - {ErrorMessage}", returnValue.FieldName, returnValue.FieldValue, returnValue.ErrorCode, returnValue.ErrorMessage);
                     }
                 }
                 if (!hasMetadataError)
@@ -285,7 +285,7 @@ namespace MCOM.Services
             }
             catch (Exception itemUpdateException)
             {
-                Global.Log.LogError("Update of item metadata failed for {SPPath}. {ErrorMessage}", extendedItem.WebUrl, itemUpdateException.Message);
+                Global.Log.LogError(itemUpdateException, "Update of item metadata failed for {SPPath}. {ErrorMessage}", extendedItem.WebUrl, itemUpdateException.Message);
                 throw;
             }
         }

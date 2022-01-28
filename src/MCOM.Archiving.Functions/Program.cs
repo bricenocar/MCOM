@@ -16,11 +16,12 @@ namespace MCOM.Archiving.Functions
                     s.AddScoped<IGraphService, GraphService>();
                     s.AddScoped<IBlobService, BlobService>();
                     s.AddScoped<IAppInsightsService, AppInsightsService>();
+                    s.AddScoped<ISharePointService, SharePointService>();
+                    s.AddScoped<IAzureService, AzureService>();
                 })
                 .ConfigureLogging((context, builder) =>
                 {
-                    builder.SetMinimumLevel(LogLevel.Information);
-                    builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_CONNECTION_STRING"]);
+                    builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
                 }).Build();
 
             host.Run();

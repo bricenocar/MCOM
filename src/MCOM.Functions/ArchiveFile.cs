@@ -39,7 +39,7 @@ namespace MCOM.Functions
             }
             catch (Exception e)
             {
-                Global.Log.LogError("Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
+                Global.Log.LogError(e, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
                 throw;
             }
 
@@ -99,7 +99,7 @@ namespace MCOM.Functions
                         }
                         catch (Exception uploadLargeFileEx)
                         {
-                            Global.Log.LogError("UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadLargeFileEx.Message);
+                            Global.Log.LogError(uploadLargeFileEx, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadLargeFileEx.Message);
                             throw;
                         }
                     }
@@ -129,14 +129,14 @@ namespace MCOM.Functions
                         }
                         catch (Exception uploadSmallFileEx)
                         {
-                            Global.Log.LogError("UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadSmallFileEx.Message);
+                            Global.Log.LogError(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadSmallFileEx.Message);
                             throw;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogError("An error occured when running ArchiveFile code. {ErrorMessage}", ex.Message);
+                    Global.Log.LogError(ex, "An error occured when running ArchiveFile code. {ErrorMessage}", ex.Message);
                     throw;
                 }
             }

@@ -52,7 +52,7 @@ namespace MCOM.Services
                 var credential = AzureUtilities.GetDefaultCredential();
                 if (credential == null)
                 {
-                    Global.Log.LogError("Failed to get chained token credential");
+                    Global.Log.LogError(new NullReferenceException(), "Failed to get chained token credential");
                     throw new AuthenticationFailedException("Failed to get chained token credential");
                 }
 
@@ -71,7 +71,7 @@ namespace MCOM.Services
             var credential = AzureUtilities.GetDefaultCredential();
             if (credential == null)
             {
-                Global.Log.LogError("Failed to get chained token credential");
+                Global.Log.LogError(new NullReferenceException(), "Failed to get chained token credential");
                 throw new AuthenticationFailedException("Failed to get chained token credential");
             }
 

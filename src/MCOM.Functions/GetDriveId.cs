@@ -34,7 +34,7 @@ namespace MCOM.Functions
             }
             catch (Exception e)
             {
-                Global.Log.LogError("An error occured when setting environmental variables", e);
+                Global.Log.LogError(e, "An error occured when setting environmental variables", e);
                 var resp = req.CreateResponse(HttpStatusCode.InternalServerError);
                 resp.WriteString("Config values missing or bad formatted in app config");
                 return resp;
@@ -59,7 +59,7 @@ namespace MCOM.Functions
                 HttpResponseData response = null;
                 if (string.IsNullOrEmpty(siteUrl) || string.IsNullOrEmpty(libraryName))
                 {
-                    Global.Log.LogError("Request is missing mandatory parameter for siteUrl or libraryName");
+                    Global.Log.LogError(new NullReferenceException(), "Request is missing mandatory parameter for siteUrl or libraryName");
                     response = req.CreateResponse(HttpStatusCode.BadRequest);
                     response.WriteString("Request is missing mandatory parameter siteUrl or libraryName");
                     return response;
@@ -82,13 +82,13 @@ namespace MCOM.Functions
                 }
                 catch (Exception e)
                 {
-                    Global.Log.LogError("An error occured when retrieving drives from {SiteUrl}. Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", uri.OriginalString, e.Message, e.StackTrace);
+                    Global.Log.LogError(e, "An error occured when retrieving drives from {SiteUrl}. Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", uri.OriginalString, e.Message, e.StackTrace);
                     response = req.CreateResponse(HttpStatusCode.InternalServerError);
                     response.WriteString(e.Message);
                     return response;
                 }
 
-                Global.Log.LogError("Library not found at {LibraryUrl}", libraryName);
+                Global.Log.LogError(new NullReferenceException(), "Library not found at {LibraryUrl}", libraryName);
                 response = req.CreateResponse(HttpStatusCode.NotFound);
                 response.WriteString($"Library not found at {libraryName}");
                 return response;

@@ -42,7 +42,7 @@ namespace MCOM.Archiving.Functions
             }
             catch (Exception e)
             {
-                Global.Log.LogError("Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
+                Global.Log.LogError(e, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
                 throw;
             }
 
@@ -103,7 +103,7 @@ namespace MCOM.Archiving.Functions
                                         LogLevel = LogLevel.Error
                                     });
 
-                                    Global.Log.LogError("Could not get drive with specified ID. DocumentId: {DocumentId}", fileData.DocumentId);
+                                    Global.Log.LogError(new NullReferenceException(), "Could not get drive with specified ID. DocumentId: {DocumentId}", fileData.DocumentId);
                                     continue;
                                 }
 
@@ -229,7 +229,7 @@ namespace MCOM.Archiving.Functions
                                 }                                    
                                 else
                                 {
-                                    Global.Log.LogError($"The file {fileData.DocumentId} could not be deleted from staging area (output)");
+                                    Global.Log.LogError(new NullReferenceException(), $"The file {fileData.DocumentId} could not be deleted from staging area (output)");
                                     _logList.Add(new FakeLog()
                                     {
                                         Message = $"The file {fileData.DocumentId} could not be deleted from staging area (output)",
@@ -254,7 +254,7 @@ namespace MCOM.Archiving.Functions
                                 }
                                 else
                                 {
-                                    Global.Log.LogError($"The file {filesBlobName} could not be deleted from container (files)");
+                                    Global.Log.LogError(new NullReferenceException(), $"The file {filesBlobName} could not be deleted from container (files)");
                                     _logList.Add(new FakeLog()
                                     {
                                         Message = $"The file {filesBlobName} could not be deleted from container (files)",
@@ -273,7 +273,7 @@ namespace MCOM.Archiving.Functions
                 catch (Exception e)
                 {
                     // Log to analytics
-                    Global.Log.LogError("Exception: {ErrorMessage}", e.Message);
+                    Global.Log.LogError(e, "Exception: {ErrorMessage}", e.Message);
                     throw;
                 }
             }
