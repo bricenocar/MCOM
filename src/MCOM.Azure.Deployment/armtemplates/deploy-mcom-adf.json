@@ -15,6 +15,27 @@
                 "description": "Location for all resources."
             }
         },
+        "SharePointUrlDCF": {
+            "type": "string",
+            "defaultValue": "https://statoilsrm.sharepoint.com/sites/LRMArchiveDCF",
+            "metadata": {
+                "description": "SharePoint site"
+            }
+        },
+        "SharePointUrlEDI": {
+            "type": "string",
+            "defaultValue": "https://statoilsrm.sharepoint.com/sites/LRMArchiveEDIBank",
+            "metadata": {
+                "description": "SharePoint site"
+            }
+        },
+        "SharePointUrlGAS": {
+            "type": "string",
+            "defaultValue": "https://statoilsrm.sharepoint.com/sites/LRMArchiveGasOps",
+            "metadata": {
+                "description": "SharePoint site"
+            }
+        },
         "paramDataFactoryName": {
             "type": "string",
             "defaultValue": "adf-mcom",
@@ -522,7 +543,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMDCFArchive"
+                        "defaultValue": "[parameters('SharePointUrlDCF')]"
                     },
                     "OpenLibraryName": {
                         "type": "String",
@@ -539,8 +560,7 @@
                         "type": "String"
                     },
                     "FeedbackUrl": {
-                        "type": "String",
-                        "defaultValue": "https://tops-dcf-sharepoint.azurewebsites.net/api/qa/drive?code=2pK2jWo5Brbt23HzahVVEDbU/g7sbrc4pr1pPD9jFHWs3c9FosuyOQ=="
+                        "type": "String"
                     }
                 },
                 "annotations": [],
@@ -713,7 +733,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMDCFArchive"
+                        "defaultValue": "[parameters('SharePointUrlDCF')]"
                     },
                     "OpenLibraryName": {
                         "type": "String",
@@ -839,7 +859,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMedibankArchive"
+                        "defaultValue": "[parameters('SharePointUrlEDI')]"
                     },
                     "LibraryName": {
                         "type": "String",
@@ -964,7 +984,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMGasOpsArchive"
+                        "defaultValue": "[parameters('SharePointUrlGAS')]"
                     },
                     "LibraryName": {
                         "type": "String",
@@ -1089,7 +1109,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMGasOpsArchive"
+                        "defaultValue": "[parameters('SharePointUrlGAS')]"
                     },
                     "LibraryName": {
                         "type": "String",
@@ -1382,10 +1402,7 @@
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]"
-            ]
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/GoMIR')]",
@@ -1423,10 +1440,7 @@
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]"
-            ]
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/DCFIR')]",
@@ -1445,10 +1459,7 @@
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]"
-            ]
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/EdiBankIR')]",
@@ -1467,10 +1478,7 @@
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]"
-            ]
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/DCF Blob trigger')]",
@@ -1525,7 +1533,7 @@
                 "type": "TumblingWindowTrigger",
                 "typeProperties": {
                     "frequency": "Minute",
-                    "interval": 5,
+                    "interval": 30,
                     "startTime": "2021-11-16T14:08:00Z",
                     "delay": "00:00:00",
                     "maxConcurrency": 50,
@@ -1553,7 +1561,7 @@
                 "type": "TumblingWindowTrigger",
                 "typeProperties": {
                     "frequency": "Minute",
-                    "interval": 5,
+                    "interval": 30,
                     "startTime": "2021-11-23T12:48:00Z",
                     "delay": "00:00:00",
                     "maxConcurrency": 50,
@@ -1583,7 +1591,7 @@
                 "type": "TumblingWindowTrigger",
                 "typeProperties": {
                     "frequency": "Minute",
-                    "interval": 15,
+                    "interval": 60,
                     "startTime": "2021-12-07T11:48:00Z",
                     "delay": "00:00:00",
                     "maxConcurrency": 50,
