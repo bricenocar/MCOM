@@ -1402,10 +1402,7 @@
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]"
-            ]
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/GoMIR')]",
@@ -1443,10 +1440,7 @@
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]"
-            ]
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/DCFIR')]",
@@ -1465,10 +1459,7 @@
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]"
-            ]
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/EdiBankIR')]",
@@ -1487,10 +1478,7 @@
                         }
                     }
                 }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]"
-            ]
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/DCF Blob trigger')]",
