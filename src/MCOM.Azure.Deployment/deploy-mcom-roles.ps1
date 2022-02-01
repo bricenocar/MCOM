@@ -7,6 +7,7 @@ Param(
     [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false
 )
+
 Write-Host "##[group]Initializing variables and configurations"
 # Initialize resource group name based on environment
 $RGName = "$ResourceGroupName-$Environment"
