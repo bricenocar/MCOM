@@ -756,7 +756,12 @@
                 },
                 "annotations": [],
                 "lastPublishTime": "2021-12-03T09:40:49Z"
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/dataflows/ProcessDCFdataManual')]",
+                "[concat(variables('factoryId'), '/integrationRuntimes/DCFIR')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/EdiBank Pipeline')]",
