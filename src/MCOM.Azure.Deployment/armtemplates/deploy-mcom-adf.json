@@ -756,7 +756,12 @@
                 },
                 "annotations": [],
                 "lastPublishTime": "2021-12-03T09:40:49Z"
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/dataflows/ProcessDCFdataManual')]",
+                "[concat(variables('factoryId'), '/integrationRuntimes/DCFIR')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/EdiBank Pipeline')]",
@@ -1524,7 +1529,7 @@
             ]
         },
         {
-            "name": "[concat(variables('dataFactoryName'), '/EDI Window Schedule')]",
+            "name": "[concat(variables('dataFactoryName'), '/EDIBank Window Schedule')]",
             "type": "Microsoft.DataFactory/factories/triggers",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -1552,7 +1557,11 @@
                     },
                     "dependsOn": []
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/pipelines/EdiBank Pipeline')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/GasOps Window trigger')]",
@@ -1579,7 +1588,11 @@
                     },
                     "dependsOn": []
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/pipelines/GasOps Pipeline')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/GoM Trigger')]",
@@ -1609,7 +1622,11 @@
                     },
                     "dependsOn": []
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/pipelines/GoM Pipeline')]"
+            ]
         }
     ],
     "outputs": {}
