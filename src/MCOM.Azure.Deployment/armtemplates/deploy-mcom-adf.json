@@ -1535,7 +1535,11 @@
                     },
                     "dependsOn": []
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/pipelines/EdiBank Pipeline')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/GasOps Window trigger')]",
@@ -1562,7 +1566,11 @@
                     },
                     "dependsOn": []
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/pipelines/GasOps Pipeline')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/GoM Trigger')]",
@@ -1592,7 +1600,11 @@
                     },
                     "dependsOn": []
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/pipelines/GoM Pipeline')]"
+            ]
         }
     ],
     "outputs": {}
