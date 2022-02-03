@@ -12,7 +12,7 @@ using MCOM.Models;
 using MCOM.Services;
 using MCOM.Utilities;
 
-namespace MCOM.Archiving.Functions
+namespace MCOM.Functions
 {
     public class StagingAreaTracker
     {
