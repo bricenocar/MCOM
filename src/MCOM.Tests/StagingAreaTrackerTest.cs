@@ -15,8 +15,7 @@ using Microsoft.Graph;
 using Microsoft.SharePoint.Client;
 using Moq;
 using Xunit;
-using MCOM.Archiving.Functions;
-using MCOM.Models;
+using MCOM.Functions;
 using MCOM.Services;
 
 namespace MCOM.Tests
