@@ -51,6 +51,7 @@ namespace MCOM.Models
                         break;
                     case "lrmhpecmrecordid": // Workaround for issue in ADF, this will be fixed
                         DocumentId = pair.Value.ToString();
+                        FileMetadata.Add(pair.Key, pair.Value.ToString());
                         break;
                     case "feedbackurl":
                         FeedBackUrl = pair.Value.ToString();
