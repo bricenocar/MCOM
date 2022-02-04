@@ -48,7 +48,10 @@ namespace MCOM.Models
                         break;
                     case "documentid":
                         DocumentId =pair.Value.ToString();
-                        break;                     
+                        break;
+                    case "lrmhpecmrecordid": // Workaround for issue in ADF, this will be fixed
+                        DocumentId = pair.Value.ToString();
+                        break;
                     case "feedbackurl":
                         FeedBackUrl = pair.Value.ToString();
                         break;
