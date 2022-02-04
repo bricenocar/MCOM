@@ -78,7 +78,7 @@ if ($Environment -eq "prod") {
     $SharePointUrlGAS = "https://statoilsrm.sharepoint.com/sites/LRMArchiveGasOps"
 } else {
     $SharePointUrlDCF = "https://statoilintegrationtest.sharepoint.com/sites/EIMDCFArchive"
-    $SharePointUrlEDI = "https://statoilintegrationtest.sharepoint.com/sites/EIMedibankArchive/"
+    $SharePointUrlEDI = "https://statoilintegrationtest.sharepoint.com/sites/EIMedibankArchive"
     $SharePointUrlGAS = "https://statoilintegrationtest.sharepoint.com/sites/EIMgasopsarchive"
 }
 Write-Host "##[debug]Deployment name: $DeploymentName"
