@@ -32,7 +32,7 @@ namespace MCOM.Functions
         }
 
         [Function("StagingAreaTracker")]
-        public async Task RunAsync([TimerTrigger("0 */5 * * * *")] TimerInfo myTimer, FunctionContext context)
+        public async Task RunAsync([TimerTrigger("0 */45 * * * *")] TimerInfo myTimer, FunctionContext context)
         {
             var logger = context.GetLogger("StagingAreaTracker");
 
