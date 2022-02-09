@@ -238,7 +238,6 @@ namespace MCOM.Functions
                                         });
                                     }
 
-
                                     // Delete blob from files container
                                     var filesBlobName = filesBlobClient.Name;
                                     var filesConteinerName = filesContainerClient.Name;
