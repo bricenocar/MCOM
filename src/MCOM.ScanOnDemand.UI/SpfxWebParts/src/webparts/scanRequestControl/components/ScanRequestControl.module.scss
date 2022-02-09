@@ -1,12 +1,12 @@
 @import '~office-ui-fabric-react/dist/sass/References.scss';
 
-/*In case of full width (Workbench)
+/*In case of full width (Workbench)*/
 :global {
   #workbenchPageContent,
   .CanvasComponent.LCS .CanvasZone {
     max-width: 100% !important;
   }
-}*/
+}
 
 .scanRequestControl {
   .container {

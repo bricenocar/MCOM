@@ -12,7 +12,8 @@ export default class ScanRequestControl extends React.Component<IScanRequestCont
   // Get querystring values
   private queryString = window.location.search;
   private urlParams = new URLSearchParams(this.queryString);
-  private id = this.urlParams.get('id');
+  private itemid = this.urlParams.get('itemid');
+  private fileName = this.urlParams.get('filename');
 
   public render(): React.ReactElement<IScanRequestControlProps> {
     return (
@@ -21,9 +22,7 @@ export default class ScanRequestControl extends React.Component<IScanRequestCont
           <div className={styles.row}>
             <div className={styles.column}>
               {this.appId &&
-                <body style={{margin: '0px', padding: '0x', overflow: 'hidden'}}>
-                  <iframe frameBorder="0" style={{overflow: 'hidden', height: '100%', width: '100%'}} width={this.width} height={this.height} src={`https://web.powerapps.com/webplayer/iframeapp?source=iframe&screenColor=rgba(104,101,171,1)&id=${this.id}&appId=/providers/Microsoft.PowerApps/apps/${this.appId}`}></iframe>
-                </body>
+                <iframe frameBorder="0" style={{ overflow: 'hidden', height: '100%', width: '100%', minHeight: '470px' }} width={this.width} height={this.height} src={`https://web.powerapps.com/webplayer/iframeapp?source=iframe&screenColor=rgba(104,101,171,1)&itemid=${this.itemid}&filename=${this.fileName}&appId=/providers/Microsoft.PowerApps/apps/${this.appId}`}></iframe>
               }
               {!this.appId &&
                 <div>
