@@ -214,53 +214,54 @@ namespace MCOM.Functions
                                         });
                                     }
                                 }
-
-                                // Delete blob from staging area (output)
-                                var outputDeleted = await _blobService.DeleteBlobClientIfExistsAsync(outputBlobClient);
-
-                                if (outputDeleted)
-                                {
-                                    Global.Log.LogInformation($"The file {fileData.DocumentId} has been deleted successfully from staging area (output)");
-                                    _logList.Add(new FakeLog()
-                                    {
-                                        Message = $"The file {fileData.DocumentId} has been deleted successfully from staging area (output)",
-                                        LogLevel = LogLevel.Information
-                                    });
-                                }                                    
                                 else
                                 {
-                                    Global.Log.LogError(new NullReferenceException(), $"The file {fileData.DocumentId} could not be deleted from staging area (output)");
-                                    _logList.Add(new FakeLog()
-                                    {
-                                        Message = $"The file {fileData.DocumentId} could not be deleted from staging area (output)",
-                                        LogLevel = LogLevel.Error
-                                    });
-                                }
-                                    
+                                    // Delete blob from staging area (output)
+                                    var outputDeleted = await _blobService.DeleteBlobClientIfExistsAsync(outputBlobClient);
 
-                                // Delete blob from files container
-                                var filesBlobName = filesBlobClient.Name;
-                                var filesConteinerName = filesContainerClient.Name;
-                                var filesDeleted = await _blobService.DeleteBlobClientIfExistsAsync(filesBlobClient);
+                                    if (outputDeleted)
+                                    {
+                                        Global.Log.LogInformation($"The file {fileData.DocumentId} has been deleted successfully from staging area (output)");
+                                        _logList.Add(new FakeLog()
+                                        {
+                                            Message = $"The file {fileData.DocumentId} has been deleted successfully from staging area (output)",
+                                            LogLevel = LogLevel.Information
+                                        });
+                                    }
+                                    else
+                                    {
+                                        Global.Log.LogError(new NullReferenceException(), $"The file {fileData.DocumentId} could not be deleted from staging area (output)");
+                                        _logList.Add(new FakeLog()
+                                        {
+                                            Message = $"The file {fileData.DocumentId} could not be deleted from staging area (output)",
+                                            LogLevel = LogLevel.Error
+                                        });
+                                    }
 
-                                if (filesDeleted)
-                                {
-                                    Global.Log.LogInformation($"The file {filesBlobName} has been deleted successfully from container (files)");
-                                    _logList.Add(new FakeLog()
+                                    // Delete blob from files container
+                                    var filesBlobName = filesBlobClient.Name;
+                                    var filesConteinerName = filesContainerClient.Name;
+                                    var filesDeleted = await _blobService.DeleteBlobClientIfExistsAsync(filesBlobClient);
+
+                                    if (filesDeleted)
                                     {
-                                        Message = $"The file {filesBlobName} has been deleted successfully from container (files)",
-                                        LogLevel = LogLevel.Information
-                                    });
-                                }
-                                else
-                                {
-                                    Global.Log.LogError(new NullReferenceException(), $"The file {filesBlobName} could not be deleted from container (files)");
-                                    _logList.Add(new FakeLog()
+                                        Global.Log.LogInformation($"The file {filesBlobName} has been deleted successfully from container (files)");
+                                        _logList.Add(new FakeLog()
+                                        {
+                                            Message = $"The file {filesBlobName} has been deleted successfully from container (files)",
+                                            LogLevel = LogLevel.Information
+                                        });
+                                    }
+                                    else
                                     {
-                                        Message = $"The file {filesBlobName} could not be deleted from container (files)",
-                                        LogLevel = LogLevel.Error
-                                    });
-                                }   
+                                        Global.Log.LogError(new NullReferenceException(), $"The file {filesBlobName} could not be deleted from container (files)");
+                                        _logList.Add(new FakeLog()
+                                        {
+                                            Message = $"The file {filesBlobName} could not be deleted from container (files)",
+                                            LogLevel = LogLevel.Error
+                                        });
+                                    }
+                                }                                
                             }
                         }
                         catch (Exception ex)
