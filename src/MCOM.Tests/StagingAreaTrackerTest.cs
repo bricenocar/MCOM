@@ -17,6 +17,7 @@ using Moq;
 using Xunit;
 using MCOM.Functions;
 using MCOM.Services;
+using MCOM.Models;
 
 namespace MCOM.Tests
 {
@@ -64,8 +65,10 @@ namespace MCOM.Tests
             Assert.Equal("The file  has been deleted successfully from container (files)", lastLog.Message);
         }
 
-        //[Fact]
-        public async Task When_The_SharePoint_ListItem_Is_Null_But_Runs_Ok()
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        public async Task When_The_SharePoint_ListItem_Is_Null_But_Runs_Ok(int itemCount)
         {
             // Function parameters
             var (mockFunctionContext, timerInfo) = GetFunctionParams();
@@ -86,7 +89,7 @@ namespace MCOM.Tests
             using FileStream stream = System.IO.File.OpenWrite(@"Files/StagingAreaTrackerTest/small.txt");
 
             // Mock configuration
-            var (mockBlobService, mockGraphService, mockSharePointService, mockAzureService) = MockConfiguration(json, drive, 0, stream);
+            var (mockBlobService, mockGraphService, mockSharePointService, mockAzureService) = MockConfiguration(json, drive, itemCount, stream);
 
             // Build azure function
             var stagingAreaTracker = new StagingAreaTracker(mockGraphService.Object, mockBlobService.Object, mockSharePointService.Object, mockAzureService.Object);
@@ -95,19 +98,28 @@ namespace MCOM.Tests
             await stagingAreaTracker.RunAsync(timerInfo, mockFunctionContext.Object);
 
             // Get error message
-            var firstLog = stagingAreaTracker._logList.First();
-            var secondLog = stagingAreaTracker._logList.ElementAt(1);
-            var thirdLog = stagingAreaTracker._logList.ElementAt(2);
-            var lastLog = stagingAreaTracker._logList.Last();
+            FakeLog firstLog, lastLog;
+            firstLog = stagingAreaTracker._logList.First();
+            /*var secondLog = stagingAreaTracker._logList.ElementAt(1);
+            var thirdLog = stagingAreaTracker._logList.ElementAt(2);*/
+            lastLog = stagingAreaTracker._logList.Last();
 
-            Assert.Equal(LogLevel.Warning, firstLog.LogLevel);
-            Assert.Equal("The ListItem for blob testId does not exist in SharePoint.", firstLog.Message);
-            Assert.Equal(LogLevel.Information, secondLog.LogLevel);
-            Assert.Equal("The file testId has been uploaded successfully (UploadSmallFile). Deleting from staging area output and files", secondLog.Message);
-            Assert.Equal(LogLevel.Information, thirdLog.LogLevel);
-            Assert.Equal("The file testId has been deleted successfully from staging area (output)", thirdLog.Message);
-            Assert.Equal(LogLevel.Information, lastLog.LogLevel);
-            Assert.Equal("The file  has been deleted successfully from container (files)", lastLog.Message);
+            // If itemCount > 0 it means that items are found in SharePoint and the code will delete them
+            // Otherwise the code will create the item in SharePoint
+            if (itemCount > 0)
+            {
+                Assert.Equal(LogLevel.Information, firstLog.LogLevel);
+                Assert.Equal("The file testId has been deleted successfully from staging area (output)", firstLog.Message);
+                Assert.Equal(LogLevel.Information, lastLog.LogLevel);
+                Assert.Equal("The file  has been deleted successfully from container (files)", lastLog.Message);
+            }
+            else
+            {
+                Assert.Equal(LogLevel.Warning, firstLog.LogLevel);
+                Assert.Equal("The ListItem for blob testId does not exist in SharePoint.", firstLog.Message);
+                Assert.Equal(LogLevel.Information, lastLog.LogLevel);
+                Assert.Equal("The file testId has been uploaded successfully (UploadSmallFile). Deleting from staging area output and files", lastLog.Message);
+            }
         }
 
         [Fact]
@@ -175,7 +187,7 @@ namespace MCOM.Tests
 
             Assert.Equal(LogLevel.Error, log.LogLevel);
             Assert.Equal("Could not get drive with specified ID. DocumentId: testId", log.Message);
-        }        
+        }
 
         #endregion
 
