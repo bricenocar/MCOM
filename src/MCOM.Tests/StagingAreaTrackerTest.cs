@@ -100,8 +100,6 @@ namespace MCOM.Tests
             // Get error message
             FakeLog firstLog, lastLog;
             firstLog = stagingAreaTracker._logList.First();
-            /*var secondLog = stagingAreaTracker._logList.ElementAt(1);
-            var thirdLog = stagingAreaTracker._logList.ElementAt(2);*/
             lastLog = stagingAreaTracker._logList.Last();
 
             // If itemCount > 0 it means that items are found in SharePoint and the code will delete them
