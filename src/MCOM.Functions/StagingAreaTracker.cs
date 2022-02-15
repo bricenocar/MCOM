@@ -1,16 +1,19 @@
+using MCOM.Models;
+using MCOM.Services;
+using MCOM.Utilities;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.Client.Search.Query;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using System.Web;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Logging;
-using Microsoft.SharePoint.Client;
-using Newtonsoft.Json;
-using MCOM.Models;
-using MCOM.Services;
-using MCOM.Utilities;
 
 namespace MCOM.Functions
 {
@@ -109,9 +112,7 @@ namespace MCOM.Functions
 
                                 // Get URL and list id from drive object
                                 var fileUri = new Uri(drive.WebUrl);
-                                var webUrl = fileUri.AbsoluteUri.Substring(0, fileUri.AbsoluteUri.LastIndexOf("/"));
-                                var listUrl = HttpUtility.UrlDecode(fileUri.AbsoluteUri.Substring(fileUri.AbsoluteUri.LastIndexOf("/") + 1));
-                                var listId = new Guid(drive.SharePointIds.ListId);
+                                var webUrl = fileUri.AbsoluteUri.Substring(0, fileUri.AbsoluteUri.LastIndexOf("/"));                               
 
                                 // Get token using managed identity                                
                                 var accessToken = await _azureService.GetAzureServiceTokenAsync(fileUri);
@@ -119,35 +120,13 @@ namespace MCOM.Functions
                                 // Get SharePoint context with access token
                                 using var clientContext = _sharePointService.GetClientContext(webUrl, accessToken.Token);
 
-                                // Get list from SharePoint site
-                                var list = _sharePointService.GetListById(clientContext, listId);
-                                _sharePointService.Load(clientContext, list);
-                                _sharePointService.Load(clientContext, list.Fields);
-                                _sharePointService.ExecuteQuery(clientContext);
-
-                                // Get Item by CAML query
-                                var camlQuery = new CamlQuery
-                                {
-                                    ViewXml = $"<View><Query><Where><Eq>" +
-                                    $"<FieldRef Name='{fileData.DocumentIdField}'/>" +
-                                    $"<Value Type='Text'>{fileData.DocumentId}</Value>" +
-                                    $"</Eq></Where></Query><RowLimit>100</RowLimit></View>"
-                                };
-
-                                // Get item based on id field provided
-                                var collListItem = _sharePointService.GetListItems(clientContext, list, camlQuery);
-                                _sharePointService.Load(clientContext, collListItem);
-                                _sharePointService.ExecuteQuery(clientContext);
-
-                                // Get SharePoint ListItem
-                                var listItems = _sharePointService.GetListAsGenericList(collListItem);
-                                var listItem = listItems.FirstOrDefault();
-
                                 // Get container and blobCLient                          
                                 var filesContainerClient = _blobService.GetBlobContainerClient(fileData.Source);
                                 var filesBlobClient = _blobService.GetBlobClient(filesContainerClient, $"files/{fileData.DocumentId}");
 
-                                if (listItem == null)
+                                bool found = SearchArchivedFile(clientContext, fileData.DocumentId);
+
+                                if (!found)
                                 {
                                     // ERROR, the file does not exist in SharePoint
                                     Global.Log.LogWarning("The ListItem for blob {BlobName} does not exist in SharePoint.", fileData.DocumentId);
@@ -278,6 +257,31 @@ namespace MCOM.Functions
                     throw;
                 }
             }
+        }
+
+        private bool SearchArchivedFile(ClientContext clientContext, string documentId)
+        {
+            bool response = false;
+            try
+            {
+                // Get events
+                ResultTable table = _sharePointService.SearchItems(clientContext, documentId);
+                if (table.RowCount == 0)
+                {
+                    var msg = "Could not find file in SharePoint indexed. Trying again in next round";
+                    Global.Log.LogWarning(msg + ". File unique id: {DocumentId}.", documentId);
+                } else
+                {
+                    response = true;
+                }
+            }
+            catch (Exception e)
+            {
+                var msg = "Error trying to get items from Archive location";
+                Global.Log.LogError(e, msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId, e.Message, e.StackTrace);
+            }
+
+            return response;
         }
     }
 }
