@@ -19,10 +19,12 @@ export default class ScanRequestControl extends React.Component<IScanRequestCont
     return (
       <div className={styles.scanRequestControl}>
         <div className={styles.container}>
-          <div className={styles.row}>
-            <div className={styles.column}>
+          <div className={styles.row} style={{backgroundColor: '#fff'}}>
+            <div className={styles.column} style={{width: '100%', position: 'initial'}}>
               {this.appId &&
-                <iframe frameBorder="0" style={{ overflow: 'hidden', height: '100%', width: '100%', minHeight: '470px' }} width={this.width} height={this.height} src={`https://web.powerapps.com/webplayer/iframeapp?source=iframe&screenColor=rgba(104,101,171,1)&itemid=${this.itemid}&filename=${this.fileName}&appId=/providers/Microsoft.PowerApps/apps/${this.appId}`}></iframe>
+                <div style={{paddingTop: '56.2%', position: 'relative'}}>
+                  <iframe frameBorder="0" style={{backgroundColor: '#FFFFFF', overflow: 'hidden', height: '100%', width: '100%', position: 'absolute', top: '0', left: '0' }} width={this.width} height={this.height} src={`https://web.powerapps.com/webplayer/iframeapp?source=iframe&screenColor=rgba(104,101,171,1)&itemid=${this.itemid}&filename=${this.fileName}&appId=/providers/Microsoft.PowerApps/apps/${this.appId}`}></iframe>
+                </div>
               }
               {!this.appId &&
                 <div>

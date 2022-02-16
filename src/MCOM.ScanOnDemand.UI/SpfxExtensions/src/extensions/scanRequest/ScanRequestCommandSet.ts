@@ -1,6 +1,5 @@
 import { override } from '@microsoft/decorators';
 import { Log } from '@microsoft/sp-core-library';
-import { Dialog } from '@microsoft/sp-dialog';
 import {
   BaseListViewCommandSet,
   Command,
@@ -18,19 +17,19 @@ export interface IFileProps {
   ValidFileType?: boolean;
 }
 
-export interface IScanRequestActionCommandSetProperties {
+export interface IScanRequestCommandSetProperties {
   targetUrl: string;
 }
 
-const LOG_SOURCE: string = 'ScanRequestActionCommandSet';
+const LOG_SOURCE: string = 'ScanRequestCommandSet';
 
-export default class ScanRequestActionCommandSet extends BaseListViewCommandSet<IScanRequestActionCommandSetProperties> {
+export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanRequestCommandSetProperties> {
 
   private fileInfo: IFileProps = {};
 
   @override
   public onInit(): Promise<void> {
-    Log.info(LOG_SOURCE, 'Initialized ScanRequestActionCommandSet');
+    Log.info(LOG_SOURCE, 'Initialized ScanRequestCommandSet');
     return Promise.resolve();
   }
 
@@ -45,6 +44,7 @@ export default class ScanRequestActionCommandSet extends BaseListViewCommandSet<
       compareOneCommand.visible = visible;
 
       // Get file info
+      // TODO: make the fields dynamic...
       if (visible) {
         this.fileInfo = {
           FileType: event.selectedRows[0].getValueByName('File_x0020_Type'),
@@ -62,10 +62,10 @@ export default class ScanRequestActionCommandSet extends BaseListViewCommandSet<
   public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
     switch (event.itemId) {
       case 'ScanOnDemand':
-        const itemId: string = event.selectedRows[0].getValueByName("ID");      
-        const url: string = this.properties.targetUrl.replace('{id}', itemId);     
+        const siteUrl = this.context.pageContext.site.absoluteUrl;
+        const pathUrl = this.properties.targetUrl.replace('{id}', this.fileInfo.ID).replace('{filename}', this.fileInfo.FileName);
 
-        window.open(url, '_blank').focus();
+        window.open(`${siteUrl}${pathUrl}`, '_blank').focus();
         break;
       default:
         throw new Error('Unknown command');

@@ -40,22 +40,7 @@
       "ProjectGuid": "d6ae9ee4-2d97-43c3-b122-d26ca0c23c00",
       "DisplayName": "MCOM.PerformanceTests",
       "ColorIndex": 6
-    },
-    "17de7131-ca29-4781-9859-44a339ebd33e": {
-      "ProjectGuid": "17de7131-ca29-4781-9859-44a339ebd33e",
-      "DisplayName": "MCOM.Services",
-      "ColorIndex": 7
-    },
-    "fe3b5f7f-658d-45bf-877c-324b390cbc83": {
-      "ProjectGuid": "fe3b5f7f-658d-45bf-877c-324b390cbc83",
-      "DisplayName": "MCOM.Utilities",
-      "ColorIndex": 8
-    },
-    "46241d93-38ae-4d38-91cc-feb1013af218": {
-      "ProjectGuid": "46241d93-38ae-4d38-91cc-feb1013af218",
-      "DisplayName": "MCOM.ScanOnDemand.UI",
-      "ColorIndex": 9
     }
   },
-  "NextColorIndex": 10
+  "NextColorIndex": 7
 }
