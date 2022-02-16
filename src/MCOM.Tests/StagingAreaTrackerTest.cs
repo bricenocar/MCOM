@@ -25,7 +25,7 @@ namespace MCOM.Tests
     {
         #region Tests
 
-        [Fact]
+        //[Fact]
         public async Task When_The_Request_Runs_Ok()
         {
             // Function parameters
@@ -65,9 +65,9 @@ namespace MCOM.Tests
             Assert.Equal("The file  has been deleted successfully from container (files)", lastLog.Message);
         }
 
-        [Theory]
-        [InlineData(0)]
-        [InlineData(1)]
+        //[Theory]
+        //[InlineData(0)]
+        //[InlineData(1)]
         public async Task When_The_SharePoint_ListItem_Is_Null_But_Runs_Ok(int itemCount)
         {
             // Function parameters
