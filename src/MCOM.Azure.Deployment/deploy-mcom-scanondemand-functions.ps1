@@ -41,11 +41,11 @@ Write-Host "##[debug]Location of app function arm template: $functionTemplateFil
 
 # Prepare parameters
 if($runLocally -eq $false) {
-    $funcParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-func-scanondemand.parameters.json"
-    $storageParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-storage-scanondemand.parameters.json"
+    $funcParametersFile = "ScanOnDemandBuild/dropdeploymentscripts/armtemplates/deploy-mcom-func-scanondemand.parameters.json"
+    $storageParametersFile = "ScanOnDemandBuild/dropdeploymentscripts/armtemplates/deploy-mcom-storage-scanondemand.parameters.json"
 } else {
-    $funcParametersFile = "$($blobStorageUrl)deploy-mcom-func.parameters.json"
-    $storageParametersFile = "$($blobStorageUrl)deploy-mcom-storage.parameters.json"
+    $funcParametersFile = "$($blobStorageUrl)deploy-mcom-func-scanondemand.parameters.json"
+    $storageParametersFile = "$($blobStorageUrl)deploy-mcom-storage-scanondemand.parameters.json"
 }
 Write-Host "##[debug]Location of storage arm parameters file: $storageParametersFile"
 Write-Host "##[debug]Location of function app parameters file: $funcParametersFile"
