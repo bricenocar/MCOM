@@ -100,15 +100,15 @@
     {
       "type": "microsoft.insights/components",
       "apiVersion": "2020-02-02-preview",
-      "name": "[variables('appInsightsName')]",
+      "name": "[variables('applicationInsightsName')]",
       "location": "[parameters('location')]",
       "kind": "web",
       "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('appInsightsName')))]": "Resource"
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('applicationInsightsName')))]": "Resource"
       },
       "properties": {
         "Application_Type": "web",
-        "ApplicationId": "[variables('appInsightsName')]",
+        "ApplicationId": "[variables('applicationInsightsName')]",
         "Request_Source": "rest"
       }
     },
