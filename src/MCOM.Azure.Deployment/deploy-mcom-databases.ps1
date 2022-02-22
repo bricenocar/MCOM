@@ -41,11 +41,11 @@ Write-Host "##[debug]Location of Databases arm template: $databasesTemplateFile"
 
 # Prepare parameters
 if($runLocally -eq $false) {
-    $databasesParametersFile = "MCOMBuild/dropdeploymentscripts/armtemplates/deploy-mcom-databases.parameters.json"
+    $databasesParametersFile = "ScanOnDemandBuild/dropdeploymentscripts/armtemplates/deploy-mcom-databases.parameters.json"
 } else {
     $databasesParametersFile = "$($blobStorageUrl)deploy-mcom-databases.parameters.json"
 }
-Write-Host "##[debug]Location of storage arm parameters file: $databasesParametersFile"
+Write-Host "##[debug]Location of databases arm parameters file: $databasesParametersFile"
 
 # Initialize variables to use
 $today = Get-Date -Format "ddMMyy-HHmm"
@@ -69,8 +69,8 @@ else {
 Write-Host "##[endgroup]"
 
 Write-Host "##[group]Deployment of arm templates"
-# Deploy storage accounts and containers
-Write-Host "##[command] Running deployment of storage template..."
+# Deploy databases 
+Write-Host "##[command] Running deployment of databases template..."
 if($runLocally -eq $false) {
     $result = az deployment group create --name "$DeploymentName-databases" --template-uri $databasesTemplateFile --parameters $databasesParametersFile environment=$Environment serverName=$serverName administratorLogin=$user administratorLoginPassword=$password | ConvertFrom-Json
 } else {
