@@ -72,9 +72,9 @@ Write-Host "##[group]Deployment of arm templates"
 # Deploy databases 
 Write-Host "##[command] Running deployment of databases template..."
 if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-databases" --template-uri $databasesTemplateFile --parameters $databasesParametersFile environment=$Environment serverName=$serverName administratorLogin=$user administratorLoginPassword=$password | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-databases" --template-uri $databasesTemplateFile --parameters $databasesParametersFile serverName=$serverName administratorLogin=$user administratorLoginPassword=$password | ConvertFrom-Json
 } else {
-    $result = az deployment group create --name "$DeploymentName-databases" --template-file $databasesTemplateFile --parameters $databasesParametersFile environment=$Environment serverName=$serverName administratorLogin=$user administratorLoginPassword=$password | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-databases" --template-file $databasesTemplateFile --parameters $databasesParametersFile serverName=$serverName administratorLogin=$user administratorLoginPassword=$password | ConvertFrom-Json
 }
 
 # Evaluate result from deployment
