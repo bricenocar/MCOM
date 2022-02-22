@@ -8,7 +8,7 @@ Write-Host "##[group]Creation of role assignments for SharePoint, Graph and App 
 # Login to Azure
 az login
 
-$objectId = "b1a6a494-813a-484e-b19d-95e3816c963a"
+#$objectId = "1efb3293-22a3-41f2-bb30-c1d8c2f45010"
 
 # Get identity from Office 365 instance
 Write-Host "##[command] Getting Office 365 app identity."
