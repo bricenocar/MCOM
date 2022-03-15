@@ -49,4 +49,15 @@ stages:
                 arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
                 zipAfterPublish: true
             - publish: '$(Build.ArtifactStagingDirectory)'
-              artifact: dropazfunc     
+              artifact: dropazfunc  
+          - job: BuildDS
+            displayName: Build deployment script
+            steps:            
+            - task: CopyFiles@2
+              displayName: Copy deployment files
+              inputs:
+                SourceFolder: 'src/MCOM.Azure.Deployment'
+                Contents: '**'
+                TargetFolder: '$(Build.ArtifactStagingDirectory)'
+            - publish: '$(Build.ArtifactStagingDirectory)'
+              artifact: dropdeploymentscripts   

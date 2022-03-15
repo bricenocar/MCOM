@@ -23,6 +23,9 @@
       "gasoperationscontainer": {
         "value": "gasops"
       },
+      "scanrequestscontainer": {
+        "value": "scanrequests"
+      },
       "outputcontainer": {
         "value": "output"
       }

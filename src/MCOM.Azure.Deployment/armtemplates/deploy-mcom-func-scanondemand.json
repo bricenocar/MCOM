@@ -75,13 +75,43 @@
     }
   },
   "variables": {
-    "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'functions', parameters('environment'))]",
+    "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'scanfunc', parameters('environment'))]",
     "stagingareaStorageAccountName": "[concat(parameters('storageAccountName'), 'stgarea', parameters('environment'))]",
     "functionAppName": "[concat(parameters('appName'), '-scanondemand-', parameters('environment'))]",
-    "hostingPlanName": "[concat(parameters('appServicePlanName'), '-', parameters('environment'))]",
+    "hostingPlanName": "[concat(parameters('appServicePlanName'), '-scanondemand-', parameters('environment'))]",
     "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]"
   },
-  "resources": [    
+  "resources": [   
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('hostingPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "computeMode": "Dynamic"
+      }
+    }, 
+    // Application insights
+    {
+      "type": "microsoft.insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[variables('applicationInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('applicationInsightsName')))]": "Resource"
+      },
+      "properties": {
+        "Application_Type": "web",
+        "ApplicationId": "[variables('applicationInsightsName')]",
+        "Request_Source": "rest"
+      }
+    },
     // Function App
     {
       "type": "Microsoft.Web/sites",
