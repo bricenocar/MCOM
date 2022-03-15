@@ -2,10 +2,10 @@
 <Elements xmlns="http://schemas.microsoft.com/sharepoint/">
     <CustomAction
         Title="ScanRequest"
-        RegistrationId="100"
+        RegistrationId="101"
         RegistrationType="List"
         Location="ClientSideExtension.ListViewCommandSet"
-        ClientSideComponentId="38fcfe41-e375-49cd-b4c9-276f6a716856"
-        ClientSideComponentProperties="{&quot;targetUrl&quot;:&quot;/SitePages/ScanOnDemand.aspx?itemid={id}&filename={filename}&quot;}">
+        ClientSideComponentId="9d569369-7361-41d3-bf4c-886cb780b28a"
+        ClientSideComponentProperties="{&quot;targetUrl&quot;:&quot;/SitePages/ScanOnDemand.aspx?itemid={id}&amp;filename={filename}&quot;}">
     </CustomAction>
 </Elements>

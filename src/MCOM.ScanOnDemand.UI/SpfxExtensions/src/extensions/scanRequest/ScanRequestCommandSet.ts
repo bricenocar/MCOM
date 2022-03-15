@@ -35,7 +35,7 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
 
   @override
   public onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): void {
-    const compareOneCommand: Command = this.tryGetCommand('ScanOnDemand');
+    const compareOneCommand: Command = this.tryGetCommand('ScanRequest');
     if (compareOneCommand) {
       // Check if only one row is selected
       const visible = event.selectedRows.length === 1;
@@ -61,7 +61,7 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
   @override
   public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
     switch (event.itemId) {
-      case 'ScanOnDemand':
+      case 'ScanRequest':
         const siteUrl = this.context.pageContext.site.absoluteUrl;
         const pathUrl = this.properties.targetUrl.replace('{id}', this.fileInfo.ID).replace('{filename}', this.fileInfo.FileName);
 

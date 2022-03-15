@@ -60,7 +60,9 @@ namespace MCOM.ScanOnDemand.Functions
                 var jsonMetadata = JsonConvert.SerializeObject(data);
 
                 try
-                {   
+                {
+                    Global.Log.LogInformation("Proceed to save the metadata file into scanrequests container");
+
                     var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/scanrequests/metadata/{data.OrderNumber}.json");
 
                     // Get blob client
@@ -70,7 +72,7 @@ namespace MCOM.ScanOnDemand.Functions
                         await blobClient.UploadAsync(stream, Global.BlobOverwriteExistingFile);
                     }
 
-                    Global.Log.LogInformation("Successfully uploaded metadata file without errors. DocumentId: {DocumentId}", data.OrderNumber);                   
+                    Global.Log.LogInformation("Successfully uploaded metadata file without errors. DocumentId: {DocumentId}", data.OrderNumber);    
                 }
                 catch (RequestFailedException rEx)
                 {

@@ -3,7 +3,7 @@
     <ClientSideComponentInstance
         Title="ScanRequest"
         Location="ClientSideExtension.ListViewCommandSet"
-        ListTemplateId="100"
-        Properties="{&quot;targetUrl&quot;:&quot;/SitePages/ScanOnDemand.aspx?itemid={id}&filename={filename}&quot;}"
-        ComponentId="38fcfe41-e375-49cd-b4c9-276f6a716856" />
+        ListTemplateId="101"
+        Properties="{&quot;targetUrl&quot;:&quot;/SitePages/ScanOnDemand.aspx?itemid={id}&amp;filename={filename}&quot;}"
+        ComponentId="9d569369-7361-41d3-bf4c-886cb780b28a" />
 </Elements>
