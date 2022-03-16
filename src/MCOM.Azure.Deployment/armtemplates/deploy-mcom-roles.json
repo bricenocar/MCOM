@@ -52,7 +52,7 @@
                             "Microsoft.Insights/components/write",
                             "microsoft.insights/components/Annotations/write",
                             "microsoft.operationalinsights/workspaces/read",
-                            "Microsoft.OperationalInsights/workspaces/write",                            
+                            "Microsoft.OperationalInsights/workspaces/write",
                             "Microsoft.DataFactory/factories/read",
                             "Microsoft.DataFactory/factories/write",
                             "Microsoft.DataFactory/factories/linkedServices/read",
@@ -100,7 +100,9 @@
                             "Microsoft.Logic/workflows/write",
                             "Microsoft.Logic/workflows/enable/action",
                             "Microsoft.Logic/workflows/disable/action",
-                            "Microsoft.Web/connections/*"
+                            "Microsoft.Web/connections/*",
+                            "Microsoft.Sql/servers/write",
+                            "Microsoft.Sql/servers/databases/write"
                         ],
                         "dataActions": [
                             "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/*"
