@@ -10,7 +10,7 @@ namespace MCOM.Utilities
         public static string RemoveSpecialChars(string str)
         {
             // Create  a string array and add the special characters you want to remove
-            var chars = new string[] { "~", "#", "%", "&", "*", ":", "<", ">", "?", "/", "\\", "{", "|", "}" };
+            var chars = new string[] { "~", "#", "%", "&", "*", ":", "<", ">", "?", "/", "\\", "{", "|", "}", "\"" };
 
             // Iterate the number of times based on the String array length.
             for (int i = 0; i < chars.Length; i++)
