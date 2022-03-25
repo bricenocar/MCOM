@@ -120,9 +120,12 @@ namespace MCOM.Functions
                                 // Get SharePoint context with access token
                                 using var clientContext = _sharePointService.GetClientContext(webUrl, accessToken.Token);
 
-                                // Get container and blobCLient                          
+                                // Get files container and blobCLient                          
                                 var filesContainerClient = _blobService.GetBlobContainerClient(fileData.Source);
                                 var filesBlobClient = _blobService.GetBlobClient(filesContainerClient, $"files/{fileData.DocumentId}");
+
+                                // Get metadataprocessed container and blobCLient                          
+                                var metadataprocessedBlobClient = _blobService.GetBlobClient(filesContainerClient, $"metadataprocessed/{fileData.DocumentId}.json");
 
                                 bool found = SearchArchivedFile(clientContext, fileData.DocumentId);
 
@@ -159,7 +162,7 @@ namespace MCOM.Functions
                                         }
                                         catch (Exception uploadLargeFileEx)
                                         {
-                                            Global.Log.LogCritical("UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadLargeFileEx.Message);
+                                            Global.Log.LogCritical(uploadLargeFileEx, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadLargeFileEx.Message);
                                             continue;
                                         }
 
@@ -181,7 +184,7 @@ namespace MCOM.Functions
                                         }
                                         catch (Exception uploadSmallFileEx)
                                         {
-                                            Global.Log.LogCritical("UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadSmallFileEx.Message);
+                                            Global.Log.LogCritical(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadSmallFileEx.Message);
                                             continue;
                                         }
 
@@ -209,7 +212,7 @@ namespace MCOM.Functions
                                     }
                                     else
                                     {
-                                        Global.Log.LogError(new NullReferenceException(), $"The file {fileData.DocumentId} could not be deleted from staging area (output)");
+                                        Global.Log.LogError(new InvalidOperationException(), $"The file {fileData.DocumentId} could not be deleted from staging area (output)");
                                         _logList.Add(new FakeLog()
                                         {
                                             Message = $"The file {fileData.DocumentId} could not be deleted from staging area (output)",
@@ -217,9 +220,31 @@ namespace MCOM.Functions
                                         });
                                     }
 
+                                    // Delete blob from metadataprocessed container
+                                    var metadataprocessedBlobName = metadataprocessedBlobClient.Name;
+                                    var metadataprocessedDeleted = await _blobService.DeleteBlobClientIfExistsAsync(metadataprocessedBlobClient);
+
+                                    if (metadataprocessedDeleted)
+                                    {
+                                        Global.Log.LogInformation($"The file {metadataprocessedBlobName} has been deleted successfully from container (metadataprocessed)");
+                                        _logList.Add(new FakeLog()
+                                        {
+                                            Message = $"The file {metadataprocessedBlobName} has been deleted successfully from container (metadataprocessed)",
+                                            LogLevel = LogLevel.Information
+                                        });
+                                    }
+                                    else
+                                    {
+                                        Global.Log.LogError(new InvalidOperationException(), $"The file {metadataprocessedBlobName} could not be deleted from container (metadataprocessed)");
+                                        _logList.Add(new FakeLog()
+                                        {
+                                            Message = $"The file {metadataprocessedBlobName} could not be deleted from container (metadataprocessed)",
+                                            LogLevel = LogLevel.Error
+                                        });
+                                    }
+
                                     // Delete blob from files container
                                     var filesBlobName = filesBlobClient.Name;
-                                    var filesConteinerName = filesContainerClient.Name;
                                     var filesDeleted = await _blobService.DeleteBlobClientIfExistsAsync(filesBlobClient);
 
                                     if (filesDeleted)
@@ -233,7 +258,7 @@ namespace MCOM.Functions
                                     }
                                     else
                                     {
-                                        Global.Log.LogError(new NullReferenceException(), $"The file {filesBlobName} could not be deleted from container (files)");
+                                        Global.Log.LogError(new InvalidOperationException(), $"The file {filesBlobName} could not be deleted from container (files)");
                                         _logList.Add(new FakeLog()
                                         {
                                             Message = $"The file {filesBlobName} could not be deleted from container (files)",
@@ -246,7 +271,7 @@ namespace MCOM.Functions
                         catch (Exception ex)
                         {
                             // ERROR, the file does not exist in SharePoint
-                            Global.Log.LogCritical("Exception with blob {BlobName}. Exception: {Exception}", outputBlobName, ex);
+                            Global.Log.LogCritical(ex, "Exception with blob {BlobName}. Exception: {ErrorMessage}", outputBlobName, ex.Message);
                         }
                     }
                 }
