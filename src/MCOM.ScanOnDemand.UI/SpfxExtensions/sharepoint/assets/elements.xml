@@ -6,6 +6,6 @@
         RegistrationType="List"
         Location="ClientSideExtension.ListViewCommandSet"
         ClientSideComponentId="9d569369-7361-41d3-bf4c-886cb780b28a"
-        ClientSideComponentProperties="{&quot;targetUrl&quot;:&quot;/SitePages/ScanOnDemand.aspx?itemid={id}&amp;filename={filename}&quot;}">
+        ClientSideComponentProperties="{&quot;targetUrl&quot;:&quot;/SitePages/ScanOnDemand.aspx?itemid={id}&amp;filename={filename}&amp;siteurl={siteurl}&amp;listname={listname}&quot;}">
     </CustomAction>
 </Elements>

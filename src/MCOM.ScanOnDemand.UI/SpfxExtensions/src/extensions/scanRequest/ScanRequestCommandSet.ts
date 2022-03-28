@@ -63,7 +63,12 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
     switch (event.itemId) {
       case 'ScanRequest':
         const siteUrl = this.context.pageContext.site.absoluteUrl;
-        const pathUrl = this.properties.targetUrl.replace('{id}', this.fileInfo.ID).replace('{filename}', this.fileInfo.FileName);
+        const listName = this.context.pageContext.list.title;
+        const pathUrl = this.properties.targetUrl
+          .replace('{id}', this.fileInfo.ID)
+          .replace('{filename}', this.fileInfo.FileName)
+          .replace('{siteurl}', siteUrl)
+          .replace('{listname}', listName);
 
         window.open(`${siteUrl}${pathUrl}`, '_blank').focus();
         break;

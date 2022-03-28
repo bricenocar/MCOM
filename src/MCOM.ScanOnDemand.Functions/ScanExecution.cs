@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using MCOM.Models;
 using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
@@ -10,11 +9,11 @@ namespace MCOM.ScanOnDemand.Functions
 {
     public class ScanExecution
     {
-        private readonly ILogger _logger;
+        // private readonly ILogger _logger;
 
         public ScanExecution(ILoggerFactory loggerFactory)
         {
-            _logger = loggerFactory.CreateLogger<ScanExecution>();
+            // _logger = loggerFactory.CreateLogger<ScanExecution>();
         }
 
         [Function("ScanExecution")]
@@ -32,17 +31,19 @@ namespace MCOM.ScanOnDemand.Functions
                 throw;
             }
 
-            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "ArchiveFile");
+            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "ScanExecution");
 
-            // Convert data
-            var fileData = JsonConvert.DeserializeObject<ArchiveFileData<string, object>>(data);
-
-            // Validate input
-            fileData.ValidateInput();
-
-            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "ArchiveFile", "Archiving"))
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "ScanExecution", "ScanOnDemand"))
             {
+                // Get document name from the incoming blob
 
+                // Get SharePoint Online information from DB based on the given document id (GUID)
+
+                // Copy the file to SharePoint
+
+                // Update metadata
+
+                // Delete from blob after confirmation
             }
         }
     }

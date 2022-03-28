@@ -47,7 +47,7 @@ namespace MCOM.ScanOnDemand.Functions
             {
                 // Get the request object
                 HttpResponseData response = null;
-                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<ScanRequestPayload>(requestBody);
 
                 // Do some logic here based on the data coming from the request...
