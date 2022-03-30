@@ -203,27 +203,35 @@ namespace MCOM.Tests
             var mockBlobClient = new Mock<BlobClient>(new Uri("https://test.com"), new BlobClientOptions());
             var blobContainerClientMock = new Mock<BlobContainerClient>();
             var blobItemProperties = BlobsModelFactory.BlobItemProperties(false, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, false, null, null, null, new DateTimeOffset(DateTime.Now.AddHours(-5)), null, null, null);
+            var blobContainerProperties = BlobsModelFactory.BlobContainerProperties(new DateTimeOffset(), new ETag());
 
             // Properties
-            var page = Page<BlobItem>.FromValues(new[]
+            var blobItemPage = Page<BlobItem>.FromValues(new[]
                 {
                     BlobsModelFactory.BlobItem("test", false, blobItemProperties)
                 }, null, Mock.Of<Response>()
             );
+            var blobContainerPage = Page<BlobContainerItem>.FromValues(new[]
+                {
+                    BlobsModelFactory.BlobContainerItem("test", blobContainerProperties)
+                }, null, Mock.Of<Response>()
+            );
 
             // BLob mocking
-            var pageable = AsyncPageable<BlobItem>.FromPages(new[] { page });
+            var pageableBlobItem = AsyncPageable<BlobItem>.FromPages(new[] { blobItemPage });
+            var pageableBlobContainer = AsyncPageable<BlobContainerItem>.FromPages(new[] { blobContainerPage });
             mockBlobService.SetupAllProperties();
             mockBlobServiceClient.SetupAllProperties();
             mockBlobService.Object.BlobServiceClient = mockBlobServiceClient.Object;
             mockBlobService.Setup(b => b.GetBlobContainerClient(It.IsAny<string>())).Returns(blobContainerClientMock.Object);
-            mockBlobService.Setup(b => b.GetBlobs(It.IsAny<BlobContainerClient>())).Returns(pageable);
+            mockBlobService.Setup(b => b.GetBlobs(It.IsAny<BlobContainerClient>(), It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>())).Returns(pageableBlobItem);
             mockBlobService.SetupSequence(b => b.GetBlobClient(It.IsAny<BlobContainerClient>(), It.IsAny<string>()))
                 .Returns(mockBlobClient.Object)
                 .Returns(mockBlobClient.Object);
             mockBlobService.Setup(b => b.GetBlobStreamAsync(It.IsAny<BlobClient>())).ReturnsAsync(stream);
             mockBlobService.Setup(b => b.BlobClientExistsAsync(It.IsAny<BlobClient>())).ReturnsAsync(true);
             mockBlobService.Setup(b => b.GetBlobDataAsync(It.IsAny<BlobClient>())).ReturnsAsync(json);
+            mockBlobService.Setup(b => b.GetBlobContainers()).Returns(pageableBlobContainer);
             mockBlobService.SetupSequence(b => b.DeleteBlobClientIfExistsAsync(It.IsAny<BlobClient>()))
                 .ReturnsAsync(true)
                 .ReturnsAsync(true);

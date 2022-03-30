@@ -326,11 +326,12 @@ namespace MCOM.Functions
                 var containerClient = _blobService.GetBlobContainerClient(continerName);
 
                 // Get all blobs based on the given prefix (virtual folder)
-                var blobPages = containerClient.GetBlobs(Azure.Storage.Blobs.Models.BlobTraits.None,
-                                                         Azure.Storage.Blobs.Models.BlobStates.None,
-                                                         "metadataprocessed/").AsPages().ToList();
+                var blobPages = _blobService.GetBlobs(containerClient,
+                                                      Azure.Storage.Blobs.Models.BlobTraits.None,
+                                                      Azure.Storage.Blobs.Models.BlobStates.None,
+                                                      "metadataprocessed/").AsPages();
                 // Loop through all pages and find blobs
-                foreach (var blobPage in blobPages)
+                await foreach(var blobPage in blobPages)
                 {
                     foreach (var blobItem in blobPage.Values)
                     {
