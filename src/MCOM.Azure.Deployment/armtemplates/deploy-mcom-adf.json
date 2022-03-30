@@ -142,6 +142,19 @@
             ]
         },
         {
+            "name": "MCOMGovernanceDB",
+            "type": "Microsoft.DataFactory/factories/linkedservices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlMI",
+                "typeProperties": {
+                    "connectionString": "integrated security=False;encrypt=True;connection timeout=30;data source=sql-mcom-gov-inttest.database.windows.net;initial catalog=GovernanceDB;user id=mcomadmin",
+                    "encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQEQ5OTlGNTI2LUU3OTEtNEM4My05Nzc0LUVGNUUwOEQ4NDg0Ql8xMmI2MDBjYS1jYjkyLTRlMWMtYThjOC0xN2MyYjk5YTBiMDQiDQp9"
+                }
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/dcf_metadata_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
             "apiVersion": "2018-06-01",
@@ -370,6 +383,144 @@
                 "[variables('factoryId')]",
                 "[concat(variables('factoryId'), '/linkedServices/Staging area')]"
             ]
+        },
+        {
+            "name": "mcom_governance_scanrequests",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "MCOMGovernanceDB",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlMITable",
+                "schema": [
+                    {
+                        "name": "id",
+                        "type": "uniqueidentifier"
+                    },
+                    {
+                        "name": "requester",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "SiteUrl",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "LibraryId",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "requestdate",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "wbs",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "businessunit",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "itemid",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "documentname",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "vendor",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "comments",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ordernumber",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "status",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "isphysical",
+                        "type": "bit"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "MCOMScanRequest"
+                }
+            },
+            "type": "Microsoft.DataFactory/factories/datasets"
+        },
+        {
+            "name": "scanrequest_metadata_dataset",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "container": "scanrequests"
+                    }
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "ItemId": {
+                            "type": "string"
+                        },
+                        "SiteUrl": {
+                            "type": "string"
+                        },
+                        "ListName": {
+                            "type": "string"
+                        },
+                        "WBS": {
+                            "type": "string"
+                        },
+                        "RequestedBy": {
+                            "type": "string"
+                        },
+                        "RequestedDate": {
+                            "type": "string"
+                        },
+                        "DocumentName": {
+                            "type": "string"
+                        },
+                        "Vendor": {
+                            "type": "string"
+                        },
+                        "Comments": {
+                            "type": "string"
+                        },
+                        "OrderNumber": {
+                            "type": "string"
+                        },
+                        "Status": {
+                            "type": "string"
+                        },
+                        "IsPhysical": {
+                            "type": "boolean"
+                        }
+                    }
+                }
+            },
+            "type": "Microsoft.DataFactory/factories/datasets"
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/DCF Pipeline')]",
