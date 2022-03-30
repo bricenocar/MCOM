@@ -523,6 +523,171 @@
             "type": "Microsoft.DataFactory/factories/datasets"
         },
         {
+            "name": "ScanRequest Pipeline",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Save request in Governance DB",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "wildcardFileName": "*.json",
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "SqlMISink",
+                                "writeBehavior": "upsert",
+                                "upsertSettings": {
+                                    "useTempDB": true,
+                                    "keys": [
+                                        "id"
+                                    ]
+                                },
+                                "sqlWriterUseTableLock": false
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "mappings": [
+                                    {
+                                        "source": {
+                                            "path": "$['ItemId']"
+                                        },
+                                        "sink": {
+                                            "name": "ordernumber",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['SiteUrl']"
+                                        },
+                                        "sink": {
+                                            "name": "SiteUrl",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['ListName']"
+                                        },
+                                        "sink": {
+                                            "name": "LibraryId",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['WBS']"
+                                        },
+                                        "sink": {
+                                            "name": "wbs",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['RequestedBy']"
+                                        },
+                                        "sink": {
+                                            "name": "requester",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['RequestedDate']"
+                                        },
+                                        "sink": {
+                                            "name": "requestdate",
+                                            "type": "DateTime"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['DocumentName']"
+                                        },
+                                        "sink": {
+                                            "name": "documentname",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['Vendor']"
+                                        },
+                                        "sink": {
+                                            "name": "vendor",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['Comments']"
+                                        },
+                                        "sink": {
+                                            "name": "comments",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['Status']"
+                                        },
+                                        "sink": {
+                                            "name": "status",
+                                            "type": "String"
+                                        }
+                                    },
+                                    {
+                                        "source": {
+                                            "path": "$['IsPhysical']"
+                                        },
+                                        "sink": {
+                                            "name": "isphysical",
+                                            "type": "Boolean"
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "scanrequest_metadata_dataset",
+                                "type": "DatasetReference"
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "mcom_governance_scanrequests",
+                                "type": "DatasetReference"
+                            }
+                        ]
+                    }
+                ],
+                "annotations": [],
+                "lastPublishTime": "2022-03-25T13:40:16Z"
+            },
+            "type": "Microsoft.DataFactory/factories/pipelines"
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/DCF Pipeline')]",
             "type": "Microsoft.DataFactory/factories/pipelines",
             "apiVersion": "2018-06-01",
