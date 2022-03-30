@@ -385,7 +385,7 @@
             ]
         },
         {
-            "name": "mcom_governance_scanrequests",
+            "name": "[concat(variables('dataFactoryName'), '/mcom_governance_scanrequests')]",
             "apiVersion": "2018-06-01",
             "properties": {
                 "linkedServiceName": {
@@ -463,7 +463,7 @@
             "type": "Microsoft.DataFactory/factories/datasets"
         },
         {
-            "name": "scanrequest_metadata_dataset",
+            "name": "[concat(variables('dataFactoryName'), '/scanrequest_metadata_dataset')]",
             "apiVersion": "2018-06-01",
             "properties": {
                 "linkedServiceName": {
