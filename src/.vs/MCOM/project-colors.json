@@ -45,7 +45,12 @@
       "ProjectGuid": "17de7131-ca29-4781-9859-44a339ebd33e",
       "DisplayName": "MCOM.Services",
       "ColorIndex": 7
+    },
+    "fe3b5f7f-658d-45bf-877c-324b390cbc83": {
+      "ProjectGuid": "fe3b5f7f-658d-45bf-877c-324b390cbc83",
+      "DisplayName": "MCOM.Utilities",
+      "ColorIndex": 8
     }
   },
-  "NextColorIndex": 8
+  "NextColorIndex": 9
 }

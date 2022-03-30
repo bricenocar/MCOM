@@ -142,6 +142,19 @@
             ]
         },
         {
+            "name": "MCOMGovernanceDB",
+            "type": "Microsoft.DataFactory/factories/linkedservices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlMI",
+                "typeProperties": {
+                    "connectionString": "integrated security=False;encrypt=True;connection timeout=30;data source=sql-mcom-gov-inttest.database.windows.net;initial catalog=GovernanceDB;user id=mcomadmin",
+                    "encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQEQ5OTlGNTI2LUU3OTEtNEM4My05Nzc0LUVGNUUwOEQ4NDg0Ql8xMmI2MDBjYS1jYjkyLTRlMWMtYThjOC0xN2MyYjk5YTBiMDQiDQp9"
+                }
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/dcf_metadata_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
             "apiVersion": "2018-06-01",
@@ -372,6 +385,144 @@
             ]
         },
         {
+            "name": "mcom_governance_scanrequests",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "MCOMGovernanceDB",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlMITable",
+                "schema": [
+                    {
+                        "name": "id",
+                        "type": "uniqueidentifier"
+                    },
+                    {
+                        "name": "requester",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "SiteUrl",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "LibraryId",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "requestdate",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "wbs",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "businessunit",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "itemid",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "documentname",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "vendor",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "comments",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ordernumber",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "status",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "isphysical",
+                        "type": "bit"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "MCOMScanRequest"
+                }
+            },
+            "type": "Microsoft.DataFactory/factories/datasets"
+        },
+        {
+            "name": "scanrequest_metadata_dataset",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "container": "scanrequests"
+                    }
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "ItemId": {
+                            "type": "string"
+                        },
+                        "SiteUrl": {
+                            "type": "string"
+                        },
+                        "ListName": {
+                            "type": "string"
+                        },
+                        "WBS": {
+                            "type": "string"
+                        },
+                        "RequestedBy": {
+                            "type": "string"
+                        },
+                        "RequestedDate": {
+                            "type": "string"
+                        },
+                        "DocumentName": {
+                            "type": "string"
+                        },
+                        "Vendor": {
+                            "type": "string"
+                        },
+                        "Comments": {
+                            "type": "string"
+                        },
+                        "OrderNumber": {
+                            "type": "string"
+                        },
+                        "Status": {
+                            "type": "string"
+                        },
+                        "IsPhysical": {
+                            "type": "boolean"
+                        }
+                    }
+                }
+            },
+            "type": "Microsoft.DataFactory/factories/datasets"
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/DCF Pipeline')]",
             "type": "Microsoft.DataFactory/factories/pipelines",
             "apiVersion": "2018-06-01",
@@ -564,6 +715,9 @@
                         "type": "String"
                     },
                     "FeedbackUrl": {
+                        "type": "String"
+                    },
+                    "FeedbackAuthorization": {
                         "type": "String"
                     }
                 },
@@ -1190,7 +1344,7 @@
                             "description": "Creates an explicit mapping for each drifted column"
                         }
                     ],
-                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tOpenLibraryDriveId as string,\n\tRestrictedLibraryDriveId as string,\n\tFeedbackUrl as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\tdocumentForm: 'singleDocument') ~> dcffilesource\nSetFileName split(startsWith(LRMUniqueFolderId, \"SA.\"),\n\tdisjoint: false) ~> CheckDestination@(SendToRestrictedLibrary, SendToOpenLibrary)\nCheckDestination@SendToRestrictedLibrary derive(driveid = $RestrictedLibraryDriveId) ~> SetRestrictedColumn\nCheckDestination@SendToOpenLibrary derive(driveid = $OpenLibraryDriveId) ~> SetOpenColumn\nFieldsMapping derive(DestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tFilename = concat(LRMHPECMRecordID,'_', Filename),\n\t\tdocumentId = LRMHPECMRecordID,\n\t\tTitle = Filename,\n\t\tdocumentIdField = 'LRMHPECMRecordID') ~> SetFileName\nDataTransformation select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMArchivedBy = {ARCHIVED USER},\n\t\tLRMAttachments = ATTACHMENTS,\n\t\tLRMBOLDate = {B/L DATE},\n\t\tLRMBroker = BROKER,\n\t\tLRMCargoNumber = {CARGO NUMBER},\n\t\tLRMCustomer = CUSTOMER,\n\t\tLRMDateExecuted = {DATE EXECUTED},\n\t\tLRMDealNumber = {DEAL NUMBER},\n\t\tLRMDischargePort = {DISCHARGE PORT},\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFolderType = {FOLDER TYPE},\n\t\tLRMLoadPort = {LOAD PORT},\n\t\tLRMQuality = QUALITY,\n\t\tLRMResponsibleOperator = {RESPONSIBLE OPS},\n\t\tLRMTo = TO,\n\t\tLRMTransmissionDate = {TRANSMISSION DATE},\n\t\tLRMUniqueFolderId = {UNIQUE FOLDER ID},\n\t\tLRMVessel = VESSEL,\n\t\tLRMVoyageNumber = {VOYAGE NUMBER},\n\t\tusecsom,\n\t\tfeedbackurl\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FieldsMapping\ndcffilesource derive({ARCHIVED USER} = toString(byName('ARCHIVED USER')),\n\t\tATTACHMENTS = toString(byName('ATTACHMENTS')),\n\t\t{B/L DATE} = toString(byName('B/L DATE')),\n\t\tBROKER = toString(byName('BROKER')),\n\t\t{CARGO NUMBER} = toString(byName('CARGO NUMBER')),\n\t\tCUSTOMER = toString(byName('CUSTOMER')),\n\t\t{DATE EXECUTED} = toString(byName('DATE EXECUTED')),\n\t\t{DEAL NUMBER} = toString(byName('DEAL NUMBER')),\n\t\t{DISCHARGE PORT} = toString(byName('DISCHARGE PORT')),\n\t\t{FOLDER TYPE} = toString(byName('FOLDER TYPE')),\n\t\tFilename = toString(byName('Filename')),\n\t\t{LOAD PORT} = toString(byName('LOAD PORT')),\n\t\tQUALITY = toString(byName('QUALITY')),\n\t\t{RESPONSIBLE OPS} = toString(byName('RESPONSIBLE OPS')),\n\t\tSource = toString(byName('Source')),\n\t\tTO = toString(byName('TO')),\n\t\t{TRANSMISSION DATE} = toString(byName('TRANSMISSION DATE')),\n\t\t{UNIQUE FOLDER ID} = toString(byName('UNIQUE FOLDER ID')),\n\t\tVESSEL = toString(byName('VESSEL')),\n\t\t{VOYAGE NUMBER} = toString(byName('VOYAGE NUMBER')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttitle = toString(byName('title')),\n\t\tusecsom = false(),\n\t\tfeedbackurl = $FeedbackUrl) ~> DataTransformation\nSetRestrictedColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationOpen\nSetOpenColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationRestricted"
+                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tOpenLibraryDriveId as string,\n\tRestrictedLibraryDriveId as string,\n\tFeedbackUrl as string,\n\tFeedbackAuthorization as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\tdocumentForm: 'singleDocument') ~> dcffilesource\nSetCustomFields split(startsWith(LRMUniqueFolderId, \"SA.\"),\n\tdisjoint: false) ~> CheckDestination@(SendToRestrictedLibrary, SendToOpenLibrary)\nCheckDestination@SendToRestrictedLibrary derive(driveid = $RestrictedLibraryDriveId) ~> SetRestrictedColumn\nCheckDestination@SendToOpenLibrary derive(driveid = $OpenLibraryDriveId) ~> SetOpenColumn\nFieldsMapping derive(DestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tFilename = concat(LRMHPECMRecordID,'_', Filename),\n\t\tdocumentId = LRMHPECMRecordID,\n\t\tTitle = Filename,\n\t\tdocumentIdField = 'LRMHPECMRecordID',\n\t\tfeedbackAuthorization = $FeedbackAuthorization) ~> SetCustomFields\nDataTransformation select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMArchivedBy = {ARCHIVED USER},\n\t\tLRMAttachments = ATTACHMENTS,\n\t\tLRMBOLDate = {B/L DATE},\n\t\tLRMBroker = BROKER,\n\t\tLRMCargoNumber = {CARGO NUMBER},\n\t\tLRMCustomer = CUSTOMER,\n\t\tLRMDateExecuted = {DATE EXECUTED},\n\t\tLRMDealNumber = {DEAL NUMBER},\n\t\tLRMDischargePort = {DISCHARGE PORT},\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFolderType = {FOLDER TYPE},\n\t\tLRMLoadPort = {LOAD PORT},\n\t\tLRMQuality = QUALITY,\n\t\tLRMResponsibleOperator = {RESPONSIBLE OPS},\n\t\tLRMTo = TO,\n\t\tLRMTransmissionDate = {TRANSMISSION DATE},\n\t\tLRMUniqueFolderId = {UNIQUE FOLDER ID},\n\t\tLRMVessel = VESSEL,\n\t\tLRMVoyageNumber = {VOYAGE NUMBER},\n\t\tusecsom,\n\t\tfeedbackurl\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FieldsMapping\ndcffilesource derive({ARCHIVED USER} = toString(byName('ARCHIVED USER')),\n\t\tATTACHMENTS = toString(byName('ATTACHMENTS')),\n\t\t{B/L DATE} = toString(byName('B/L DATE')),\n\t\tBROKER = toString(byName('BROKER')),\n\t\t{CARGO NUMBER} = toString(byName('CARGO NUMBER')),\n\t\tCUSTOMER = toString(byName('CUSTOMER')),\n\t\t{DATE EXECUTED} = toString(byName('DATE EXECUTED')),\n\t\t{DEAL NUMBER} = toString(byName('DEAL NUMBER')),\n\t\t{DISCHARGE PORT} = toString(byName('DISCHARGE PORT')),\n\t\t{FOLDER TYPE} = toString(byName('FOLDER TYPE')),\n\t\tFilename = toString(byName('Filename')),\n\t\t{LOAD PORT} = toString(byName('LOAD PORT')),\n\t\tQUALITY = toString(byName('QUALITY')),\n\t\t{RESPONSIBLE OPS} = toString(byName('RESPONSIBLE OPS')),\n\t\tSource = toString(byName('Source')),\n\t\tTO = toString(byName('TO')),\n\t\t{TRANSMISSION DATE} = toString(byName('TRANSMISSION DATE')),\n\t\t{UNIQUE FOLDER ID} = toString(byName('UNIQUE FOLDER ID')),\n\t\tVESSEL = toString(byName('VESSEL')),\n\t\t{VOYAGE NUMBER} = toString(byName('VOYAGE NUMBER')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttitle = toString(byName('title')),\n\t\tusecsom = false(),\n\t\tfeedbackurl = $FeedbackUrl) ~> DataTransformation\nSetRestrictedColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationOpen\nSetOpenColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationRestricted"
                 }
             },
             "dependsOn": [
@@ -1580,7 +1734,7 @@
                 "typeProperties": {
                     "frequency": "Minute",
                     "interval": 30,
-                    "startTime": "2021-11-23T12:48:00Z",
+                    "startTime": "2021-03-30T12:48:00Z",
                     "delay": "00:00:00",
                     "maxConcurrency": 50,
                     "retryPolicy": {
