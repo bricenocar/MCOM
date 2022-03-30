@@ -736,6 +736,10 @@
                                     "FeedbackUrl": {
                                         "value": "'@{variables('FeedbackUrl')}'",
                                         "type": "Expression"
+                                    },
+                                    "FeedbackAuthorization": {
+                                        "value": "'@{variables('FeedbackAuthorization')}'",
+                                        "type": "Expression"
                                     }
                                 },
                                 "datasetParameters": {
