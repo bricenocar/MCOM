@@ -22,6 +22,7 @@ namespace MCOM.Services
         AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient);
 
         BlobClient GetBlobClient(BlobContainerClient containerClient, string blobName);
+        AsyncPageable<BlobContainerItem> GetBlobContainers();
 
         Task<string> GetBlobDataAsync(BlobClient blobClient);
 
@@ -84,6 +85,14 @@ namespace MCOM.Services
                 throw new Exception("BlobServiceClient has to be called first");
 
             return BlobServiceClient.GetBlobContainerClient(container);
+        }
+
+        public virtual AsyncPageable<BlobContainerItem> GetBlobContainers()
+        {
+            if (BlobServiceClient == null)
+                throw new Exception("BlobServiceClient has to be called first");            
+
+            return BlobServiceClient.GetBlobContainersAsync();
         }
 
         public virtual AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient)

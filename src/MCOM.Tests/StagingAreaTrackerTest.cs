@@ -202,11 +202,12 @@ namespace MCOM.Tests
             var mockBlobService = new Mock<BlobService>();
             var mockBlobClient = new Mock<BlobClient>(new Uri("https://test.com"), new BlobClientOptions());
             var blobContainerClientMock = new Mock<BlobContainerClient>();
+            var blobItemProperties = BlobsModelFactory.BlobItemProperties(false, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, false, null, null, null, new DateTimeOffset(DateTime.Now.AddHours(-5)), null, null, null);
 
             // Properties
             var page = Page<BlobItem>.FromValues(new[]
                 {
-                    BlobsModelFactory.BlobItem("test")
+                    BlobsModelFactory.BlobItem("test", false, blobItemProperties)
                 }, null, Mock.Of<Response>()
             );
 
