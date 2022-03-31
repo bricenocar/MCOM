@@ -1,9 +1,5 @@
-﻿using MCOM.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
+using MCOM.Models;
 
 namespace MCOM.Business.PostFeedBack.DCF
 {
@@ -23,13 +19,13 @@ namespace MCOM.Business.PostFeedBack.DCF
             var headers = queueItem.Headers;
 
             // The Authentication header has to be encoded
-            if (headers.TryGetValue("Authentication", out var authHeader))
+            if (headers.TryGetValue("Authorization", out var authHeader))
             {
                 var authHeaderBytes = Encoding.UTF8.GetBytes(authHeader);
                 var base64Header = Convert.ToBase64String(authHeaderBytes);
                 var newAuthHeader = $"Basic {base64Header}";
 
-                queueItem.Headers["Authentication"] = newAuthHeader;
+                queueItem.Headers["Authorization"] = newAuthHeader;
             }
 
             return queueItem;
