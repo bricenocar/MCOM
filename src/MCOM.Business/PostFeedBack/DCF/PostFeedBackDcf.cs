@@ -6,7 +6,7 @@ namespace MCOM.Business.PostFeedBack.DCF
     internal class PostFeedBackDcf
     {
         /*
-         * DCF requires the http request to authenticate agaisnt their endpoint. For this, the value of the Authentication header
+         * DCF requires the http request to authenticate agaisnt their endpoint. For this, the value of the Authorization header
          * has to be encoded in a specific way. After the header is abse64 encoded the Method sends the new updated object back to the threath.
         */
         /// <summary>
