@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Azure;
@@ -16,8 +17,10 @@ namespace MCOM.Services
         void GetBlobServiceClient();
         BlobClient GetBlobClient(Uri fileUri);
         BlobContainerClient GetBlobContainerClient(string container);
+        AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient, BlobTraits blobTraits = BlobTraits.None, BlobStates blobStates = BlobStates.None, string prefix = null);
         AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient);
         BlobClient GetBlobClient(BlobContainerClient containerClient, string blobName);
+        AsyncPageable<BlobContainerItem> GetBlobContainers();
         Task<string> GetBlobDataAsync(BlobClient blobClient);
         Task<Stream> GetBlobStreamAsync(BlobClient blobClient);
         Task<Stream> OpenReadAsync(BlobClient blobClient);
@@ -78,6 +81,15 @@ namespace MCOM.Services
             return BlobServiceClient.GetBlobContainerClient(container);
         }
 
+        public virtual AsyncPageable<BlobContainerItem> GetBlobContainers()
+        {
+            if (BlobServiceClient == null)
+                throw new Exception("BlobServiceClient has to be called first");
+
+            return BlobServiceClient.GetBlobContainersAsync();
+        }
+
+        public virtual AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient, BlobTraits blobTraits = BlobTraits.None, BlobStates blobStates = BlobStates.None, string prefix = null)
         public virtual async Task<Response<BlobContainerProperties>> GetBlobContainerPropertiesAsync(BlobContainerClient blobContainerClient)
         {
             if (BlobServiceClient == null)
@@ -88,7 +100,10 @@ namespace MCOM.Services
 
         public virtual AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient)
         {
-            return containerClient.GetBlobsAsync();
+            if (BlobServiceClient == null)
+                throw new Exception("BlobServiceClient has to be called first");
+
+            return containerClient.GetBlobsAsync(blobTraits, blobStates, prefix);
         }
 
         public virtual BlobClient GetBlobClient(BlobContainerClient containerClient, string blobName)

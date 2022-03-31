@@ -50,22 +50,7 @@
       "ProjectGuid": "fe3b5f7f-658d-45bf-877c-324b390cbc83",
       "DisplayName": "MCOM.Utilities",
       "ColorIndex": 8
-    },
-    "819b8c03-e2c6-40b4-a1c0-a865ce2d6d43": {
-      "ProjectGuid": "819b8c03-e2c6-40b4-a1c0-a865ce2d6d43",
-      "DisplayName": "MCOM.Business",
-      "ColorIndex": 9
-    },
-    "32707d34-29d2-4953-86a6-c8a5549686fe": {
-      "ProjectGuid": "32707d34-29d2-4953-86a6-c8a5549686fe",
-      "DisplayName": "MCOM.Business",
-      "ColorIndex": 10
-    },
-    "7a1a16aa-956d-49c2-8d60-100c0277880b": {
-      "ProjectGuid": "7a1a16aa-956d-49c2-8d60-100c0277880b",
-      "DisplayName": "MCOM.Extensions",
-      "ColorIndex": 11
     }
   },
-  "NextColorIndex": 12
+  "NextColorIndex": 9
 }
