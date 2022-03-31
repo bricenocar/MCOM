@@ -28,7 +28,7 @@ namespace MCOM.Archiving.Functions
         }
 
         [Function("PostFile")]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData req, FunctionContext context)
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", "put", Route = null)] HttpRequestData req, FunctionContext context)
         {
             var logger = context.GetLogger("PostFile");
 
