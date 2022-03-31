@@ -22,10 +22,11 @@ namespace MCOM.Tests
         public async Task When_The_Function_Runs_Ok()
         {
             // Mock return values
-            var queueItem = JsonConvert.SerializeObject(new
+            var queueItem = JsonConvert.SerializeObject(new QueueItem()
             {
                 ClientUrl = "https://test.com",
-                Item = new FeedbackItem() { DocumentId = $"DocumentId", DriveId = $"DriveId" }
+                Content = new FeedbackItem() { DocumentId = $"DocumentId", DriveId = $"DriveId" },
+                Source = "test"
             });
             var response = new HttpResponseMessage()
             {
@@ -87,10 +88,11 @@ namespace MCOM.Tests
             try
             {
                 // Mock return values
-                var queueItem = JsonConvert.SerializeObject(new // WE ARE SENDING HERE A WRONG OBJECT
+                var queueItem = JsonConvert.SerializeObject(new QueueItem() // WE ARE SENDING HERE A WRONG OBJECT
                 {
                     ClientUrl = "https://test.com",
-                    Item = new FeedbackItem() { DocumentId = "00000000-0000-0000-0000-000000000000", DriveId = "00000000-0000-0000-0000-000000000000" }
+                    Content = new FeedbackItem() { DocumentId = "00000000-0000-0000-0000-000000000000", DriveId = "00000000-0000-0000-0000-000000000000" },
+                    Source = "test"
                 });
                 var response = new HttpResponseMessage()
                 {
@@ -125,7 +127,8 @@ namespace MCOM.Tests
                 var queueItem = JsonConvert.SerializeObject(new QueueItem()
                 {
                     ClientUrl = "https://test.com",
-                    Content = new FeedbackItem() { DocumentId = "DocumentId", DriveId = "DriveId" }
+                    Content = new FeedbackItem() { DocumentId = "DocumentId", DriveId = "DriveId" },
+                    Source = "test"
                 });
                 var response = new HttpResponseMessage()
                 {
@@ -167,7 +170,7 @@ namespace MCOM.Tests
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
             var mockFunctionContext = new Mock<FunctionContext>();
-            mockFunctionContext.SetupProperty(c => c.InstanceServices, serviceProvider);            
+            mockFunctionContext.SetupProperty(c => c.InstanceServices, serviceProvider);
 
             return mockFunctionContext;
         }
@@ -189,8 +192,14 @@ namespace MCOM.Tests
             mockQueueService.Setup(x => x.PostFeedbackAsync(It.IsAny<QueueItem>())).ReturnsAsync(responseMessage);
 
             // Mock business service
+            var queueItem = new QueueItem()
+            {
+                ClientUrl = "https://test.com",
+                Content = new FeedbackItem() { DocumentId = "test", DriveId = "test" },
+                Source = "test"
+            };
             mockPostFeedBackBusiness.SetupAllProperties();
-            mockPostFeedBackBusiness.Setup(x => x.GetQueueItem(It.IsAny<QueueItem>())).Returns(new QueueItem());
+            mockPostFeedBackBusiness.Setup(x => x.GetQueueItem(It.IsAny<QueueItem>())).Returns(queueItem);
 
             return (mockQueueService, mockPostFeedBackBusiness);
         }

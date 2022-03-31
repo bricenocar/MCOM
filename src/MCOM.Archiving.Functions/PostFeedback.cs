@@ -48,7 +48,7 @@ namespace MCOM.Archiving.Functions
                     var queueObject = JsonConvert.DeserializeObject<QueueItem>(queueItem);
 
                     // Validate object
-                    if (queueObject.ClientUrl == null || queueObject.Content == null || queueItem.Source == null)
+                    if (queueObject.ClientUrl == null || queueObject.Content == null || queueObject.Source == null)
                     {
                         Global.Log.LogError(new NullReferenceException(), $"Error: Error when deserializing the object into a QueueItem");
                         throw new Exception("Error when deserializing the object into a QueueItem");

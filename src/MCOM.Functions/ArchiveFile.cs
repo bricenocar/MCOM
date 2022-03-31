@@ -49,7 +49,7 @@ namespace MCOM.Functions
             var fileData = JsonConvert.DeserializeObject<ArchiveFileData<string, object>>(data);
 
             // Validate input
-            fileData.ValidateInput();        
+            fileData.ValidateInput();
 
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "ArchiveFile", "Archiving"))
             {
@@ -66,7 +66,7 @@ namespace MCOM.Functions
                     var stream = await _blobService.OpenReadAsync(blobCLient);
 
                     // Get container metadata from properties
-                    var blobContainerProperties = await blobContainerClient.GetPropertiesAsync();
+                    var blobContainerProperties = await _blobService.GetBlobContainerPropertiesAsync(blobContainerClient);
                     var blobContainerMetadata = blobContainerProperties?.Value?.Metadata;
 
                     // Max slice size must be a multiple of 320 KiB
@@ -85,13 +85,19 @@ namespace MCOM.Functions
                                 Global.Log.LogInformation("Completed uploading {BlobFilePath} with id:{DocumentId} to location {SPPath} in drive: {DriveId}", fileData.BlobFilePath, fileData.DocumentId, uploadedItem.WebUrl, fileData.DriveID);
 
                                 await _graphService.SetMetadataAsync(fileData, uploadedItem);
-                                
+
+                                // Return QueueItem in case it is configured for the current source
                                 if (blobContainerProperties != null && blobContainerMetadata != null && blobContainerMetadata.Count > 0)
                                 {
-                                    if(blobContainerMetadata.TryGetValue("PostFeedBackClientUrl", out var cientUrl) &&
-                                       blobContainerMetadata.TryGetValue("PostFeedBackHeaders", out var strHeaders))
+                                    if (blobContainerMetadata.TryGetValue("PostFeedBackClientUrl", out var cientUrl))
                                     {
-                                        var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(strHeaders);
+                                        var headers = new Dictionary<string, string>();
+
+                                        if (blobContainerMetadata.TryGetValue("PostFeedBackHeaders", out var strHeaders))
+                                        {
+                                            headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(strHeaders);
+                                        }
+
                                         return new QueueItem()
                                         {
                                             Content = new FeedbackItem()
@@ -100,10 +106,10 @@ namespace MCOM.Functions
                                                 DocumentId = fileData.DocumentId
                                             },
                                             ClientUrl = cientUrl,
-                                            Headers = headers,
-                                            Source = fileData.Source
+                                            Source = fileData.Source,
+                                            Headers = headers
                                         };
-                                    }                                    
+                                    }
                                 }
                             }
                         }
@@ -123,13 +129,18 @@ namespace MCOM.Functions
                             await _graphService.SetMetadataAsync(fileData, uploadedItem);
                             Global.Log.LogInformation("Checking feedbackurl: {FeedBackUrl}", fileData.FeedBackUrl);
 
-                            // Return callback if it exists
+                            // Return QueueItem in case it is configured for the current source
                             if (blobContainerProperties != null && blobContainerMetadata != null && blobContainerMetadata.Count > 0)
                             {
-                                if (blobContainerMetadata.TryGetValue("PostFeedBackClientUrl", out var cientUrl) &&
-                                   blobContainerMetadata.TryGetValue("PostFeedBackHeaders", out var strHeaders))
+                                if (blobContainerMetadata.TryGetValue("PostFeedBackClientUrl", out var cientUrl))
                                 {
-                                    var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(strHeaders);
+                                    var headers = new Dictionary<string, string>();
+
+                                    if (blobContainerMetadata.TryGetValue("PostFeedBackHeaders", out var strHeaders))
+                                    {
+                                        headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(strHeaders);
+                                    }
+
                                     return new QueueItem()
                                     {
                                         Content = new FeedbackItem()
@@ -138,6 +149,7 @@ namespace MCOM.Functions
                                             DocumentId = fileData.DocumentId
                                         },
                                         ClientUrl = cientUrl,
+                                        Source = fileData.Source,
                                         Headers = headers
                                     };
                                 }

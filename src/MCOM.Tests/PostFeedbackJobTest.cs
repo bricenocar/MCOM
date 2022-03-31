@@ -115,8 +115,8 @@ namespace MCOM.Tests
                 var queueItem = JsonConvert.SerializeObject(new // WE ARE SENDING HERE A WRONG OBJECT
                 {
                     ClientUrl = "https://test.com",
-                    Content = "test", 
-                    Item = new FeedbackItem() { DocumentId = "00000000-0000-0000-0000-000000000000", DriveId = "00000000-0000-0000-0000-000000000000" }
+                    Content = new FeedbackItem() { DocumentId = "00000000-0000-0000-0000-000000000000", DriveId = "00000000-0000-0000-0000-000000000000" }, 
+                    Source = "test"
                 });
                 var messages = new List<CloudQueueMessage>()
                 {
@@ -155,7 +155,8 @@ namespace MCOM.Tests
                 var queueItem = JsonConvert.SerializeObject(new QueueItem()
                 {
                     ClientUrl = "https://test.com",
-                    Content = new FeedbackItem() { DocumentId = "DocumentId", DriveId = "DriveId" }
+                    Content = new FeedbackItem() { DocumentId = "DocumentId", DriveId = "DriveId" },
+                    Source = "test"
                 });
                 var messages = new List<CloudQueueMessage>()
                 {
