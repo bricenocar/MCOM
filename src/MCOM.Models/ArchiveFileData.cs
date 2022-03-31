@@ -13,6 +13,7 @@ namespace MCOM.Models
         public string DocumentId { get; set; }
         public string DocumentIdField { get; set; }
         public string FeedBackUrl { get; set; }
+        public string FeedBackAuthorization { get; set; }
         public bool UseCSOM { get; set; }
         public bool SetMetadata { get; set; }
         
@@ -55,6 +56,9 @@ namespace MCOM.Models
                     //    break;
                     case "feedbackurl":
                         FeedBackUrl = pair.Value.ToString();
+                        break;
+                    case "feedbackauthorization":
+                        FeedBackAuthorization = pair.Value.ToString();
                         break;
                     case "documentidfield":
                         DocumentIdField = pair.Value.ToString();

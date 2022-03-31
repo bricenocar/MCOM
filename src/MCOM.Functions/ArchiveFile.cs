@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using Microsoft.Azure.WebJobs;
 using Newtonsoft.Json;
 using MCOM.Models;
 using MCOM.Services;
@@ -62,7 +62,12 @@ namespace MCOM.Functions
 
                     // Get file from staging area
                     var blobCLient = _blobService.GetBlobClient(fileUri);
+                    var blobContainerClient = _blobService.GetBlobContainerClient(blobCLient.BlobContainerName);
                     var stream = await _blobService.OpenReadAsync(blobCLient);
+
+                    // Get container metadata from properties
+                    var blobContainerProperties = await blobContainerClient.GetPropertiesAsync();
+                    var blobContainerMetadata = blobContainerProperties?.Value?.Metadata;
 
                     // Max slice size must be a multiple of 320 KiB
                     var maxSliceSize = 320 * 1024;
@@ -80,20 +85,25 @@ namespace MCOM.Functions
                                 Global.Log.LogInformation("Completed uploading {BlobFilePath} with id:{DocumentId} to location {SPPath} in drive: {DriveId}", fileData.BlobFilePath, fileData.DocumentId, uploadedItem.WebUrl, fileData.DriveID);
 
                                 await _graphService.SetMetadataAsync(fileData, uploadedItem);
-                                Global.Log.LogInformation("Checking feedbackurl: {FeedBackUrl}", fileData.FeedBackUrl);
-
-                                // Return callback if it exists
-                                if (!string.IsNullOrEmpty(fileData.FeedBackUrl))
+                                
+                                if (blobContainerProperties != null && blobContainerMetadata != null && blobContainerMetadata.Count > 0)
                                 {
-                                    return new QueueItem()
+                                    if(blobContainerMetadata.TryGetValue("PostFeedBackClientUrl", out var cientUrl) &&
+                                       blobContainerMetadata.TryGetValue("PostFeedBackHeaders", out var strHeaders))
                                     {
-                                        Item = new FeedbackItem()
+                                        var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(strHeaders);
+                                        return new QueueItem()
                                         {
-                                            DriveId = fileData.DriveID,
-                                            DocumentId = fileData.DocumentId
-                                        },
-                                        ResponseUrl = fileData.FeedBackUrl
-                                    };
+                                            Content = new FeedbackItem()
+                                            {
+                                                DriveId = fileData.DriveID,
+                                                DocumentId = fileData.DocumentId
+                                            },
+                                            ClientUrl = cientUrl,
+                                            Headers = headers,
+                                            Source = fileData.Source
+                                        };
+                                    }                                    
                                 }
                             }
                         }
@@ -112,20 +122,26 @@ namespace MCOM.Functions
 
                             await _graphService.SetMetadataAsync(fileData, uploadedItem);
                             Global.Log.LogInformation("Checking feedbackurl: {FeedBackUrl}", fileData.FeedBackUrl);
-                            // Return callback if it exists
-                            if (!string.IsNullOrEmpty(fileData.FeedBackUrl))
-                            {
-                                return new QueueItem()
-                                {
-                                    Item = new FeedbackItem()
-                                    {
-                                        DriveId = fileData.DriveID,
-                                        DocumentId = fileData.DocumentId
-                                    },
-                                    ResponseUrl = fileData.FeedBackUrl
-                                };
-                            }
 
+                            // Return callback if it exists
+                            if (blobContainerProperties != null && blobContainerMetadata != null && blobContainerMetadata.Count > 0)
+                            {
+                                if (blobContainerMetadata.TryGetValue("PostFeedBackClientUrl", out var cientUrl) &&
+                                   blobContainerMetadata.TryGetValue("PostFeedBackHeaders", out var strHeaders))
+                                {
+                                    var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(strHeaders);
+                                    return new QueueItem()
+                                    {
+                                        Content = new FeedbackItem()
+                                        {
+                                            DriveId = fileData.DriveID,
+                                            DocumentId = fileData.DocumentId
+                                        },
+                                        ClientUrl = cientUrl,
+                                        Headers = headers
+                                    };
+                                }
+                            }
                         }
                         catch (Exception uploadSmallFileEx)
                         {

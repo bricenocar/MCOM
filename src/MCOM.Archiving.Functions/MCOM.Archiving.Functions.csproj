@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.20.0" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MCOM.Business\MCOM.Business.csproj" />
     <ProjectReference Include="..\MCOM.Services\MCOM.Services.csproj" />
   </ItemGroup>
   <ItemGroup>

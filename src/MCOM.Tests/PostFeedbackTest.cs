@@ -10,6 +10,7 @@ using Xunit;
 using MCOM.Models;
 using MCOM.Archiving.Functions;
 using MCOM.Services;
+using MCOM.Business.PostFeedBack;
 
 namespace MCOM.Tests
 {
@@ -23,7 +24,7 @@ namespace MCOM.Tests
             // Mock return values
             var queueItem = JsonConvert.SerializeObject(new
             {
-                ResponseUrl = "https://test.com",
+                ClientUrl = "https://test.com",
                 Item = new FeedbackItem() { DocumentId = $"DocumentId", DriveId = $"DriveId" }
             });
             var response = new HttpResponseMessage()
@@ -36,10 +37,10 @@ namespace MCOM.Tests
             var mockFunctionContext = GetFunctionParams();
 
             // Getting mock config variables
-            var mockQueueService = MockConfiguration(response);
+            var (mockQueueService, mockBusinessService) = MockConfiguration(response);
 
             // Build azure function
-            var postFeedback = new PostFeedback(mockQueueService.Object);
+            var postFeedback = new PostFeedback(mockQueueService.Object, mockBusinessService.Object);
 
             // Run function
             await postFeedback.RunAsync(queueItem, mockFunctionContext.Object);
@@ -66,10 +67,10 @@ namespace MCOM.Tests
                 var mockFunctionContext = GetFunctionParams();
 
                 // Getting mock config variables
-                var mockQueueService = MockConfiguration(response);
+                var (mockQueueService, mockBusinessService) = MockConfiguration(response);
 
                 // Build azure function
-                var postFeedback = new PostFeedback(mockQueueService.Object);
+                var postFeedback = new PostFeedback(mockQueueService.Object, mockBusinessService.Object);
 
                 // Run function
                 await postFeedback.RunAsync(queueItem, mockFunctionContext.Object);
@@ -88,7 +89,7 @@ namespace MCOM.Tests
                 // Mock return values
                 var queueItem = JsonConvert.SerializeObject(new // WE ARE SENDING HERE A WRONG OBJECT
                 {
-                    ResponseUrl = "https://test.com",
+                    ClientUrl = "https://test.com",
                     Item = new FeedbackItem() { DocumentId = "00000000-0000-0000-0000-000000000000", DriveId = "00000000-0000-0000-0000-000000000000" }
                 });
                 var response = new HttpResponseMessage()
@@ -101,10 +102,10 @@ namespace MCOM.Tests
                 var mockFunctionContext = GetFunctionParams();
 
                 // Getting mock config variables
-                var mockQueueService = MockConfiguration(response);
+                var (mockQueueService, mockBusinessService) = MockConfiguration(response);
 
                 // Build azure function
-                var postFeedback = new PostFeedback(mockQueueService.Object);
+                var postFeedback = new PostFeedback(mockQueueService.Object, mockBusinessService.Object);
 
                 // Run function
                 await postFeedback.RunAsync(queueItem, mockFunctionContext.Object);
@@ -123,8 +124,8 @@ namespace MCOM.Tests
                 // Mock return values
                 var queueItem = JsonConvert.SerializeObject(new QueueItem()
                 {
-                    ResponseUrl = "https://test.com",
-                    Item = new FeedbackItem() { DocumentId = "DocumentId", DriveId = "DriveId" }
+                    ClientUrl = "https://test.com",
+                    Content = new FeedbackItem() { DocumentId = "DocumentId", DriveId = "DriveId" }
                 });
                 var response = new HttpResponseMessage()
                 {
@@ -136,10 +137,10 @@ namespace MCOM.Tests
                 var mockFunctionContext = GetFunctionParams();
 
                 // Getting mock config variables
-                var mockQueueService = MockConfiguration(response);
+                var (mockQueueService, mockBusinessService) = MockConfiguration(response);
 
                 // Build azure function
-                var postFeedback = new PostFeedback(mockQueueService.Object);
+                var postFeedback = new PostFeedback(mockQueueService.Object, mockBusinessService.Object);
 
                 // Run function
                 await postFeedback.RunAsync(queueItem, mockFunctionContext.Object);
@@ -177,16 +178,21 @@ namespace MCOM.Tests
         /// <param name="messages"></param>
         /// <param name="responseMessage"></param>
         /// <returns></returns>
-        private static Mock<IQueueService> MockConfiguration(HttpResponseMessage responseMessage)
+        private static (Mock<IQueueService>, Mock<IPostFeedBackBusiness>) MockConfiguration(HttpResponseMessage responseMessage)
         {
             // Mock variables
             var mockQueueService = new Mock<IQueueService>();
+            var mockPostFeedBackBusiness = new Mock<IPostFeedBackBusiness>();
 
-            // Mock configuration
+            // Mock queue service
             mockQueueService.SetupAllProperties();
             mockQueueService.Setup(x => x.PostFeedbackAsync(It.IsAny<QueueItem>())).ReturnsAsync(responseMessage);
 
-            return mockQueueService;
+            // Mock business service
+            mockPostFeedBackBusiness.SetupAllProperties();
+            mockPostFeedBackBusiness.Setup(x => x.GetQueueItem(It.IsAny<QueueItem>())).Returns(new QueueItem());
+
+            return (mockQueueService, mockPostFeedBackBusiness);
         }
 
         #endregion

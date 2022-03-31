@@ -50,8 +50,8 @@ namespace MCOM.Tests
             // Build test item to compare against function response
             var testFeedBackItem = new QueueItem()
             {
-                ResponseUrl = "https://test.com",
-                Item = new FeedbackItem() { DocumentId = "test", DriveId = "test" }
+                ClientUrl = "https://test.com",
+                Content = new FeedbackItem() { DocumentId = "test", DriveId = "test" }
             };
 
             // Convert to Json to compare objects

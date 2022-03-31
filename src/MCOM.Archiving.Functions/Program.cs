@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MCOM.Services;
+using MCOM.Business.PostFeedBack;
 
 namespace MCOM.Archiving.Functions
 {
@@ -18,6 +19,7 @@ namespace MCOM.Archiving.Functions
                     s.AddScoped<IAppInsightsService, AppInsightsService>();
                     s.AddScoped<ISharePointService, SharePointService>();
                     s.AddScoped<IAzureService, AzureService>();
+                    s.AddScoped<IPostFeedBackBusiness, PostFeedBackBusiness>();
                 })
                 .ConfigureLogging((context, builder) =>
                 {
