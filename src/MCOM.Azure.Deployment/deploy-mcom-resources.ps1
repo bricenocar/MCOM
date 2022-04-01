@@ -75,7 +75,7 @@ $apimName = "apim-mcom-$Environment"
 if ($Environment -eq "prod") {
     $SharePointUrlDCF = "https://statoilsrm.sharepoint.com/sites/LRMArchiveDCF"
     $SharePointUrlEDI = "https://statoilsrm.sharepoint.com/sites/LRMArchiveEDIBank"
-    $SharePointUrlGAS = "https://statoilsrm.sharepoint.com/sites/LRMArchiveGasOps"
+    $SharePointUrlGAS = "https://statoilsrm.sharepoint.com/sites/LRMArchiveGasOpsEU"
 } else {
     $SharePointUrlDCF = "https://statoilintegrationtest.sharepoint.com/sites/EIMDCFArchive"
     $SharePointUrlEDI = "https://statoilintegrationtest.sharepoint.com/sites/EIMedibankArchive"
