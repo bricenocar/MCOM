@@ -119,7 +119,7 @@ namespace MCOM.Functions
                             });
 
                             // ERROR, the file does exist in SharePoint but is missing Metadata
-                            Global.Log.LogCritical("The blob {BlobName} is missing driveId {DriveId} or DocumentId {DocumentId} or Source {Source}", outputBlobName, fileData.DriveID, fileData.DocumentId, fileData.Source);
+                            Global.Log.LogCritical(new NullReferenceException(), "The blob {BlobName} is missing driveId {DriveId} or DocumentId {DocumentId} or Source {Source}", outputBlobName, fileData.DriveID, fileData.DocumentId, fileData.Source);
                             continue;
                         }
 
@@ -352,12 +352,11 @@ namespace MCOM.Functions
                                     // Convert data
                                     var metadataProcessedFileData = JObject.Parse(metadataProcessedData);
 
-                                    // Get Source
-                                    var source = metadataProcessedFileData.TryGetValue("Source", out var jSource);
+                                    // Get Source;
 
-                                    if (string.IsNullOrEmpty(jSource?.ToString()))
+                                    if (!metadataProcessedFileData.TryGetValue("Source", out var jSource))
                                     {
-                                        Global.Log.LogError(new NullReferenceException(), $"The file {blobName} is missing the Source parameter");
+                                        Global.Log.LogWarning($"The file {blobName} is missing the Source parameter");
                                         _logList.Add(new FakeLog()
                                         {
                                             Message = $"The file {blobName} is missing the Source parameter",
@@ -366,11 +365,16 @@ namespace MCOM.Functions
                                     }
                                     else
                                     {
+                                        // Get source from file properties
+                                        var source = jSource?.ToString();
+
                                         // Remove sub folders from blob name
                                         var strippedBlobName = blobName.Split('/')[1];
 
                                         // Url to copy data to
                                         var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{source}/metadata/{strippedBlobName}");
+
+                                        Global.Log.LogInformation("Uri if blob to be uploaded ${metadataUri}. BlobName: {BlobName}", metadataUri, strippedBlobName);
 
                                         // Get blob client and copy file
                                         var blobMetadataClient = _blobService.GetBlobClient(metadataUri);
