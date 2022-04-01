@@ -49,10 +49,10 @@ namespace MCOM.Models
                     case "documentid":
                         DocumentId =pair.Value.ToString();
                         break;
-                    //case "lrmhpecmrecordid": // Workaround for issue in ADF
-                    //    DocumentId = pair.Value.ToString();
-                    //    FileMetadata.Add(pair.Key, pair.Value.ToString());
-                    //    break;
+                    case "lrmhpecmrecordid": // Workaround for issue in ADF
+                        DocumentId = pair.Value.ToString();
+                        FileMetadata.Add(pair.Key, pair.Value.ToString());
+                        break;
                     case "feedbackurl":
                         FeedBackUrl = pair.Value.ToString();
                         break;
