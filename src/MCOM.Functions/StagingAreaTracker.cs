@@ -370,7 +370,7 @@ namespace MCOM.Functions
                                         var strippedBlobName = blobName.Split('/')[1];
 
                                         // Url to copy data to
-                                        var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{source}/metadata/{strippedBlobName}.json");
+                                        var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{source}/metadata/{strippedBlobName}");
 
                                         // Get blob client and copy file
                                         var blobMetadataClient = _blobService.GetBlobClient(metadataUri);
