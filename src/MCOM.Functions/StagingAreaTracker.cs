@@ -179,6 +179,7 @@ namespace MCOM.Functions
                                 {
                                     // Upload the file
                                     var uploadResult = await _graphService.UploadFileAsync(fileData.DriveID, fileData.FileName, filesBlobStream, maxSliceSize, fileData.BlobFilePath);
+
                                     if (uploadResult.UploadSucceeded)
                                     {
                                         var uploadedItem = uploadResult.ItemResponse;
@@ -187,9 +188,13 @@ namespace MCOM.Functions
                                         await _graphService.SetMetadataAsync(fileData, uploadedItem);
                                     }
                                 }
-                                catch (Exception uploadLargeFileEx)
+                                catch (Microsoft.Graph.ServiceException ex)
                                 {
-                                    Global.Log.LogCritical(uploadLargeFileEx, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadLargeFileEx.Message);
+                                    Global.Log.LogWarning(ex.Message);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, ex.Message);
                                     continue;
                                 }
 
@@ -331,7 +336,7 @@ namespace MCOM.Functions
                                                       Azure.Storage.Blobs.Models.BlobStates.None,
                                                       "metadataprocessed/").AsPages();
                 // Loop through all pages and find blobs
-                await foreach(var blobPage in blobPages)
+                await foreach (var blobPage in blobPages)
                 {
                     foreach (var blobItem in blobPage.Values)
                     {
