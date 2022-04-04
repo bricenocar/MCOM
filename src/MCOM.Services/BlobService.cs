@@ -25,6 +25,7 @@ namespace MCOM.Services
         Task<Stream> OpenReadAsync(BlobClient blobClient);
         Task<bool> BlobClientExistsAsync(BlobClient blobClient);
         Task<bool> DeleteBlobClientIfExistsAsync(BlobClient blobClient);
+        Task<Response<BlobContainerProperties>> GetBlobContainerPropertiesAsync(BlobContainerClient blobContainerClient);
     }
 
     public class BlobService : IBlobService
@@ -85,6 +86,14 @@ namespace MCOM.Services
                 throw new Exception("BlobServiceClient has to be called first");
 
             return BlobServiceClient.GetBlobContainersAsync();
+        }
+
+        public virtual async Task<Response<BlobContainerProperties>> GetBlobContainerPropertiesAsync(BlobContainerClient blobContainerClient)
+        {
+            if (BlobServiceClient == null)
+                throw new Exception("BlobServiceClient has to be called first");
+
+            return await blobContainerClient.GetPropertiesAsync();
         }
 
         public virtual AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient, BlobTraits blobTraits = BlobTraits.None, BlobStates blobStates = BlobStates.None, string prefix = null)
