@@ -63,6 +63,13 @@
         "description": "Name for storage account"
       }
     },
+    "exchangecontainer": {
+      "type": "string",
+      "defaultValue": "exchange",
+      "metadata": {
+        "description": "Name for storage account"
+      }
+    },
     "scanrequestscontainer" : {
       "type": "string",
       "defaultValue": "scanrequests",
@@ -161,6 +168,15 @@
           "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
           "apiVersion": "2019-06-01",
           "name": "[concat(variables('stagingareaStorageAccountName'), '/default/', parameters('gomcontainer'))]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('stagingareaStorageAccountName'), 'default')]",
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName'))]"
+          ]
+        },        
+        {
+          "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+          "apiVersion": "2019-06-01",
+          "name": "[concat(variables('stagingareaStorageAccountName'), '/default/', parameters('exchangecontainer'))]",
           "dependsOn": [
             "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('stagingareaStorageAccountName'), 'default')]",
             "[resourceId('Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName'))]"

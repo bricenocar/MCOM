@@ -385,6 +385,45 @@
             ]
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/exchange_metadata_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "folderPath": "metadata",
+                        "container": "exchange"
+                    }
+                },
+                "schema": {}
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/exchange_output_metadata_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "container": "output"
+                    }
+                },
+                "schema": {}
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/mcom_governance_scanrequests')]",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -1296,6 +1335,130 @@
             ]
         },
         {
+            "name": "Exchange Pipeline",            
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Process Exchange data",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [
+                            {
+                                "activity": "SetLibraryId",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "1.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "ProcessEdiBankData",
+                                "type": "DataFlowReference",
+                                "parameters": {
+                                    "SharePointSiteUrl": {
+                                        "value": "'@{variables('SharePointSiteUrl')}'",
+                                        "type": "Expression"
+                                    },
+                                    "TempFileLocation": {
+                                        "value": "'@{'exchange/files/'}'",
+                                        "type": "Expression"
+                                    },
+                                    "LibraryId": {
+                                        "value": "'@{variables('LibraryId')}'",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "integrationRuntime": {
+                                "referenceName": "ExchangeIR",
+                                "type": "IntegrationRuntimeReference"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    },
+                    {
+                        "name": "GetDestinationLibraryId",
+                        "type": "AzureFunctionActivity",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "functionName": "GetDriveId",
+                            "method": "POST",
+                            "body": {
+                                "value": "@concat('{\"siteUrl\":\"',variables('SharePointSiteUrl'), '\",\"libraryName\":\"', formatDateTime(utcnow(), 'yyyy'), '\"}')",
+                                "type": "Expression"
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "MCOMFunctions",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "SetLibraryId",
+                        "type": "SetVariable",
+                        "dependsOn": [
+                            {
+                                "activity": "GetDestinationLibraryId",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "variableName": "LibraryId",
+                            "value": {
+                                "value": "@activity('GetDestinationLibraryId').output.DriveId",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ],
+                "parameters": {
+                    "SourceContainer": {
+                        "type": "string"
+                    }
+                },
+                "variables": {
+                    "SharePointSiteUrl": {
+                        "type": "String",
+                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMExchangeOnlineArchive"
+                    },
+                    "LibraryName": {
+                        "type": "String",
+                        "defaultValue": "Documents"
+                    },
+                    "LibraryId": {
+                        "type": "String"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2022-03-30T08:33:47Z"
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/dataflows/ProcessExchangeData')]",
+                "[concat(variables('factoryId'), '/integrationRuntimes/ExchangeIR')]"
+            ]
+        },        
+        {
             "name": "[concat(variables('dataFactoryName'), '/ProcessDCFdata')]",
             "type": "Microsoft.DataFactory/factories/dataflows",
             "apiVersion": "2018-06-01",
@@ -1558,6 +1721,52 @@
             ]
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/ProcessExchangeData')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "exchange_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "name": "exchangefilesource"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "edibank_output_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "name": "exchangefiledestination"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "DataTransformation"
+                        },
+                        {
+                            "name": "DynamicFetchData",
+                            "description": "Creates an explicit mapping for each drifted column"
+                        },
+                        {
+                            "name": "SharePointFieldMappings"
+                        }
+                    ],
+                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tLibraryId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\tdocumentForm: 'singleDocument') ~> exchangefilesource\nSharePointFieldMappings derive(each(match(instr(name,'date')>0), $$ = toString(toDate(toString($$), 'yyyy-MM-dd'), 'MM/dd/yyyy HH:mm:ss')),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tDestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tFilename = concat(LRMHPECMRecordID,'_',Filename),\n\t\tdriveid = $LibraryId,\n\t\tTitle = Filename,\n\t\tdocumentIdField = 'LRMHPECMRecordID',\n\t\tdocumentId = LRMHPECMRecordID) ~> DataTransformation\nexchangefilesource derive(Filename = toString(byName('Filename')),\n\t\tSource = toString(byName('Source')),\n\t\tfrom = toString(byName('From')),\n\t\tto = toString(byName('To')),\n\t\tdate = toString(byName('Date')),\n\t\tsubject = toString(byName('Subject')),\n\t\tmessageId = toString(byName('MsgId')),\n\t\tdocumentId = toString(byName('documentId'))) ~> DynamicFetchData\nDynamicFetchData select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFrom = from,\n\t\tLRMTo = to,\n\t\tLRMMessageDate = date,\n\t\tLRMSubject = subject,\n\t\tLRMMessageId = messageId\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SharePointFieldMappings\nDataTransformation sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> exchangefiledestination"
+                }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/datasets/exchange_metadata_dataset')]",
+                "[concat(variables('factoryId'), '/datasets/exchange_output_metadata_dataset')]"
+            ]
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/MCOMIntegrationRuntime')]",
             "type": "Microsoft.DataFactory/factories/integrationRuntimes",
             "apiVersion": "2018-06-01",
@@ -1645,6 +1854,25 @@
                         "dataFlowProperties": {
                             "computeType": "General",
                             "coreCount": 16,
+                            "timeToLive": 10,
+                            "cleanup": false
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/ExchangeIR')]",
+            "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "Managed",
+                "typeProperties": {
+                    "computeProperties": {
+                        "location": "AutoResolve",
+                        "dataFlowProperties": {
+                            "computeType": "General",
+                            "coreCount": 8,
                             "timeToLive": 10,
                             "cleanup": false
                         }
