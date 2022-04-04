@@ -70,7 +70,7 @@
         "description": "Name for storage account"
       }
     },
-    "scanrequestscontainer" : {
+    "scanrequestscontainer": {
       "type": "string",
       "defaultValue": "scanrequests",
       "metadata": {
@@ -141,6 +141,12 @@
           "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
           "apiVersion": "2019-06-01",
           "name": "[concat(variables('stagingareaStorageAccountName'), '/default/', parameters('dcfcontainer'))]",
+          "properties": {
+            "metadata": [
+              {"postfeedbackclienturl" : "https://api-dev.gateway.equinor.com/dcfliquidsrouter/v1/sharepointDriveId"},
+              {"postfeedbackheaders" : "{\"Authentication\": \"sharepointUser:veryscarymonsters\"}"}
+            ]
+          },
           "dependsOn": [
             "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('stagingareaStorageAccountName'), 'default')]",
             "[resourceId('Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName'))]"
@@ -172,7 +178,7 @@
             "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('stagingareaStorageAccountName'), 'default')]",
             "[resourceId('Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName'))]"
           ]
-        },        
+        },
         {
           "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
           "apiVersion": "2019-06-01",
@@ -267,8 +273,7 @@
           "properties": {
             "metadata": {}
           }
-        }
-        ,
+        },
         {
           "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
           "apiVersion": "2021-04-01",
@@ -329,8 +334,7 @@
           "properties": {
             "metadata": {}
           }
-        }
-        ,
+        },
         {
           "type": "Microsoft.Storage/storageAccounts/queueServices/queues",
           "apiVersion": "2021-04-01",
