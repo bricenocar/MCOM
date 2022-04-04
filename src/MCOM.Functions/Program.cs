@@ -20,7 +20,7 @@ namespace MCOM.Functions
                     s.AddScoped<IBlobService, BlobService>();
                     s.AddScoped<IAppInsightsService, AppInsightsService>();
                     s.AddScoped<ISharePointService, SharePointService>();
-                    s.AddScoped<IAzureService, AzureService>();
+                    s.AddScoped<IAzureService, AzureService>();                    
                 })
                 .ConfigureLogging((context, builder) =>
                 {

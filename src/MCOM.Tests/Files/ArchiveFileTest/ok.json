@@ -5,7 +5,6 @@
   "blobFilePath": "test",
   "driveID": "test",
   "documentId": "test",
-  "feedBackUrl": "https://test.com",
   "useCSOM": true,
   "setMetadata": true
 }

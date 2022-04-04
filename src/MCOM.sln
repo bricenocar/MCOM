@@ -19,7 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Services", "MCOM.Servi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Extensions", "MCOM.Extensions\MCOM.Extensions.csproj", "{7A1A16AA-956D-49C2-8D60-100C0277880B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCOM.ScanOnDemand.Functions", "MCOM.ScanOnDemand.Functions\MCOM.ScanOnDemand.Functions.csproj", "{98D32A89-506D-40A2-BB35-E7BFC03ED003}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.ScanOnDemand.Functions", "MCOM.ScanOnDemand.Functions\MCOM.ScanOnDemand.Functions.csproj", "{98D32A89-506D-40A2-BB35-E7BFC03ED003}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Business", "MCOM.Business\MCOM.Business.csproj", "{32707D34-29D2-4953-86A6-C8A5549686FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{98D32A89-506D-40A2-BB35-E7BFC03ED003}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98D32A89-506D-40A2-BB35-E7BFC03ED003}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98D32A89-506D-40A2-BB35-E7BFC03ED003}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32707D34-29D2-4953-86A6-C8A5549686FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32707D34-29D2-4953-86A6-C8A5549686FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32707D34-29D2-4953-86A6-C8A5549686FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32707D34-29D2-4953-86A6-C8A5549686FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
