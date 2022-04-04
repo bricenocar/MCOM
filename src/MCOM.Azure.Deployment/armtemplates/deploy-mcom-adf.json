@@ -1335,7 +1335,7 @@
             ]
         },
         {
-            "name": "Exchange Pipeline",            
+            "name": "[concat(variables('dataFactoryName'), '/Exchange Pipeline')]",
             "type": "Microsoft.DataFactory/factories/pipelines",
             "apiVersion": "2018-06-01",
             "properties": {
