@@ -143,8 +143,8 @@
           "name": "[concat(variables('stagingareaStorageAccountName'), '/default/', parameters('dcfcontainer'))]",
           "properties": {
             "metadata": [
-              {"postfeedbackclienturl" : "https://api-dev.gateway.equinor.com/dcfliquidsrouter/v1/sharepointDriveId"},
-              {"postfeedbackheaders" : "{\"Authentication\": \"sharepointUser:veryscarymonsters\"}"}
+              {"postfeedbackclienturl" : "https://api-test.gateway.equinor.com/dcfliquidsrouter/v1/sharepointDriveId"},
+              {"postfeedbackheaders" : ""}
             ]
           },
           "dependsOn": [
