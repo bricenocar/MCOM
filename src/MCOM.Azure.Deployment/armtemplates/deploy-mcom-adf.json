@@ -1725,7 +1725,7 @@
                     "sinks": [
                         {
                             "dataset": {
-                                "referenceName": "edibank_output_metadata_dataset",
+                                "referenceName": "exchange_output_metadata_dataset",
                                 "type": "DatasetReference"
                             },
                             "name": "exchangefiledestination"
