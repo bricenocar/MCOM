@@ -46,9 +46,9 @@
       "DisplayName": "MCOM.Services",
       "ColorIndex": 7
     },
-    "46241d93-38ae-4d38-91cc-feb1013af218": {
-      "ProjectGuid": "46241d93-38ae-4d38-91cc-feb1013af218",
-      "DisplayName": "MCOM.ScanOnDemand.UI",
+    "fe3b5f7f-658d-45bf-877c-324b390cbc83": {
+      "ProjectGuid": "fe3b5f7f-658d-45bf-877c-324b390cbc83",
+      "DisplayName": "MCOM.Utilities",
       "ColorIndex": 8
     }
   },

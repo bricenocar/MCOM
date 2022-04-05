@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,8 +52,10 @@ namespace MCOM.Tests
             // Build test item to compare against function response
             var testFeedBackItem = new QueueItem()
             {
-                ResponseUrl = "https://test.com",
-                Item = new FeedbackItem() { DocumentId = "test", DriveId = "test" }
+                ClientUrl = "https://test.com",
+                Content = new FeedbackItem() { DocumentId = "test", DriveId = "test" },
+                Source = "test",
+                Headers = new Dictionary<string, string>() { { "Authorization", "test"} }
             };
 
             // Convert to Json to compare objects
@@ -111,11 +115,20 @@ namespace MCOM.Tests
             var mockBlobService = new Mock<BlobService>();
             var mockBlobClient = new Mock<BlobClient>(new Uri("https://test.com"), new BlobClientOptions());
             var mockBlobServiceClient = new Mock<BlobServiceClient>("UseDevelopmentStorage=true");
+            var mockBlobContainerProperties = new Mock<Azure.Response<BlobContainerProperties>>();
+            var containerMetadata = new Dictionary<string, string>()
+            {
+                {"PostFeedBackClientUrl", "https://test.com" },
+                {"PostFeedBackHeaders", "{\"Authorization\": \"test\"}" }
+            };
+            var blobContainerProperties = BlobsModelFactory.BlobContainerProperties(new DateTimeOffset(), new Azure.ETag(), null, null, null, null, null, null, null, null, null, containerMetadata);
+            var blobContainerPropertiesResponse = Azure.Response.FromValue(blobContainerProperties, Mock.Of<Azure.Response>());
             var stream = System.IO.File.OpenRead(filePath);
             mockBlobService.SetupAllProperties();
             mockBlobService.Object.BlobServiceClient = mockBlobServiceClient.Object;
             mockBlobService.Setup(b => b.GetBlobClient(It.IsAny<Uri>())).Returns(mockBlobClient.Object);
             mockBlobService.Setup(b => b.OpenReadAsync(It.IsAny<BlobClient>())).ReturnsAsync(stream);
+            mockBlobService.Setup(b => b.GetBlobContainerPropertiesAsync(It.IsAny<BlobContainerClient>())).ReturnsAsync(blobContainerPropertiesResponse);
 
             var mockGraphService = new Mock<GraphService>();
             var mockGraphServiceClient = new Mock<GraphServiceClient>(new HttpClient(), "https://test.com");
@@ -127,7 +140,7 @@ namespace MCOM.Tests
             {
                 ItemResponse = driveItem
             };
-            
+
             mockGraphService.Setup(g => g.UploadDriveItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>())).ReturnsAsync(driveItem);
             mockGraphService.Setup(g => g.SetMetadataAsync(It.IsAny<ArchiveFileData<string, object>>(), It.IsAny<DriveItem>()));
             mockGraphService.Setup(g => g.UploadFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(result);

@@ -9,7 +9,7 @@ namespace MCOM.Services
 {
     public interface IQueueService
     {
-        Task<HttpResponseMessage> PostFeedbackAsync(QueueItem queueMessage);
+        Task<HttpResponseMessage> PostFeedbackAsync(QueueItem queueItem);
         CloudQueue GetCloudQueue(string connString, string queueName);
     }
 
@@ -27,9 +27,9 @@ namespace MCOM.Services
             return queueClient.GetQueueReference(queueName);
         }
 
-        public virtual async Task<HttpResponseMessage> PostFeedbackAsync(QueueItem queueMessage)
+        public virtual async Task<HttpResponseMessage> PostFeedbackAsync(QueueItem queueItem)
         {
-            return await HttpClientUtilities.PostFeedbackAsync(queueMessage.ResponseUrl, queueMessage.Item);
+            return await HttpClientUtilities.PostAsync(queueItem.ClientUrl, queueItem.Content, queueItem.Headers);
         }
     }
 }

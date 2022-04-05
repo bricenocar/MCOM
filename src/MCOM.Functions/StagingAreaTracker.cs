@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Search.Query;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using MCOM.Models;
 using MCOM.Services;
 using MCOM.Utilities;
@@ -72,11 +74,14 @@ namespace MCOM.Functions
             }
         }
 
+        /* LOGIC:
+            This logic will check whether the files in output container were copied into SharePoint without any issues.
+            After this check, if the file has been copied successfully it will be deleted from: metadata, metadataprocess and output
+            If the file does not exist in SharePoint then it will be provisioned again into SharePoint, so in the next run it should be found
+            in SharePoint so they will be deleted from all previously mentioned containers.
+        */
         /// <summary>
-        /// This logic will check whether the files in output container were copied into SharePoint without any issues.
-        /// After this check, if the file has been copied successfully it will be deleted from: metadata, metadataprocess and output
-        /// If the file does not exist in SharePoint then it will be provisioned again into SharePoint, so in the next run it should be found
-        /// in SharePoint so they will be deleted from all previously mentioned containers.
+        /// Logic to process output, metadata and metadataprocessed by tracking SharePoint
         /// </summary>
         /// <returns></returns>
         private async Task OutputTrackerAsync()
@@ -114,7 +119,7 @@ namespace MCOM.Functions
                             });
 
                             // ERROR, the file does exist in SharePoint but is missing Metadata
-                            Global.Log.LogCritical("The blob {BlobName} is missing driveId {DriveId} or DocumentId {DocumentId} or Source {Source}", outputBlobName, fileData.DriveID, fileData.DocumentId, fileData.Source);
+                            Global.Log.LogCritical(new NullReferenceException(), "The blob {BlobName} is missing driveId {DriveId} or DocumentId {DocumentId} or Source {Source}", outputBlobName, fileData.DriveID, fileData.DocumentId, fileData.Source);
                             continue;
                         }
 
@@ -174,6 +179,7 @@ namespace MCOM.Functions
                                 {
                                     // Upload the file
                                     var uploadResult = await _graphService.UploadFileAsync(fileData.DriveID, fileData.FileName, filesBlobStream, maxSliceSize, fileData.BlobFilePath);
+
                                     if (uploadResult.UploadSucceeded)
                                     {
                                         var uploadedItem = uploadResult.ItemResponse;
@@ -182,9 +188,13 @@ namespace MCOM.Functions
                                         await _graphService.SetMetadataAsync(fileData, uploadedItem);
                                     }
                                 }
-                                catch (Exception uploadLargeFileEx)
+                                catch (Microsoft.Graph.ServiceException ex)
                                 {
-                                    Global.Log.LogCritical(uploadLargeFileEx, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, uploadLargeFileEx.Message);
+                                    Global.Log.LogWarning(ex.Message);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", fileData.BlobFilePath, fileData.DocumentId, fileData.DriveID, ex.Message);
                                     continue;
                                 }
 
@@ -298,79 +308,119 @@ namespace MCOM.Functions
             }
         }
 
+        /* LOGIC:
+            This tracker will check all the metadata files from the metadataprocess container. In case the files are older than 1 day then
+            these will be copied to metadata again (Into the right Source) and then they will be deleted from the metadataprocess container.
+            This is done in order to double check in case the metadata files were not copied to the OUTPUT container by the pipeline.
+            In some cases the pipeline does not copy the files to output and it just move the files to metadataprocess.
+            By copying the metadata files again to metadata container we re-run the process again.
+        */
         /// <summary>
-        /// This tracker will check all the metadata files from the metadataprocess container. In case the files are older than 1 day then
-        /// these will be copied to metadata again (Into the right Source) and then they will be deleted from the metadataprocess container.
-        /// This is done in order to double check in case the metadata files were not copied to the OUTPUT container by the pipeline.
-        /// In some cases the pipeline does not copy the files to output and it just move the files to metadataprocess.
-        /// By copying the metadata files again to metadata container we re-run the process again.
+        /// Logic to process metadata by tracking files that has not been processed
         /// </summary>
         /// <returns></returns>
         private async Task MetadataProcessTrackerAsync()
         {
-            // Get blob service client, get container and blobItems
-            var metadataProcessedContainerClient = _blobService.GetBlobContainerClient("metadataprocessed");
-            var metadataProcessedBlobItems = _blobService.GetBlobs(metadataProcessedContainerClient);
 
-            await foreach (var metadataProcessedBlobItem in metadataProcessedBlobItems)
+            // Get all containers
+            var containerPages = _blobService.GetBlobContainers();
+
+            await foreach (var containerPage in containerPages)
             {
-                var metadataProcessedBlobName = metadataProcessedBlobItem.Name;
-                var metadataProcessedBlobCreatedOn = metadataProcessedBlobItem.Properties.CreatedOn;
+                var continerName = containerPage.Name;
+                var containerClient = _blobService.GetBlobContainerClient(continerName);
 
-                try
+                // Get all blobs based on the given prefix (virtual folder)
+                var blobPages = _blobService.GetBlobs(containerClient,
+                                                      Azure.Storage.Blobs.Models.BlobTraits.None,
+                                                      Azure.Storage.Blobs.Models.BlobStates.None,
+                                                      "metadataprocessed/").AsPages();
+                // Loop through all pages and find blobs
+                await foreach (var blobPage in blobPages)
                 {
-                    if (metadataProcessedBlobCreatedOn < DateTime.Now.AddDays(-1))
+                    foreach (var blobItem in blobPage.Values)
                     {
-                        var metadataProcessedBlobClient = _blobService.GetBlobClient(metadataProcessedContainerClient, metadataProcessedBlobName);
+                        var blobName = blobItem.Name;
+                        var blobCreatedOn = blobItem.Properties.CreatedOn;
 
-                        if (await _blobService.BlobClientExistsAsync(metadataProcessedBlobClient))
+                        try
                         {
-                            // Get blob data
-                            var metadataProcessedData = await _blobService.GetBlobDataAsync(metadataProcessedBlobClient);
-
-                            // Convert data
-                            var metadataProcessedFileData = JsonConvert.DeserializeObject<ArchiveFileData<string, object>>(metadataProcessedData);
-
-                            // Url to copy data to
-                            var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{metadataProcessedFileData.Source}/metadata/{metadataProcessedBlobName}.json");
-
-                            // Get blob client and copy file
-                            var blobClient = _blobService.GetBlobClient(metadataUri);
-                            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(metadataProcessedData)))
+                            if (blobCreatedOn < DateTime.Now.AddDays(-1))
                             {
-                                await blobClient.UploadAsync(stream, Global.BlobOverwriteExistingFile);
-                            }
+                                var blobClient = _blobService.GetBlobClient(containerClient, blobName);
 
-                            Global.Log.LogInformation("Successfully uploaded metadata file without errors. DocumentId: {BlobName}", metadataProcessedBlobName);
-
-                            // Delete blob from files container
-                            var filesDeleted = await _blobService.DeleteBlobClientIfExistsAsync(metadataProcessedBlobClient);
-
-                            if (filesDeleted)
-                            {
-                                Global.Log.LogInformation($"The file {metadataProcessedBlobName} has been deleted successfully from container (files)");
-                                _logList.Add(new FakeLog()
+                                if (await _blobService.BlobClientExistsAsync(blobClient))
                                 {
-                                    Message = $"The file {metadataProcessedBlobName} has been deleted successfully from container (files)",
-                                    LogLevel = LogLevel.Information
-                                });
-                            }
-                            else
-                            {
-                                Global.Log.LogError(new NullReferenceException(), $"The file {metadataProcessedBlobName} could not be deleted from container (files)");
-                                _logList.Add(new FakeLog()
-                                {
-                                    Message = $"The file {metadataProcessedBlobName} could not be deleted from container (files)",
-                                    LogLevel = LogLevel.Error
-                                });
+                                    // Get blob data
+                                    var metadataProcessedData = await _blobService.GetBlobDataAsync(blobClient);
+
+                                    // Convert data
+                                    var metadataProcessedFileData = JObject.Parse(metadataProcessedData);
+
+                                    // Get Source;
+
+                                    if (!metadataProcessedFileData.TryGetValue("Source", out var jSource))
+                                    {
+                                        Global.Log.LogWarning($"The file {blobName} is missing the Source parameter");
+                                        _logList.Add(new FakeLog()
+                                        {
+                                            Message = $"The file {blobName} is missing the Source parameter",
+                                            LogLevel = LogLevel.Error
+                                        });
+                                    }
+                                    else
+                                    {
+                                        // Get source from file properties
+                                        var source = jSource?.ToString();
+
+                                        // Remove sub folders from blob name
+                                        var strippedBlobName = blobName.Split('/')[1];
+
+                                        // Url to copy data to
+                                        var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{source}/metadata/{strippedBlobName}");
+
+                                        Global.Log.LogInformation("Uri if blob to be uploaded ${metadataUri}. BlobName: {BlobName}", metadataUri, strippedBlobName);
+
+                                        // Get blob client and copy file
+                                        var blobMetadataClient = _blobService.GetBlobClient(metadataUri);
+                                        using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(metadataProcessedData)))
+                                        {
+                                            await blobMetadataClient.UploadAsync(stream, Global.BlobOverwriteExistingFile);
+                                        }
+
+                                        Global.Log.LogInformation("Successfully uploaded metadata file without errors. DocumentId: {BlobName}", strippedBlobName);
+
+                                        // Delete blob from files container
+                                        var filesDeleted = await _blobService.DeleteBlobClientIfExistsAsync(blobClient);
+
+                                        if (filesDeleted)
+                                        {
+                                            Global.Log.LogInformation($"The file {strippedBlobName} has been deleted successfully from container (files)");
+                                            _logList.Add(new FakeLog()
+                                            {
+                                                Message = $"The file {strippedBlobName} has been deleted successfully from container (files)",
+                                                LogLevel = LogLevel.Information
+                                            });
+                                        }
+                                        else
+                                        {
+                                            Global.Log.LogError(new NullReferenceException(), $"The file {strippedBlobName} could not be deleted from container (files)");
+                                            _logList.Add(new FakeLog()
+                                            {
+                                                Message = $"The file {strippedBlobName} could not be deleted from container (files)",
+                                                LogLevel = LogLevel.Error
+                                            });
+                                        }
+                                    }
+                                }
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            Global.Log.LogError(ex, "Exception when processing blob {BlobItem} - MetadataProcess. {ErrorMessage}", blobName, ex.Message);
+                            throw;
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    Global.Log.LogError(ex, "Exception when processing blob {BlobItem} - MetadataProcess. {ErrorMessage}", metadataProcessedBlobName, ex.Message);
-                    throw;
                 }
             }
         }

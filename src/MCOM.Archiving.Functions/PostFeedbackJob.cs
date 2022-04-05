@@ -6,16 +6,19 @@ using Newtonsoft.Json;
 using MCOM.Models;
 using MCOM.Services;
 using MCOM.Utilities;
+using MCOM.Business.PostFeedBack;
 
 namespace MCOM.Archiving.Functions
 {
     public class PostFeedbackJob
     {
         private IQueueService _queueService;
+        private IPostFeedBackBusiness _postFeedBackBusiness;
 
-        public PostFeedbackJob(IQueueService queueService)
+        public PostFeedbackJob(IQueueService queueService, IPostFeedBackBusiness postFeedBackBusiness)
         {
             _queueService = queueService;
+            _postFeedBackBusiness = postFeedBackBusiness;
         }
 
         [Function("PostFeedbackJob")]
@@ -53,23 +56,27 @@ namespace MCOM.Archiving.Functions
                     foreach (var message in messages)
                     {
                         // Build client and send request
-                        var queueObject = JsonConvert.DeserializeObject<QueueItem>(message.AsString);
+                        var queueItem = JsonConvert.DeserializeObject<QueueItem>(message.AsString);
 
                         // Validate object
-                        if (queueObject.ResponseUrl == null || queueObject.Item == null)
+                        if (queueItem.ClientUrl == null || queueItem.Content == null || queueItem.Source == null)
                         {
                             Global.Log.LogError(new NullReferenceException(), $"Error: Error when deserializing the object into a QueueItem");
                             throw new Exception("Error when deserializing the object into a QueueItem");
                         }
 
                         // Validate null guid
-                        if (queueObject.Item.DocumentId.Equals("00000000-0000-0000-0000-000000000000"))
+                        if (queueItem.Content.DocumentId.Equals("00000000-0000-0000-0000-000000000000"))
                         {
                             Global.Log.LogError(new NullReferenceException(), "Error: Got null guid");
                             throw new Exception("Got null guid");
                         }
 
-                        var response = await _queueService.PostFeedbackAsync(queueObject);
+                        // Run business layer and transform queue item
+                        queueItem = _postFeedBackBusiness.GetQueueItem(queueItem);
+
+                        // Send the http request
+                        var response = await _queueService.PostFeedbackAsync(queueItem);
                         var responseContent = await response.Content.ReadAsStringAsync();
 
                         if (response.IsSuccessStatusCode)

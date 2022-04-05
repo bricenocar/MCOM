@@ -107,7 +107,7 @@ namespace MCOM.Functions
                 
 
                 // Check presence of drive Id in the request
-                if (string.IsNullOrEmpty(driveId))
+                if (string.IsNullOrEmpty(driveId) || driveId.Equals("null"))
                 {
                     // Check if the document id is a guid (it means that the document came through the archiving pipeline and not from HPECM migration)
                     if(StringUtilities.IsGuid(documentId))

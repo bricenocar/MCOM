@@ -13,6 +13,7 @@ namespace MCOM.Models
         public string DocumentId { get; set; }
         public string DocumentIdField { get; set; }
         public string FeedBackUrl { get; set; }
+        public string FeedBackAuthorization { get; set; }
         public bool UseCSOM { get; set; }
         public bool SetMetadata { get; set; }
         
@@ -49,12 +50,15 @@ namespace MCOM.Models
                     case "documentid":
                         DocumentId =pair.Value.ToString();
                         break;
-                    //case "lrmhpecmrecordid": // Workaround for issue in ADF
-                    //    DocumentId = pair.Value.ToString();
-                    //    FileMetadata.Add(pair.Key, pair.Value.ToString());
-                    //    break;
+                    case "lrmhpecmrecordid": // Workaround for issue in ADF
+                        DocumentId = pair.Value.ToString();
+                        FileMetadata.Add(pair.Key, pair.Value.ToString());
+                        break;
                     case "feedbackurl":
                         FeedBackUrl = pair.Value.ToString();
+                        break;
+                    case "feedbackauthorization":
+                        FeedBackAuthorization = pair.Value.ToString();
                         break;
                     case "documentidfield":
                         DocumentIdField = pair.Value.ToString();

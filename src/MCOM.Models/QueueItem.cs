@@ -1,9 +1,13 @@
-﻿namespace MCOM.Models
+﻿using System.Collections.Generic;
+
+namespace MCOM.Models
 {
     public class QueueItem
     {
-        public string ResponseUrl { get; set; }
-        public FeedbackItem Item  { get; set; }
+        public string ClientUrl { get; set; }
+        public Dictionary<string, string> Headers { get; set; }
+        public FeedbackItem Content { get; set; }
+        public string Source { get; set; }
     }
 
     public class FeedbackItem
