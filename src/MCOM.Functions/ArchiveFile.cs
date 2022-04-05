@@ -55,6 +55,9 @@ namespace MCOM.Functions
             {
                 try
                 {
+                    // Init blob service client
+                    _blobService.GetBlobServiceClient();
+
                     var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{fileData.BlobFilePath}");
 
                     // Replace special characters
