@@ -1999,6 +1999,39 @@
                 "[variables('factoryId')]",
                 "[concat(variables('factoryId'), '/pipelines/GoM Pipeline')]"
             ]
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/Exchange schedule trigger')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "Exchange Pipeline",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {
+                            "SourceContainer": "exchange"
+                        }
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Minute",
+                        "interval": 5,
+                        "startTime": "2022-04-05T11:42:00Z",
+                        "timeZone": "UTC"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/pipelines/Exchange Pipeline')]"
+            ]
         }
     ],
     "outputs": {}
