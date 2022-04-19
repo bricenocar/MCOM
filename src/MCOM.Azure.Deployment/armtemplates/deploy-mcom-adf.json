@@ -36,6 +36,13 @@
                 "description": "SharePoint site"
             }
         },
+        "SharePointUrlGOM": {
+            "type": "string",
+            "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMGoMArchive",
+            "metadata": {
+                "description": "SharePoint site"
+            }
+        },
         "paramDataFactoryName": {
             "type": "string",
             "defaultValue": "adf-mcom",
@@ -424,6 +431,25 @@
             }
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/scanrequest_output_metadata_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "container": "output"
+                    }
+                },
+                "schema": {}
+            }            
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/mcom_governance_scanrequests')]",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -588,7 +614,7 @@
                         "userProperties": [],
                         "typeProperties": {
                             "dataflow": {
-                                "referenceName": "ProcessDCFdata",
+                                "referenceName": "ProcessDCFdataMaintenance",
                                 "type": "DataFlowReference",
                                 "parameters": {
                                     "SharePointSiteUrl": {
@@ -606,14 +632,6 @@
                                     "RestrictedLibraryDriveId": {
                                         "value": "'@{variables('RestrictedLibraryDriveId')}'",
                                         "type": "Expression"
-                                    }
-                                },
-                                "datasetParameters": {
-                                    "dcffilesource": {
-                                        "Filename": {
-                                            "value": "@pipeline().parameters.SourceFileName",
-                                            "type": "Expression"
-                                        }
                                     }
                                 }
                             },
@@ -725,9 +743,6 @@
                 "parameters": {
                     "SourceContainer": {
                         "type": "string"
-                    },
-                    "SourceFileName": {
-                        "type": "string"
                     }
                 },
                 "variables": {
@@ -760,7 +775,7 @@
             ]
         },
         {
-            "name": "[concat(variables('dataFactoryName'), '/DCF Pipeline Manual')]",
+            "name": "[concat(variables('dataFactoryName'), '/DCF Pipeline Maintenance')]",
             "type": "Microsoft.DataFactory/factories/pipelines",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -786,7 +801,7 @@
                         "userProperties": [],
                         "typeProperties": {
                             "dataflow": {
-                                "referenceName": "ProcessDCFdataManual",
+                                "referenceName": "ProcessDCFdataMaintenance",
                                 "type": "DataFlowReference",
                                 "parameters": {
                                     "SharePointSiteUrl": {
@@ -942,7 +957,7 @@
             },
             "dependsOn": [
                 "[variables('factoryId')]",
-                "[concat(variables('factoryId'), '/dataflows/ProcessDCFdataManual')]",
+                "[concat(variables('factoryId'), '/dataflows/ProcessDCFdataMaintenance')]",
                 "[concat(variables('factoryId'), '/integrationRuntimes/DCFIR')]"
             ]
         },
@@ -1321,6 +1336,40 @@
             ]
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/ScanRequest Pipeline')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Process scan request",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "1.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "ProcessScanRequest",
+                                "type": "DataFlowReference"
+                            },
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    }
+                ],
+                "annotations": []
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/Exchange Pipeline')]",
             "type": "Microsoft.DataFactory/factories/pipelines",
             "apiVersion": "2018-06-01",
@@ -1507,7 +1556,7 @@
             ]
         },
         {
-            "name": "[concat(variables('dataFactoryName'), '/ProcessDCFdataManual')]",
+            "name": "[concat(variables('dataFactoryName'), '/ProcessDCFdataMaintenance')]",
             "type": "Microsoft.DataFactory/factories/dataflows",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -1559,7 +1608,7 @@
                             "description": "Creates an explicit mapping for each drifted column"
                         }
                     ],
-                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tOpenLibraryDriveId as string,\n\tRestrictedLibraryDriveId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tpurgeFiles: true,\n\tdocumentForm: 'singleDocument') ~> dcffilesource\nSetFileName split(startsWith(LRMUniqueFolderId, \"SA.\"),\n\tdisjoint: false) ~> CheckDestination@(SendToRestrictedLibrary, SendToOpenLibrary)\nCheckDestination@SendToRestrictedLibrary derive(driveid = $RestrictedLibraryDriveId) ~> SetRestrictedColumn\nCheckDestination@SendToOpenLibrary derive(driveid = $OpenLibraryDriveId) ~> SetOpenColumn\nFieldsMapping derive(DestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tFilename = concat(LRMHPECMRecordID,'_', Filename),\n\t\tdocumentId = LRMHPECMRecordID,\n\t\tTitle = Filename,\n\t\tdocumentIdField = 'LRMHPECMRecordID') ~> SetFileName\nDataTransformation select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMArchivedBy = {ARCHIVED USER},\n\t\tLRMAttachments = ATTACHMENTS,\n\t\tLRMBOLDate = {B/L DATE},\n\t\tLRMBroker = BROKER,\n\t\tLRMCargoNumber = {CARGO NUMBER},\n\t\tLRMCustomer = CUSTOMER,\n\t\tLRMDateExecuted = {DATE EXECUTED},\n\t\tLRMDealNumber = {DEAL NUMBER},\n\t\tLRMDischargePort = {DISCHARGE PORT},\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFolderType = {FOLDER TYPE},\n\t\tLRMLoadPort = {LOAD PORT},\n\t\tLRMQuality = QUALITY,\n\t\tLRMResponsibleOperator = {RESPONSIBLE OPS},\n\t\tLRMTo = TO,\n\t\tLRMTransmissionDate = {TRANSMISSION DATE},\n\t\tLRMUniqueFolderId = {UNIQUE FOLDER ID},\n\t\tLRMVessel = VESSEL,\n\t\tLRMVoyageNumber = {VOYAGE NUMBER},\n\t\tusecsom,\n\t\tfeedbackurl\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FieldsMapping\ndcffilesource derive({ARCHIVED USER} = toString(byName('ARCHIVED USER')),\n\t\tATTACHMENTS = toString(byName('ATTACHMENTS')),\n\t\t{B/L DATE} = toString(byName('B/L DATE')),\n\t\tBROKER = toString(byName('BROKER')),\n\t\t{CARGO NUMBER} = toString(byName('CARGO NUMBER')),\n\t\tCUSTOMER = toString(byName('CUSTOMER')),\n\t\t{DATE EXECUTED} = toString(byName('DATE EXECUTED')),\n\t\t{DEAL NUMBER} = toString(byName('DEAL NUMBER')),\n\t\t{DISCHARGE PORT} = toString(byName('DISCHARGE PORT')),\n\t\t{FOLDER TYPE} = toString(byName('FOLDER TYPE')),\n\t\tFilename = toString(byName('Filename')),\n\t\t{LOAD PORT} = toString(byName('LOAD PORT')),\n\t\tQUALITY = toString(byName('QUALITY')),\n\t\t{RESPONSIBLE OPS} = toString(byName('RESPONSIBLE OPS')),\n\t\tSource = toString(byName('Source')),\n\t\tTO = toString(byName('TO')),\n\t\t{TRANSMISSION DATE} = toString(byName('TRANSMISSION DATE')),\n\t\t{UNIQUE FOLDER ID} = toString(byName('UNIQUE FOLDER ID')),\n\t\tVESSEL = toString(byName('VESSEL')),\n\t\t{VOYAGE NUMBER} = toString(byName('VOYAGE NUMBER')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttitle = toString(byName('title')),\n\t\tusecsom = false(),\n\t\tfeedbackurl = \"https://tops-dcf-sharepoint.azurewebsites.net/api/test/drive?code=H64RWZuOiq2nZLluc2daNe8cKxsOp/WhcG8azWWnx/xR4ANitl9EQQ==\") ~> DataTransformation\nSetRestrictedColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationOpen\nSetOpenColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationRestricted"
+                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tOpenLibraryDriveId as string,\n\tRestrictedLibraryDriveId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\tmodifiedBefore: (currentTimestamp()-minutes(30)),\n\tdocumentForm: 'singleDocument') ~> dcffilesource\nSetFileName split(startsWith(LRMUniqueFolderId, \"SA.\"),\n\tdisjoint: false) ~> CheckDestination@(SendToRestrictedLibrary, SendToOpenLibrary)\nCheckDestination@SendToRestrictedLibrary derive(driveid = $RestrictedLibraryDriveId) ~> SetRestrictedColumn\nCheckDestination@SendToOpenLibrary derive(driveid = $OpenLibraryDriveId) ~> SetOpenColumn\nFieldsMapping derive(DestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tFilename = concat(LRMHPECMRecordID,'_', Filename),\n\t\tdocumentId = LRMHPECMRecordID,\n\t\tTitle = Filename) ~> SetFileName\nDataTransformation select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMArchivedBy = {ARCHIVED USER},\n\t\tLRMAttachments = ATTACHMENTS,\n\t\tLRMBOLDate = {B/L DATE},\n\t\tLRMBroker = BROKER,\n\t\tLRMCargoNumber = {CARGO NUMBER},\n\t\tLRMCustomer = CUSTOMER,\n\t\tLRMDateExecuted = {DATE EXECUTED},\n\t\tLRMDealNumber = {DEAL NUMBER},\n\t\tLRMDischargePort = {DISCHARGE PORT},\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFolderType = {FOLDER TYPE},\n\t\tLRMLoadPort = {LOAD PORT},\n\t\tLRMQuality = QUALITY,\n\t\tLRMResponsibleOperator = {RESPONSIBLE OPS},\n\t\tLRMTo = TO,\n\t\tLRMTransmissionDate = {TRANSMISSION DATE},\n\t\tLRMUniqueFolderId = {UNIQUE FOLDER ID},\n\t\tLRMVessel = VESSEL,\n\t\tLRMVoyageNumber = {VOYAGE NUMBER},\n\t\tusecsom\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FieldsMapping\ndcffilesource derive({ARCHIVED USER} = toString(byName('ARCHIVED USER')),\n\t\tATTACHMENTS = toString(byName('ATTACHMENTS')),\n\t\t{B/L DATE} = toString(byName('B/L DATE')),\n\t\tBROKER = toString(byName('BROKER')),\n\t\t{CARGO NUMBER} = toString(byName('CARGO NUMBER')),\n\t\tCUSTOMER = toString(byName('CUSTOMER')),\n\t\t{DATE EXECUTED} = toString(byName('DATE EXECUTED')),\n\t\t{DEAL NUMBER} = toString(byName('DEAL NUMBER')),\n\t\t{DISCHARGE PORT} = toString(byName('DISCHARGE PORT')),\n\t\t{FOLDER TYPE} = toString(byName('FOLDER TYPE')),\n\t\tFilename = toString(byName('Filename')),\n\t\t{LOAD PORT} = toString(byName('LOAD PORT')),\n\t\tQUALITY = toString(byName('QUALITY')),\n\t\t{RESPONSIBLE OPS} = toString(byName('RESPONSIBLE OPS')),\n\t\tSource = toString(byName('Source')),\n\t\tTO = toString(byName('TO')),\n\t\t{TRANSMISSION DATE} = toString(byName('TRANSMISSION DATE')),\n\t\t{UNIQUE FOLDER ID} = toString(byName('UNIQUE FOLDER ID')),\n\t\tVESSEL = toString(byName('VESSEL')),\n\t\t{VOYAGE NUMBER} = toString(byName('VOYAGE NUMBER')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttitle = toString(byName('title')),\n\t\tusecsom = false()) ~> DataTransformation\nSetRestrictedColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationOpen\nSetOpenColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationRestricted"
                 }
             },
             "dependsOn": [
@@ -1753,6 +1802,59 @@
             ]
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/ProcessScanRequest')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "scanrequest_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "name": "scandatasource"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "scanrequest_output_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "name": "scandatadestination"
+                        }
+                    ],
+                    "transformations": [],
+                    "scriptLines": [
+                        "source(output(",
+                        "          ItemId as string,",
+                        "          SiteUrl as string,",
+                        "          ListName as string,",
+                        "          WBS as string,",
+                        "          RequestedBy as string,",
+                        "          RequestedDate as string,",
+                        "          DocumentName as string,",
+                        "          Vendor as string,",
+                        "          Comments as string,",
+                        "          OrderNumber as string,",
+                        "          Status as string,",
+                        "          IsPhysical as boolean",
+                        "     ),",
+                        "     allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     ignoreNoFilesFound: false,",
+                        "     documentForm: 'documentPerLine') ~> scandatasource",
+                        "scandatasource sink(allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true) ~> scandatadestination"
+                    ]
+                }
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/MCOMIntegrationRuntime')]",
             "type": "Microsoft.DataFactory/factories/integrationRuntimes",
             "apiVersion": "2018-06-01",
@@ -1901,6 +2003,35 @@
             ]
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/DCF Scheduled trigger')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Stopped",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "DCF Pipeline Maintenance",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {
+                            "SourceContainer": "dcf"
+                        }
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Hour",
+                        "interval": 1,
+                        "startTime": "2022-04-06T09:53:00Z",
+                        "timeZone": "UTC"
+                    }
+                }
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/EDIBank Window Schedule')]",
             "type": "Microsoft.DataFactory/factories/triggers",
             "apiVersion": "2018-06-01",
@@ -2001,7 +2132,7 @@
             ]
         },
         {
-            "name": "[concat(variables('dataFactoryName'), '/Exchange schedule trigger')]",
+            "name": "[concat(variables('dataFactoryName'), '/Exchange scheduled trigger')]",
             "type": "Microsoft.DataFactory/factories/triggers",
             "apiVersion": "2018-06-01",
             "properties": {

@@ -76,10 +76,12 @@ if ($Environment -eq "prod") {
     $SharePointUrlDCF = "https://statoilsrm.sharepoint.com/sites/LRMArchiveDCF"
     $SharePointUrlEDI = "https://statoilsrm.sharepoint.com/sites/LRMArchiveEDIBank"
     $SharePointUrlGAS = "https://statoilsrm.sharepoint.com/sites/LRMArchiveGasOpsEU"
+    $SharePointUrlGOM = "https://statoilsrm.sharepoint.com/sites/LRMArchiveGOM"
 } else {
     $SharePointUrlDCF = "https://statoilintegrationtest.sharepoint.com/sites/EIMDCFArchive"
     $SharePointUrlEDI = "https://statoilintegrationtest.sharepoint.com/sites/EIMedibankArchive"
     $SharePointUrlGAS = "https://statoilintegrationtest.sharepoint.com/sites/EIMgasopsarchive"
+    $SharePointUrlGOM = "https://statoilintegrationtest.sharepoint.com/sites/EIMGoMArchive"
 }
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
@@ -173,9 +175,9 @@ if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded
 # Deploy Azure data factory
 Write-Host "##[command] Running deployment of Azure Data Factory template..."
 if($runLocally -eq $false) { 
-    $result = az deployment group create --name "$DeploymentName-adf" --template-uri $adfTemplateFile --parameters $adfParametersFile environment=$Environment stgAreaConnectionString=$connString triggerScope=$stgAreaId functionAppUrl=$functionAppUrl functionKey=$functionAppKeyGetDriveId adfFunctionResourceId=$adfFunctionResourceId SharePointUrlDCF=$SharePointUrlDCF SharePointUrlEDI=$SharePointUrlEDI SharePointUrlGAS=$SharePointUrlGAS | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-adf" --template-uri $adfTemplateFile --parameters $adfParametersFile environment=$Environment stgAreaConnectionString=$connString triggerScope=$stgAreaId functionAppUrl=$functionAppUrl functionKey=$functionAppKeyGetDriveId adfFunctionResourceId=$adfFunctionResourceId SharePointUrlDCF=$SharePointUrlDCF SharePointUrlEDI=$SharePointUrlEDI SharePointUrlGAS=$SharePointUrlGAS SharePointUrlGOM=$SharePointUrlGOM | ConvertFrom-Json
 } else {
-    $result = az deployment group create --name "$DeploymentName-adf" --template-file $adfTemplateFile --parameters $adfParametersFile environment=$Environment stgAreaConnectionString=$connString triggerScope=$stgAreaId functionAppUrl=$functionAppUrl functionKey=$functionAppKeyGetDriveId adfFunctionResourceId=$adfFunctionResourceId SharePointUrlDCF=$SharePointUrlDCF SharePointUrlEDI=$SharePointUrlEDI SharePointUrlGAS=$SharePointUrlGAS | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-adf" --template-file $adfTemplateFile --parameters $adfParametersFile environment=$Environment stgAreaConnectionString=$connString triggerScope=$stgAreaId functionAppUrl=$functionAppUrl functionKey=$functionAppKeyGetDriveId adfFunctionResourceId=$adfFunctionResourceId SharePointUrlDCF=$SharePointUrlDCF SharePointUrlEDI=$SharePointUrlEDI SharePointUrlGAS=$SharePointUrlGAS SharePointUrlGOM=$SharePointUrlGOM | ConvertFrom-Json
 }
 
 # Evaluate result from deployment
