@@ -1,5 +1,7 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MCOM.Services;
 
 namespace MCOM.ScanOnDemand.Functions
 {
@@ -9,6 +11,11 @@ namespace MCOM.ScanOnDemand.Functions
         {
             var host = new HostBuilder()
                 .ConfigureFunctionsWorkerDefaults()
+                .ConfigureServices(s =>
+                {
+                    // Adding services to DI               
+                    s.AddScoped<IBlobService, BlobService>();
+                })
                 .ConfigureLogging((context, builder) =>
                 {
                     builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
