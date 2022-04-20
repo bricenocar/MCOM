@@ -38,7 +38,7 @@
         },
         "SharePointUrlGOM": {
             "type": "string",
-            "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMGoMArchive",
+            "defaultValue": "https://statoilsrm.sharepoint.com/sites/EIMGoMArchive",
             "metadata": {
                 "description": "SharePoint site"
             }
@@ -394,6 +394,7 @@
         {
             "name": "[concat(variables('dataFactoryName'), '/exchange_metadata_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
             "properties": {
                 "linkedServiceName": {
                     "referenceName": "Staging area",
@@ -414,6 +415,7 @@
         {
             "name": "[concat(variables('dataFactoryName'), '/exchange_output_metadata_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
             "properties": {
                 "linkedServiceName": {
                     "referenceName": "Staging area",
