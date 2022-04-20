@@ -449,7 +449,7 @@
                     }
                 },
                 "schema": {}
-            }            
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/mcom_governance_scanrequests')]",
@@ -1826,9 +1826,23 @@
                                 "type": "DatasetReference"
                             },
                             "name": "scandatadestination"
+                        },
+                        {
+                            "dataset": {
+                                "referenceName": "mcom_governance_scanrequests",
+                                "type": "DatasetReference"
+                            },
+                            "name": "SaveDataInDatabase"
                         }
                     ],
-                    "transformations": [],
+                    "transformations": [
+                        {
+                            "name": "MapSPFields"
+                        },
+                        {
+                            "name": "AlterRow"
+                        }
+                    ],
                     "scriptLines": [
                         "source(output(",
                         "          ItemId as string,",
@@ -1848,10 +1862,68 @@
                         "     validateSchema: false,",
                         "     ignoreNoFilesFound: false,",
                         "     documentForm: 'documentPerLine') ~> scandatasource",
-                        "scandatasource sink(allowSchemaDrift: true,",
+                        "scandatasource select(mapColumn(",
+                        "          ItemId,",
+                        "          SiteUrl,",
+                        "          ListName,",
+                        "          WBS,",
+                        "          RequestedBy,",
+                        "          RequestedDate,",
+                        "          DocumentName,",
+                        "          Vendor,",
+                        "          Comments,",
+                        "          OrderNumber,",
+                        "          Status,",
+                        "          IsPhysical",
+                        "     ),",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true) ~> MapSPFields",
+                        "scandatasource alterRow(upsertIf(true())) ~> AlterRow",
+                        "MapSPFields sink(allowSchemaDrift: true,",
                         "     validateSchema: false,",
                         "     skipDuplicateMapInputs: true,",
-                        "     skipDuplicateMapOutputs: true) ~> scandatadestination"
+                        "     skipDuplicateMapOutputs: true) ~> scandatadestination",
+                        "AlterRow sink(allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     input(",
+                        "          id as string,",
+                        "          requester as string,",
+                        "          SiteUrl as string,",
+                        "          LibraryId as string,",
+                        "          requestdate as timestamp,",
+                        "          wbs as string,",
+                        "          businessunit as string,",
+                        "          itemid as integer,",
+                        "          documentname as string,",
+                        "          vendor as string,",
+                        "          comments as string,",
+                        "          ordernumber as string,",
+                        "          status as string,",
+                        "          isphysical as boolean",
+                        "     ),",
+                        "     deletable:false,",
+                        "     insertable:true,",
+                        "     updateable:false,",
+                        "     upsertable:true,",
+                        "     keys:['ordernumber'],",
+                        "     format: 'table',",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true,",
+                        "     errorHandlingOption: 'stopOnFirstError',",
+                        "     mapColumn(",
+                        "          requester = RequestedBy,",
+                        "          SiteUrl,",
+                        "          LibraryId = ListName,",
+                        "          requestdate = RequestedDate,",
+                        "          wbs = WBS,",
+                        "          itemid = ItemId,",
+                        "          documentname = DocumentName,",
+                        "          vendor = Vendor,",
+                        "          comments = Comments,",
+                        "          ordernumber = OrderNumber,",
+                        "          status = Status,",
+                        "          isphysical = IsPhysical",
+                        "     )) ~> SaveDataInDatabase"
                     ]
                 }
             }
