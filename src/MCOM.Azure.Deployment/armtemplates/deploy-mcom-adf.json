@@ -754,6 +754,9 @@
                 "parameters": {
                     "SourceContainer": {
                         "type": "string"
+                    },
+                    "SourceFileName": {
+                        "type": "string"
                     }
                 },
                 "variables": {
