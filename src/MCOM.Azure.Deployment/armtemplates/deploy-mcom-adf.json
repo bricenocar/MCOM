@@ -617,7 +617,7 @@
                         "userProperties": [],
                         "typeProperties": {
                             "dataflow": {
-                                "referenceName": "ProcessDCFdataMaintenance",
+                                "referenceName": "ProcessDCFdata",
                                 "type": "DataFlowReference",
                                 "parameters": {
                                     "SharePointSiteUrl": {
@@ -635,6 +635,14 @@
                                     "RestrictedLibraryDriveId": {
                                         "value": "'@{variables('RestrictedLibraryDriveId')}'",
                                         "type": "Expression"
+                                    }
+                                },
+                                "datasetParameters": {
+                                    "dcffilesource": {
+                                        "Filename": {
+                                            "value": "@pipeline().parameters.SourceFileName",
+                                            "type": "Expression"
+                                        }
                                     }
                                 }
                             },
@@ -2095,7 +2103,7 @@
             "apiVersion": "2018-06-01",
             "properties": {
                 "annotations": [],
-                "runtimeState": "Stopped",
+                "runtimeState": "Started",
                 "pipelines": [
                     {
                         "pipelineReference": {
