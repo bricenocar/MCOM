@@ -4,6 +4,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using MCOM.Models;
+using MCOM.Models.Azure;
 using MCOM.Services;
 using MCOM.Utilities;
 using MCOM.Business.PostFeedBack;

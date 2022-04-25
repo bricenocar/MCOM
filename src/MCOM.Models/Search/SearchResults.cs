@@ -1,6 +1,6 @@
-﻿namespace MCOM.Models
+﻿namespace MCOM.Models.Search
 {
-    public class MCOMSearchResult
+    public class SearchResult
     {
         public string Name { get; set; }
         public string SiteId { get; set; }

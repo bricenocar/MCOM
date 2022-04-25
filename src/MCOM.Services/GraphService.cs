@@ -9,6 +9,7 @@ using Microsoft.Graph;
 using Microsoft.SharePoint.Client;
 using Newtonsoft.Json;
 using MCOM.Models;
+using MCOM.Models.Archiving;
 using MCOM.Utilities;
 
 namespace MCOM.Services
@@ -23,7 +24,7 @@ namespace MCOM.Services
 
         Task<Microsoft.Graph.ListItem> GetListItemAsync(string driveId, string driveItemId);
 
-        Task<List<MCOMSearchResult>> SearchItemAsync(string documentId);
+        Task<List<Models.Search.SearchResult>> SearchItemAsync(string documentId);
 
         Task<ISiteDrivesCollectionPage> GetDriveCollectionPageAsync(Uri uri);
 
@@ -90,7 +91,7 @@ namespace MCOM.Services
             return await GraphServiceClient.Drives[driveId].Items[driveItemId].ListItem.Request().GetAsync();
         }
 
-        public virtual async Task<List<MCOMSearchResult>> SearchItemAsync(string documentId)
+        public virtual async Task<List<Models.Search.SearchResult>> SearchItemAsync(string documentId)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
             var requests = new List<SearchRequestObject>()
@@ -113,7 +114,7 @@ namespace MCOM.Services
                 .Request()
                 .PostAsync();
 
-            List<MCOMSearchResult> results = new List<MCOMSearchResult>();
+            var results = new List<Models.Search.SearchResult>();
             Global.Log.LogInformation($"Count: {response.CurrentPage.Count}");
             if (response.CurrentPage.Count > 0)
             {
@@ -127,7 +128,7 @@ namespace MCOM.Services
                             Global.Log.LogInformation($"Entered hit");
                             var spItem = hit.Resource as DriveItem;
                             Global.Log.LogInformation($"{spItem.Name} : {spItem.WebUrl}");
-                            results.Add(new MCOMSearchResult() { Name = spItem.Name });
+                            results.Add(new Models.Search.SearchResult() { Name = spItem.Name });
                         }
                     }
                 }

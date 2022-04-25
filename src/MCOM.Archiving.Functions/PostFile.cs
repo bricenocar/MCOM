@@ -1,13 +1,3 @@
-using Azure;
-using Azure.Storage.Blobs;
-using HttpMultipartParser;
-using MCOM.Models;
-using MCOM.Services;
-using MCOM.Utilities;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,6 +5,17 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
+using Azure;
+using Azure.Storage.Blobs;
+using Newtonsoft.Json;
+using HttpMultipartParser;
+using MCOM.Models;
+using MCOM.Models.Archiving;
+using MCOM.Services;
+using MCOM.Utilities;
 
 namespace MCOM.Archiving.Functions
 {

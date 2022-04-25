@@ -3,14 +3,15 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Azure;
-using MCOM.Models;
-using MCOM.Services;
-using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Azure;
 using Newtonsoft.Json;
+using MCOM.Models;
+using MCOM.Models.ScanOnDemand;
+using MCOM.Services;
+using MCOM.Utilities;
 
 namespace MCOM.ScanOnDemand.Functions
 {

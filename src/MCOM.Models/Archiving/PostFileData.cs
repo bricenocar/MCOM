@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MCOM.Models
+namespace MCOM.Models.Archiving
 {
     public class PostFileData<TKey, TValue> : Dictionary<string, string>
     {

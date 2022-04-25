@@ -13,7 +13,8 @@ using Moq;
 using Xunit;
 using Newtonsoft.Json;
 using MCOM.Functions;
-using MCOM.Models;
+using MCOM.Models.Archiving;
+using MCOM.Models.Azure;
 using MCOM.Services;
 
 namespace MCOM.Tests

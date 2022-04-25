@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,8 +9,8 @@ using Microsoft.Azure.ApplicationInsights.Query;
 using Microsoft.Rest;
 using MCOM.Extensions;
 using MCOM.Models;
+using MCOM.Models.AppInsights;
 using MCOM.Utilities;
-using System.Linq;
 
 namespace MCOM.Services
 {

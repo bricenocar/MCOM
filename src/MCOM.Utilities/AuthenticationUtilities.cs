@@ -4,8 +4,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Web;
-using Newtonsoft.Json.Linq;
-using MCOM.Models;
+using MCOM.Models.Azure;
 
 namespace MCOM.Utilities
 {

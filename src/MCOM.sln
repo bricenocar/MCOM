@@ -25,6 +25,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Business", "MCOM.Busin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.ScanOnDemand.UI", "MCOM.ScanOnDemand.UI\MCOM.ScanOnDemand.UI.csproj", "{BDF162B1-39EB-4BA6-BFAF-224C378DDC78}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCOM.Data", "MCOM.Data\MCOM.Data.csproj", "{988359B7-1B0A-44CA-A2F0-61F1A5E2809F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{BDF162B1-39EB-4BA6-BFAF-224C378DDC78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDF162B1-39EB-4BA6-BFAF-224C378DDC78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDF162B1-39EB-4BA6-BFAF-224C378DDC78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{988359B7-1B0A-44CA-A2F0-61F1A5E2809F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{988359B7-1B0A-44CA-A2F0-61F1A5E2809F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{988359B7-1B0A-44CA-A2F0-61F1A5E2809F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{988359B7-1B0A-44CA-A2F0-61F1A5E2809F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
