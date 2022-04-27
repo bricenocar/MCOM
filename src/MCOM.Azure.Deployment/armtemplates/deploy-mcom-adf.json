@@ -451,6 +451,86 @@
                 "schema": {}
             }
         },
+        {            
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_metadata_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "IronMountainSFTP",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "SftpLocation",
+                        "folderPath": "/upload"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_metadata_file_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "IronMountainSFTP",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "FileName": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "SftpLocation",
+                        "fileName": {
+                            "value": "@dataset().FileName",
+                            "type": "Expression"
+                        },
+                        "folderPath": "/upload"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_output_metadata_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "MCOMGovernanceDB",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlMITable",
+                "schema": [
+                    {
+                        "name": "filename",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "datescanned",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "requestId",
+                        "type": "uniqueidentifier"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "MCOMScanExecution"
+                }
+            }
+        },
         {
             "name": "[concat(variables('dataFactoryName'), '/mcom_governance_scanrequests')]",
             "apiVersion": "2018-06-01",
@@ -1506,6 +1586,164 @@
                 "[concat(variables('factoryId'), '/dataflows/ProcessExchangeData')]",
                 "[concat(variables('factoryId'), '/integrationRuntimes/ExchangeIR')]"
             ]
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/ScanExecution Pipeline')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Get Files in folder",
+                        "type": "GetMetadata",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "scanexecution_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "fieldList": [
+                                "childItems"
+                            ],
+                            "storeSettings": {
+                                "type": "SftpReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false,
+                                "disableChunking": false
+                            },
+                            "formatSettings": {
+                                "type": "BinaryReadSettings"
+                            }
+                        }
+                    },
+                    {
+                        "name": "Iterate through files",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "Get Files in folder",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Get Files in folder').output.childItems",
+                                "type": "Expression"
+                            },
+                            "activities": [
+                                {
+                                    "name": "Get File Metadata",
+                                    "type": "GetMetadata",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "7.00:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "dataset": {
+                                            "referenceName": "scanexecution_metadata_file_dataset",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "FileName": {
+                                                    "value": "@item().name",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        },
+                                        "fieldList": [
+                                            "lastModified",
+                                            "itemName",
+                                            "size"
+                                        ],
+                                        "storeSettings": {
+                                            "type": "SftpReadSettings",
+                                            "recursive": true,
+                                            "enablePartitionDiscovery": false,
+                                            "disableChunking": false
+                                        },
+                                        "formatSettings": {
+                                            "type": "BinaryReadSettings"
+                                        }
+                                    }
+                                },
+                                {
+                                    "name": "Upsert Scan Execution",
+                                    "type": "SqlServerStoredProcedure",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "Get File Metadata",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "timeout": "7.00:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "storedProcedureName": "[dbo].[upsert_scanexecution]",
+                                        "storedProcedureParameters": {
+                                            "pFileName": {
+                                                "value": {
+                                                    "value": "@activity('Get File Metadata').output.itemName",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "String"
+                                            },
+                                            "pRequestId": {
+                                                "value": {
+                                                    "value": "substring(activity('Get File Metadata').output.itemName, 0 , lastIndexOf(activity('Get File Metadata').output.itemName, '.')",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "String"
+                                            },
+                                            "pScannedDate": {
+                                                "value": {
+                                                    "value": "@activity('Get File Metadata').output.lastModified",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "DateTime"
+                                            },
+                                            "pSize": {
+                                                "value": {
+                                                    "value": "@activity('Get File Metadata').output.size",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "Int32"
+                                            }
+                                        }
+                                    },
+                                    "linkedServiceName": {
+                                        "referenceName": "MCOMGovernanceDB",
+                                        "type": "LinkedServiceReference"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "annotations": [],
+            }
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/ProcessDCFdata')]",

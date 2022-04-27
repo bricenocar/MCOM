@@ -172,13 +172,16 @@ namespace MCOM.Functions
                             // Get blob stream
                             var filesBlobStream = await _blobService.GetBlobStreamAsync(filesBlobClient);
 
+                            // Replace special characters
+                            var fileName = StringUtilities.RemoveSpecialChars(fileData.FileName);
+
                             // Upload as large or small file
                             if (filesBlobStream.Length > maxSliceSize)
                             {
                                 try
                                 {
                                     // Upload the file
-                                    var uploadResult = await _graphService.UploadFileAsync(fileData.DriveID, fileData.FileName, filesBlobStream, maxSliceSize, fileData.BlobFilePath);
+                                    var uploadResult = await _graphService.UploadFileAsync(fileData.DriveID, fileName, filesBlobStream, maxSliceSize, fileData.BlobFilePath);
 
                                     if (uploadResult.UploadSucceeded)
                                     {
@@ -209,7 +212,7 @@ namespace MCOM.Functions
                             {
                                 try
                                 {
-                                    var uploadedItem = await _graphService.UploadDriveItemAsync(fileData.DriveID, fileData.FileName, filesBlobStream);
+                                    var uploadedItem = await _graphService.UploadDriveItemAsync(fileData.DriveID, fileName, filesBlobStream);
                                     Global.Log.LogInformation("Completed uploading {BlobFilePath} with id:{DocumentId} to location {SPPath} in drive: {DriveId}", fileData.BlobFilePath, fileData.DocumentId, uploadedItem.WebUrl, fileData.DriveID);
 
                                     await _graphService.SetMetadataAsync(fileData, uploadedItem);
