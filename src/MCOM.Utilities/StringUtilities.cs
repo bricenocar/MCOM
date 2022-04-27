@@ -21,7 +21,7 @@ namespace MCOM.Utilities
                 }
             }
 
-            return str;
+            return str.Trim();
         }
 
         public static bool IsGuid(string value)
