@@ -1701,7 +1701,7 @@
                                     },
                                     "userProperties": [],
                                     "typeProperties": {
-                                        "storedProcedureName": "[dbo].[upsert_scanexecution]",
+                                        "storedProcedureName": "[[dbo].[upsert_scanexecution]",
                                         "storedProcedureParameters": {
                                             "pFileName": {
                                                 "value": {
