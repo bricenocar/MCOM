@@ -451,7 +451,7 @@
                 "schema": {}
             }
         },
-        {            
+        {
             "name": "[concat(variables('dataFactoryName'), '/scanexecution_metadata_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
             "apiVersion": "2018-06-01",
@@ -2257,8 +2257,8 @@
                     "computeProperties": {
                         "location": "AutoResolve",
                         "dataFlowProperties": {
-                            "computeType": "General",
-                            "coreCount": 80,
+                            "computeType": "MemoryOptimized",
+                            "coreCount": 16,
                             "timeToLive": 30,
                             "cleanup": false
                         }
