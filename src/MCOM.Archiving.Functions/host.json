@@ -7,5 +7,8 @@
         "excludedTypes": "Request"
       }
     }
+  },
+  "queues": {
+    "maxDequeueCount": 1
   }
 }
