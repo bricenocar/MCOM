@@ -213,6 +213,10 @@
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",
               "value": "1"
+            },
+            {
+              "name": "GOVERNANCEDB_CONNECTIONSTRING",
+              "value": "Server=sql-mcom-gov-inttest.database.windows.net; Authentication=Active Directory Managed Identity; Database=GovernanceDB;"
             }
           ]
         }

@@ -451,6 +451,86 @@
                 "schema": {}
             }
         },
+        {            
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_metadata_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "IronMountainSFTP",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "SftpLocation",
+                        "folderPath": "/upload"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_metadata_file_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "IronMountainSFTP",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "FileName": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "SftpLocation",
+                        "fileName": {
+                            "value": "@dataset().FileName",
+                            "type": "Expression"
+                        },
+                        "folderPath": "/upload"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_output_metadata_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "MCOMGovernanceDB",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlMITable",
+                "schema": [
+                    {
+                        "name": "filename",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "datescanned",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "requestId",
+                        "type": "uniqueidentifier"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "MCOMScanExecution"
+                }
+            }
+        },
         {
             "name": "[concat(variables('dataFactoryName'), '/mcom_governance_scanrequests')]",
             "apiVersion": "2018-06-01",
@@ -1508,6 +1588,164 @@
             ]
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/ScanExecution Pipeline')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Get Files in folder",
+                        "type": "GetMetadata",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "scanexecution_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "fieldList": [
+                                "childItems"
+                            ],
+                            "storeSettings": {
+                                "type": "SftpReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false,
+                                "disableChunking": false
+                            },
+                            "formatSettings": {
+                                "type": "BinaryReadSettings"
+                            }
+                        }
+                    },
+                    {
+                        "name": "Iterate through files",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "Get Files in folder",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Get Files in folder').output.childItems",
+                                "type": "Expression"
+                            },
+                            "activities": [
+                                {
+                                    "name": "Get File Metadata",
+                                    "type": "GetMetadata",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "7.00:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "dataset": {
+                                            "referenceName": "scanexecution_metadata_file_dataset",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "FileName": {
+                                                    "value": "@item().name",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        },
+                                        "fieldList": [
+                                            "lastModified",
+                                            "itemName",
+                                            "size"
+                                        ],
+                                        "storeSettings": {
+                                            "type": "SftpReadSettings",
+                                            "recursive": true,
+                                            "enablePartitionDiscovery": false,
+                                            "disableChunking": false
+                                        },
+                                        "formatSettings": {
+                                            "type": "BinaryReadSettings"
+                                        }
+                                    }
+                                },
+                                {
+                                    "name": "Upsert Scan Execution",
+                                    "type": "SqlServerStoredProcedure",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "Get File Metadata",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "timeout": "7.00:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "storedProcedureName": "[[dbo].[upsert_scanexecution]",
+                                        "storedProcedureParameters": {
+                                            "pFileName": {
+                                                "value": {
+                                                    "value": "@activity('Get File Metadata').output.itemName",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "String"
+                                            },
+                                            "pRequestId": {
+                                                "value": {
+                                                    "value": "substring(activity('Get File Metadata').output.itemName, 0 , lastIndexOf(activity('Get File Metadata').output.itemName, '.')",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "String"
+                                            },
+                                            "pScannedDate": {
+                                                "value": {
+                                                    "value": "@activity('Get File Metadata').output.lastModified",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "DateTime"
+                                            },
+                                            "pSize": {
+                                                "value": {
+                                                    "value": "@activity('Get File Metadata').output.size",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "Int32"
+                                            }
+                                        }
+                                    },
+                                    "linkedServiceName": {
+                                        "referenceName": "MCOMGovernanceDB",
+                                        "type": "LinkedServiceReference"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "annotations": []
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/ProcessDCFdata')]",
             "type": "Microsoft.DataFactory/factories/dataflows",
             "apiVersion": "2018-06-01",
@@ -1560,7 +1798,7 @@
                             "description": "Creates an explicit mapping for each drifted column"
                         }
                     ],
-                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tOpenLibraryDriveId as string,\n\tRestrictedLibraryDriveId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\tdocumentForm: 'singleDocument') ~> dcffilesource\nSetCustomFields split(startsWith(LRMUniqueFolderId, \"SA.\"),\n\tdisjoint: false) ~> CheckDestination@(SendToRestrictedLibrary, SendToOpenLibrary)\nCheckDestination@SendToRestrictedLibrary derive(driveid = $RestrictedLibraryDriveId) ~> SetRestrictedColumn\nCheckDestination@SendToOpenLibrary derive(driveid = $OpenLibraryDriveId) ~> SetOpenColumn\nFieldsMapping derive(DestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tFilename = concat(LRMHPECMRecordID,'_', Filename),\n\t\tdocumentId = LRMHPECMRecordID,\n\t\tTitle = Filename,\n\t\tdocumentIdField = 'LRMHPECMRecordID') ~> SetCustomFields\nDataTransformation select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMArchivedBy = {ARCHIVED USER},\n\t\tLRMAttachments = ATTACHMENTS,\n\t\tLRMBOLDate = {B/L DATE},\n\t\tLRMBroker = BROKER,\n\t\tLRMCargoNumber = {CARGO NUMBER},\n\t\tLRMCustomer = CUSTOMER,\n\t\tLRMDateExecuted = {DATE EXECUTED},\n\t\tLRMDealNumber = {DEAL NUMBER},\n\t\tLRMDischargePort = {DISCHARGE PORT},\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFolderType = {FOLDER TYPE},\n\t\tLRMLoadPort = {LOAD PORT},\n\t\tLRMQuality = QUALITY,\n\t\tLRMResponsibleOperator = {RESPONSIBLE OPS},\n\t\tLRMTo = TO,\n\t\tLRMTransmissionDate = {TRANSMISSION DATE},\n\t\tLRMUniqueFolderId = {UNIQUE FOLDER ID},\n\t\tLRMVessel = VESSEL,\n\t\tLRMVoyageNumber = {VOYAGE NUMBER},\n\t\tusecsom\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FieldsMapping\ndcffilesource derive({ARCHIVED USER} = toString(byName('ARCHIVED USER')),\n\t\tATTACHMENTS = toString(byName('ATTACHMENTS')),\n\t\t{B/L DATE} = toString(byName('B/L DATE')),\n\t\tBROKER = toString(byName('BROKER')),\n\t\t{CARGO NUMBER} = toString(byName('CARGO NUMBER')),\n\t\tCUSTOMER = toString(byName('CUSTOMER')),\n\t\t{DATE EXECUTED} = toString(byName('DATE EXECUTED')),\n\t\t{DEAL NUMBER} = toString(byName('DEAL NUMBER')),\n\t\t{DISCHARGE PORT} = toString(byName('DISCHARGE PORT')),\n\t\t{FOLDER TYPE} = toString(byName('FOLDER TYPE')),\n\t\tFilename = toString(byName('Filename')),\n\t\t{LOAD PORT} = toString(byName('LOAD PORT')),\n\t\tQUALITY = toString(byName('QUALITY')),\n\t\t{RESPONSIBLE OPS} = toString(byName('RESPONSIBLE OPS')),\n\t\tSource = toString(byName('Source')),\n\t\tTO = toString(byName('TO')),\n\t\t{TRANSMISSION DATE} = toString(byName('TRANSMISSION DATE')),\n\t\t{UNIQUE FOLDER ID} = toString(byName('UNIQUE FOLDER ID')),\n\t\tVESSEL = toString(byName('VESSEL')),\n\t\t{VOYAGE NUMBER} = toString(byName('VOYAGE NUMBER')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttitle = toString(byName('title')),\n\t\tusecsom = false()) ~> DataTransformation\nSetRestrictedColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationOpen\nSetOpenColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationRestricted"
+                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tOpenLibraryDriveId as string,\n\tRestrictedLibraryDriveId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\tdocumentForm: 'singleDocument') ~> dcffilesource\nSetCustomFields split(startsWith(LRMUniqueFolderId, \"SA.\"),\n\tdisjoint: false) ~> CheckDestination@(SendToRestrictedLibrary, SendToOpenLibrary)\nCheckDestination@SendToRestrictedLibrary derive(driveid = $RestrictedLibraryDriveId) ~> SetRestrictedColumn\nCheckDestination@SendToOpenLibrary derive(driveid = $OpenLibraryDriveId) ~> SetOpenColumn\nFieldsMapping derive(DestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tFilename = concat(LRMHPECMRecordID,'_', replace(Filename, \"/\", \"\")),\n\t\tdocumentId = LRMHPECMRecordID,\n\t\tTitle = Filename,\n\t\tdocumentIdField = 'LRMHPECMRecordID') ~> SetCustomFields\nDataTransformation select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMArchivedBy = {ARCHIVED USER},\n\t\tLRMAttachments = ATTACHMENTS,\n\t\tLRMBOLDate = {B/L DATE},\n\t\tLRMBroker = BROKER,\n\t\tLRMCargoNumber = {CARGO NUMBER},\n\t\tLRMCustomer = CUSTOMER,\n\t\tLRMDateExecuted = {DATE EXECUTED},\n\t\tLRMDealNumber = {DEAL NUMBER},\n\t\tLRMDischargePort = {DISCHARGE PORT},\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFolderType = {FOLDER TYPE},\n\t\tLRMLoadPort = {LOAD PORT},\n\t\tLRMQuality = QUALITY,\n\t\tLRMResponsibleOperator = {RESPONSIBLE OPS},\n\t\tLRMTo = TO,\n\t\tLRMTransmissionDate = {TRANSMISSION DATE},\n\t\tLRMUniqueFolderId = {UNIQUE FOLDER ID},\n\t\tLRMVessel = VESSEL,\n\t\tLRMVoyageNumber = {VOYAGE NUMBER},\n\t\tusecsom\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FieldsMapping\ndcffilesource derive({ARCHIVED USER} = toString(byName('ARCHIVED USER')),\n\t\tATTACHMENTS = toString(byName('ATTACHMENTS')),\n\t\t{B/L DATE} = toString(byName('B/L DATE')),\n\t\tBROKER = toString(byName('BROKER')),\n\t\t{CARGO NUMBER} = toString(byName('CARGO NUMBER')),\n\t\tCUSTOMER = toString(byName('CUSTOMER')),\n\t\t{DATE EXECUTED} = toString(byName('DATE EXECUTED')),\n\t\t{DEAL NUMBER} = toString(byName('DEAL NUMBER')),\n\t\t{DISCHARGE PORT} = toString(byName('DISCHARGE PORT')),\n\t\t{FOLDER TYPE} = toString(byName('FOLDER TYPE')),\n\t\tFilename = toString(byName('Filename')),\n\t\t{LOAD PORT} = toString(byName('LOAD PORT')),\n\t\tQUALITY = toString(byName('QUALITY')),\n\t\t{RESPONSIBLE OPS} = toString(byName('RESPONSIBLE OPS')),\n\t\tSource = toString(byName('Source')),\n\t\tTO = toString(byName('TO')),\n\t\t{TRANSMISSION DATE} = toString(byName('TRANSMISSION DATE')),\n\t\t{UNIQUE FOLDER ID} = toString(byName('UNIQUE FOLDER ID')),\n\t\tVESSEL = toString(byName('VESSEL')),\n\t\t{VOYAGE NUMBER} = toString(byName('VOYAGE NUMBER')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttitle = toString(byName('title')),\n\t\tusecsom = false()) ~> DataTransformation\nSetRestrictedColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationOpen\nSetOpenColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationRestricted"
                 }
             },
             "dependsOn": [
@@ -1622,7 +1860,7 @@
                             "description": "Creates an explicit mapping for each drifted column"
                         }
                     ],
-                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tOpenLibraryDriveId as string,\n\tRestrictedLibraryDriveId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\tmodifiedBefore: (currentTimestamp()-minutes(30)),\n\tdocumentForm: 'singleDocument') ~> dcffilesource\nSetFileName split(startsWith(LRMUniqueFolderId, \"SA.\"),\n\tdisjoint: false) ~> CheckDestination@(SendToRestrictedLibrary, SendToOpenLibrary)\nCheckDestination@SendToRestrictedLibrary derive(driveid = $RestrictedLibraryDriveId) ~> SetRestrictedColumn\nCheckDestination@SendToOpenLibrary derive(driveid = $OpenLibraryDriveId) ~> SetOpenColumn\nFieldsMapping derive(DestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tFilename = concat(LRMHPECMRecordID,'_', Filename),\n\t\tdocumentId = LRMHPECMRecordID,\n\t\tTitle = Filename) ~> SetFileName\nDataTransformation select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMArchivedBy = {ARCHIVED USER},\n\t\tLRMAttachments = ATTACHMENTS,\n\t\tLRMBOLDate = {B/L DATE},\n\t\tLRMBroker = BROKER,\n\t\tLRMCargoNumber = {CARGO NUMBER},\n\t\tLRMCustomer = CUSTOMER,\n\t\tLRMDateExecuted = {DATE EXECUTED},\n\t\tLRMDealNumber = {DEAL NUMBER},\n\t\tLRMDischargePort = {DISCHARGE PORT},\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFolderType = {FOLDER TYPE},\n\t\tLRMLoadPort = {LOAD PORT},\n\t\tLRMQuality = QUALITY,\n\t\tLRMResponsibleOperator = {RESPONSIBLE OPS},\n\t\tLRMTo = TO,\n\t\tLRMTransmissionDate = {TRANSMISSION DATE},\n\t\tLRMUniqueFolderId = {UNIQUE FOLDER ID},\n\t\tLRMVessel = VESSEL,\n\t\tLRMVoyageNumber = {VOYAGE NUMBER},\n\t\tusecsom\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FieldsMapping\ndcffilesource derive({ARCHIVED USER} = toString(byName('ARCHIVED USER')),\n\t\tATTACHMENTS = toString(byName('ATTACHMENTS')),\n\t\t{B/L DATE} = toString(byName('B/L DATE')),\n\t\tBROKER = toString(byName('BROKER')),\n\t\t{CARGO NUMBER} = toString(byName('CARGO NUMBER')),\n\t\tCUSTOMER = toString(byName('CUSTOMER')),\n\t\t{DATE EXECUTED} = toString(byName('DATE EXECUTED')),\n\t\t{DEAL NUMBER} = toString(byName('DEAL NUMBER')),\n\t\t{DISCHARGE PORT} = toString(byName('DISCHARGE PORT')),\n\t\t{FOLDER TYPE} = toString(byName('FOLDER TYPE')),\n\t\tFilename = toString(byName('Filename')),\n\t\t{LOAD PORT} = toString(byName('LOAD PORT')),\n\t\tQUALITY = toString(byName('QUALITY')),\n\t\t{RESPONSIBLE OPS} = toString(byName('RESPONSIBLE OPS')),\n\t\tSource = toString(byName('Source')),\n\t\tTO = toString(byName('TO')),\n\t\t{TRANSMISSION DATE} = toString(byName('TRANSMISSION DATE')),\n\t\t{UNIQUE FOLDER ID} = toString(byName('UNIQUE FOLDER ID')),\n\t\tVESSEL = toString(byName('VESSEL')),\n\t\t{VOYAGE NUMBER} = toString(byName('VOYAGE NUMBER')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttitle = toString(byName('title')),\n\t\tusecsom = false()) ~> DataTransformation\nSetRestrictedColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationOpen\nSetOpenColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationRestricted"
+                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tOpenLibraryDriveId as string,\n\tRestrictedLibraryDriveId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\tmodifiedBefore: (currentTimestamp()-minutes(30)),\n\tdocumentForm: 'singleDocument') ~> dcffilesource\nSetFileName split(startsWith(LRMUniqueFolderId, \"SA.\"),\n\tdisjoint: false) ~> CheckDestination@(SendToRestrictedLibrary, SendToOpenLibrary)\nCheckDestination@SendToRestrictedLibrary derive(driveid = $RestrictedLibraryDriveId) ~> SetRestrictedColumn\nCheckDestination@SendToOpenLibrary derive(driveid = $OpenLibraryDriveId) ~> SetOpenColumn\nFieldsMapping derive(DestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tFilename = concat(LRMHPECMRecordID,'_', replace(Filename, \"/\", \"\")),\n\t\tdocumentId = LRMHPECMRecordID,\n\t\tTitle = Filename) ~> SetFileName\nDataTransformation select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMArchivedBy = {ARCHIVED USER},\n\t\tLRMAttachments = ATTACHMENTS,\n\t\tLRMBOLDate = {B/L DATE},\n\t\tLRMBroker = BROKER,\n\t\tLRMCargoNumber = {CARGO NUMBER},\n\t\tLRMCustomer = CUSTOMER,\n\t\tLRMDateExecuted = {DATE EXECUTED},\n\t\tLRMDealNumber = {DEAL NUMBER},\n\t\tLRMDischargePort = {DISCHARGE PORT},\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMFolderType = {FOLDER TYPE},\n\t\tLRMLoadPort = {LOAD PORT},\n\t\tLRMQuality = QUALITY,\n\t\tLRMResponsibleOperator = {RESPONSIBLE OPS},\n\t\tLRMTo = TO,\n\t\tLRMTransmissionDate = {TRANSMISSION DATE},\n\t\tLRMUniqueFolderId = {UNIQUE FOLDER ID},\n\t\tLRMVessel = VESSEL,\n\t\tLRMVoyageNumber = {VOYAGE NUMBER},\n\t\tusecsom\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FieldsMapping\ndcffilesource derive({ARCHIVED USER} = toString(byName('ARCHIVED USER')),\n\t\tATTACHMENTS = toString(byName('ATTACHMENTS')),\n\t\t{B/L DATE} = toString(byName('B/L DATE')),\n\t\tBROKER = toString(byName('BROKER')),\n\t\t{CARGO NUMBER} = toString(byName('CARGO NUMBER')),\n\t\tCUSTOMER = toString(byName('CUSTOMER')),\n\t\t{DATE EXECUTED} = toString(byName('DATE EXECUTED')),\n\t\t{DEAL NUMBER} = toString(byName('DEAL NUMBER')),\n\t\t{DISCHARGE PORT} = toString(byName('DISCHARGE PORT')),\n\t\t{FOLDER TYPE} = toString(byName('FOLDER TYPE')),\n\t\tFilename = toString(byName('Filename')),\n\t\t{LOAD PORT} = toString(byName('LOAD PORT')),\n\t\tQUALITY = toString(byName('QUALITY')),\n\t\t{RESPONSIBLE OPS} = toString(byName('RESPONSIBLE OPS')),\n\t\tSource = toString(byName('Source')),\n\t\tTO = toString(byName('TO')),\n\t\t{TRANSMISSION DATE} = toString(byName('TRANSMISSION DATE')),\n\t\t{UNIQUE FOLDER ID} = toString(byName('UNIQUE FOLDER ID')),\n\t\tVESSEL = toString(byName('VESSEL')),\n\t\t{VOYAGE NUMBER} = toString(byName('VOYAGE NUMBER')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttitle = toString(byName('title')),\n\t\tusecsom = false()) ~> DataTransformation\nSetRestrictedColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationOpen\nSetOpenColumn sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> FileDestinationRestricted"
                 }
             },
             "dependsOn": [
@@ -2181,7 +2419,7 @@
                 "typeProperties": {
                     "frequency": "Minute",
                     "interval": 30,
-                    "startTime": "2021-03-30T12:48:00Z",
+                    "startTime": "2022-04-28T22:27:00Z",
                     "delay": "00:00:00",
                     "maxConcurrency": 50,
                     "retryPolicy": {

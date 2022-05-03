@@ -23,7 +23,7 @@ namespace MCOM.Archiving.Functions
         }
 
         [Function("PostFeedbackJob")]
-        public async Task RunAsync([TimerTrigger("0 0 * * * *")] TimerInfo timer, FunctionContext context)
+        public async Task RunAsync([TimerTrigger("0 */15 * * * *")] TimerInfo timer, FunctionContext context)
         {
             var logger = context.GetLogger("PostFeedbackJob");
 
@@ -56,38 +56,46 @@ namespace MCOM.Archiving.Functions
                     // Loop trhough messages and send the request to the client
                     foreach (var message in messages)
                     {
-                        // Build client and send request
-                        var queueItem = JsonConvert.DeserializeObject<QueueItem>(message.AsString);
-
-                        // Validate object
-                        if (queueItem.ClientUrl == null || queueItem.Content == null || queueItem.Source == null)
+                        try
                         {
-                            Global.Log.LogError(new NullReferenceException(), $"Error: Error when deserializing the object into a QueueItem");
-                            throw new Exception("Error when deserializing the object into a QueueItem");
+                            // Build client and send request
+                            var queueItem = JsonConvert.DeserializeObject<QueueItem>(message.AsString);
+
+                            // Validate object
+                            if (queueItem.ClientUrl == null || queueItem.Content == null || queueItem.Source == null)
+                            {
+                                Global.Log.LogError(new NullReferenceException(), $"Error: Error when deserializing the object into a QueueItem");
+                                throw new Exception("Error when deserializing the object into a QueueItem");
+                            }
+
+                            // Validate null guid
+                            if (queueItem.Content.DocumentId.Equals("00000000-0000-0000-0000-000000000000"))
+                            {
+                                Global.Log.LogError(new NullReferenceException(), "Error: Got null guid");
+                                throw new Exception("Got null guid");
+                            }
+
+                            // Run business layer and transform queue item
+                            queueItem = _postFeedBackBusiness.GetQueueItem(queueItem);
+
+                            // Send the http request
+                            var response = await _queueService.PostFeedbackAsync(queueItem);
+                            var responseContent = await response.Content.ReadAsStringAsync();
+
+                            if (response.IsSuccessStatusCode)
+                            {
+                                Global.Log.LogInformation($"Success: {responseContent}");
+                            }
+                            else
+                            {
+                                Global.Log.LogError(new NullReferenceException(), $"Error: {response.ReasonPhrase}. Message: {responseContent}");
+                                //throw new Exception(response.ReasonPhrase);
+                            }
                         }
-
-                        // Validate null guid
-                        if (queueItem.Content.DocumentId.Equals("00000000-0000-0000-0000-000000000000"))
+                        catch (Exception ex)
                         {
-                            Global.Log.LogError(new NullReferenceException(), "Error: Got null guid");
-                            throw new Exception("Got null guid");
-                        }
-
-                        // Run business layer and transform queue item
-                        queueItem = _postFeedBackBusiness.GetQueueItem(queueItem);
-
-                        // Send the http request
-                        var response = await _queueService.PostFeedbackAsync(queueItem);
-                        var responseContent = await response.Content.ReadAsStringAsync();
-
-                        if (response.IsSuccessStatusCode)
-                        {
-                            Global.Log.LogInformation($"Success: {responseContent}");
-                        }
-                        else
-                        {
-                            Global.Log.LogError(new NullReferenceException(), $"Error: {response.ReasonPhrase}. Message: {responseContent}");
-                            //throw new Exception(response.ReasonPhrase);
+                            // log to analytics
+                            Global.Log.LogError(ex, $"Exception trying to call destination endpoint: {ex.Message}");
                         }
                     }
                 }
