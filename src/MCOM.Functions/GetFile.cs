@@ -107,38 +107,41 @@ namespace MCOM.Functions
                 
 
                 // Check presence of drive Id in the request
-                if (string.IsNullOrEmpty(driveId) || driveId.Equals("null"))
-                {
-                    // Check if the document id is a guid (it means that the document came through the archiving pipeline and not from HPECM migration)
-                    if(StringUtilities.IsGuid(documentId))
-                    {
-                        // Return trace logs from app insights with status of the document
-                        return await GetEventsFromAppInsights(req, documentId);
-                    } else
-                    {
-                        using ClientContext clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
-                        // If the file is coming from HPCEM migration then return it via graph search
-                        return SearchArchivedFile(req, clientContext, documentId, documentIdField, accessToken.Token);
-                    }                    
-                }                
+                //if (string.IsNullOrEmpty(driveId) || driveId.Equals("null"))
+                //{
+                //    // Check if the document id is a guid (it means that the document came through the archiving pipeline and not from HPECM migration)
+                //    if(StringUtilities.IsGuid(documentId))
+                //    {
+                //        // Return trace logs from app insights with status of the document
+                //        return await GetEventsFromAppInsights(req, documentId);
+                //    } else
+                //    {
+                //        using ClientContext clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
+                //        // If the file is coming from HPCEM migration then return it via graph search
+                //        return SearchArchivedFile(req, clientContext, documentId, documentIdField, accessToken.Token);
+                //    }                    
+                //}                
 
                 // If drive Id is not empty proceed to check 
                 Drive driveObject = null;
                 try
                 {
                     // Get drive from graph
-                    driveObject = await _graphService.GetDriveAsync(driveId, "webUrl,sharepointIds");
-                    if (driveObject == null)
+                    if (!string.IsNullOrEmpty(driveId) && !driveId.Equals("null"))
                     {
-                        Global.Log.LogError(new NullReferenceException(), "Could not find drive with specified ID. driveId: {DocumentId}", driveId);
-                        response = req.CreateResponse(HttpStatusCode.NotFound);
-                        response.WriteString(JsonConvert.SerializeObject(new
+                        driveObject = await _graphService.GetDriveAsync(driveId, "webUrl,sharepointIds");
+                        if (driveObject == null)
                         {
-                            Message = $"Could not find any drive with specified ID. driveId: {driveId}",
-                            Status = "Error"
-                        }));
-                        return response;
-                    }
+                            Global.Log.LogError(new NullReferenceException(), "Could not find drive with specified ID. driveId: {DocumentId}", driveId);
+                            response = req.CreateResponse(HttpStatusCode.NotFound);
+                            response.WriteString(JsonConvert.SerializeObject(new
+                            {
+                                Message = $"Could not find any drive with specified ID. driveId: {driveId}",
+                                Status = "Error"
+                            }));
+                            return response;
+                        }
+                    }                        
                 }
                 catch (Exception e)
                 {
@@ -160,7 +163,29 @@ namespace MCOM.Functions
                     response = SearchArchivedFile(req, clientContext, documentId, documentIdField, accessToken.Token);
                     if(response.StatusCode != HttpStatusCode.OK)
                     {
-                        response = await GetArchivedFile(req, driveId, documentId, documentIdField);
+                        // Check presence of drive Id in the request
+                        if (string.IsNullOrEmpty(driveId) || driveId.Equals("null"))
+                        {
+                            // Check if the document id is a guid (it means that the document came through the archiving pipeline and not from HPECM migration)
+                            if (StringUtilities.IsGuid(documentId))
+                            {
+                                // Return trace logs from app insights with status of the document
+                                return await GetEventsFromAppInsights(req, documentId);
+                            } else
+                            {
+                                Global.Log.LogWarning("The item to be retrieved is migrated from HPCEM and cannot be found. DocumentId: {DocumentId}. DriveId: {DriveId}.", documentId, driveId);
+                                response = req.CreateResponse(HttpStatusCode.NotFound);
+                                response.WriteString(JsonConvert.SerializeObject(new
+                                {
+                                    Message = $"The item to be retrieved is migrated from HPCEM and cannot be found. DocumentId: {documentId}",
+                                    Status = "Error"
+                                }));
+                                return response;
+                            }
+                        } else
+                        {
+                            response = await GetArchivedFile(req, driveId, documentId, documentIdField);
+                        }                        
                     }                    
                 }
                 catch (Exception e)
@@ -224,7 +249,7 @@ namespace MCOM.Functions
             {
                 var msg = "Error trying to get items from Archive location";
                 Global.Log.LogError(e, msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId, e.Message, e.StackTrace);
-                var exResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
+                var exResponse = req.CreateResponse(HttpStatusCode.Conflict);
                 exResponse.WriteString(JsonConvert.SerializeObject(new
                 {
                     Message = msg,
