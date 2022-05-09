@@ -73,47 +73,8 @@ namespace MCOM.Functions
                                     // Convert data
                                     var fileData = JsonConvert.DeserializeObject<Dictionary<string, object>>(blobData);
 
-                                    // Validate all                               
-                                    if (!fileData.TryGetValue("domain", out var domain))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Missing domain in metadata.: {blobName}", blobName);
-                                        continue;
-                                    }
-                                    if (!fileData.TryGetValue("siteId", out var siteId))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Missing siteId in metadata.: {blobName}", blobName);
-                                        continue;
-                                    }
-                                    if (!fileData.TryGetValue("webId", out var webId))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Missing webId in metadata.: {blobName}", blobName);
-                                        continue;
-                                    }
-                                    if (!fileData.TryGetValue("listId", out var listId))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Missing listId in metadata.: {blobName}", blobName);
-                                        continue;
-                                    }
-                                    if (!fileData.TryGetValue("itemId", out var itemId))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Missing itemId in metadata.: {blobName}", blobName);
-                                        continue;
-                                    }
-                                    if (!fileData.TryGetValue("documentId", out var documentId))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Missing documentId in metadata.: {blobName}", blobName);
-                                        continue;
-                                    }
-                                    if (!fileData.TryGetValue("fileName", out var fileName))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Missing fileName in metadata.: {blobName}", blobName);
-                                        continue;
-                                    }
-                                    if (!fileData.TryGetValue("documentIdField", out var documentIdField))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Missing documentIdField in metadata.: {blobName}", blobName);
-                                        continue;
-                                    }
+                                    // Validate internal properties
+                                    var (isValid, domain, siteId, webId, listId, itemId, documentId, fileName, documentIdField) = ValidateFileData(fileData, blobName);
 
                                     // Remove all internal properties
                                     fileData = CleanFileData(fileData);
@@ -259,6 +220,53 @@ namespace MCOM.Functions
             fileData.Remove("fileName");
 
             return fileData;
+        }
+
+        private (bool, string, string, string, string, string, string, string, string) ValidateFileData(Dictionary<string, object> fileData, string blobName)
+        {
+            // Validate all                               
+            if (!fileData.TryGetValue("domain", out var domain))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing domain in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
+            if (!fileData.TryGetValue("siteId", out var siteId))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing siteId in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
+            if (!fileData.TryGetValue("webId", out var webId))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing webId in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
+            if (!fileData.TryGetValue("listId", out var listId))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing listId in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
+            if (!fileData.TryGetValue("itemId", out var itemId))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing itemId in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
+            if (!fileData.TryGetValue("documentId", out var documentId))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing documentId in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
+            if (!fileData.TryGetValue("fileName", out var fileName))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing fileName in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
+            if (!fileData.TryGetValue("documentIdField", out var documentIdField))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing documentIdField in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
+
+            return (true, domain.ToString(), siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString(), documentId.ToString(), fileName.ToString(), documentIdField.ToString());
         }
     }
 }
