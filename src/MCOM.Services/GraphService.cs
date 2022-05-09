@@ -22,6 +22,7 @@ namespace MCOM.Services
         Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string driveId, string fileName);
 
         Task<Microsoft.Graph.ListItem> GetListItemAsync(string driveId, string driveItemId);
+        Task<Microsoft.Graph.ListItem> GetListItemAsync(string domain, string siteId, string webId, string listId, string itemId);
 
         Task<List<MCOMSearchResult>> SearchItemAsync(string documentId);
 
@@ -32,6 +33,7 @@ namespace MCOM.Services
         Task<Stream> GetFileContentAsync(string driveId, string driveItemId);
 
         Task<Drive> GetDriveAsync(string driveId, string select);
+        Task<Drive> GetDriveAsync(string domain, string siteId, string webId, string listId, string select);
 
         Task SetMetadataAsync(ArchiveFileData<string, object> filedata, DriveItem uploadedItem);
 
@@ -76,6 +78,13 @@ namespace MCOM.Services
             return await GraphServiceClient.Drives[driveId].Request().Select(select).GetAsync();
         }
 
+        public virtual async Task<Drive> GetDriveAsync(string domain, string siteId, string webId, string listId, string select)
+        {
+            GraphServiceClient = await GetGraphServiceClientAsync();
+
+            return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Drive.Request().Select(select).GetAsync();
+        }
+
         public virtual async Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string driveId, string fileName)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
@@ -88,6 +97,13 @@ namespace MCOM.Services
             GraphServiceClient = await GetGraphServiceClientAsync();
 
             return await GraphServiceClient.Drives[driveId].Items[driveItemId].ListItem.Request().GetAsync();
+        }
+
+        public virtual async Task<Microsoft.Graph.ListItem> GetListItemAsync(string domain, string siteId, string webId, string listId, string itemId)
+        {
+            GraphServiceClient = await GetGraphServiceClientAsync();
+
+            return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items[itemId].Request().GetAsync();
         }
 
         public virtual async Task<List<MCOMSearchResult>> SearchItemAsync(string documentId)
