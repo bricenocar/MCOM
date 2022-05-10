@@ -74,7 +74,7 @@ namespace MCOM.Functions
                                     var fileData = JsonConvert.DeserializeObject<Dictionary<string, object>>(blobData);
 
                                     // Validate internal properties
-                                    var (isValid, domain, siteId, webId, listId, itemId, documentId, fileName, documentIdField, documentIdFieldValue) = ValidateFileData(fileData, blobName);
+                                    var (isValid, siteId, webId, listId, itemId, documentId, fileName, documentIdField, documentIdFieldValue) = ValidateFileData(fileData, blobName);
 
                                     // CHECK IS VALID????
                                     if (!isValid)
@@ -87,7 +87,7 @@ namespace MCOM.Functions
                                     fileData = CleanFileData(fileData);
 
                                     // Get drive
-                                    var drive = await _graphService.GetDriveAsync(domain, siteId, webId, listId, "Id");
+                                    var drive = await _graphService.GetDriveAsync(Global.SharePointDomain, siteId, webId, listId, "Id");
                                     if (drive == null)
                                     {
                                         Global.Log.LogError(new NullReferenceException(), "Could not get drive with specified blobName: {blobName}", blobName);
@@ -103,7 +103,7 @@ namespace MCOM.Functions
                                     }
 
                                     // Check whether the item exists in SharePoint
-                                    var listItem = await _graphService.GetListItemAsync(domain, siteId, webId, listId, itemId);
+                                    var listItem = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId, webId, listId, itemId);
                                     if (listItem.Fields.AdditionalData.TryGetValue(documentIdField, out var spCustomField))
                                     {
                                         if (spCustomField.ToString().Equals(documentIdFieldValue))
@@ -168,7 +168,7 @@ namespace MCOM.Functions
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, ex.Message);                   
+                    Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, ex.Message);
                 }
 
                 Global.Log.LogInformation($"The file {documentId} has been uploaded successfully (UploadLargeFile). Deleting from staging area output and files");
@@ -184,7 +184,7 @@ namespace MCOM.Functions
                 }
                 catch (Exception uploadSmallFileEx)
                 {
-                    Global.Log.LogCritical(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, uploadSmallFileEx.Message);                   
+                    Global.Log.LogCritical(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, uploadSmallFileEx.Message);
                 }
 
                 Global.Log.LogInformation($"The file {documentId} has been uploaded successfully (UploadSmallFile). Deleting from staging area output and files");
@@ -217,7 +217,6 @@ namespace MCOM.Functions
 
         private Dictionary<string, object> CleanFileData(Dictionary<string, object> fileData)
         {
-            fileData.Remove("domain");
             fileData.Remove("siteId");
             fileData.Remove("webId");
             fileData.Remove("listId");
@@ -229,56 +228,51 @@ namespace MCOM.Functions
             return fileData;
         }
 
-        private (bool, string, string, string, string, string, string, string, string, string) ValidateFileData(Dictionary<string, object> fileData, string blobName)
+        private (bool, string, string, string, string, string, string, string, string) ValidateFileData(Dictionary<string, object> fileData, string blobName)
         {
-            // Validate all                               
-            if (!fileData.TryGetValue("domain", out var domain))
-            {
-                Global.Log.LogError(new NullReferenceException(), "Missing domain in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
-            }
+            // Validate all
             if (!fileData.TryGetValue("siteId", out var siteId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing siteId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
+                return (false, "", "", "", "", "", "", "", "");
             }
             if (!fileData.TryGetValue("webId", out var webId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing webId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
+                return (false, "", "", "", "", "", "", "", "");
             }
             if (!fileData.TryGetValue("listId", out var listId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing listId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
+                return (false, "", "", "", "", "", "", "", "");
             }
             if (!fileData.TryGetValue("itemId", out var itemId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing itemId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
+                return (false, "", "", "", "", "", "", "", "");
             }
             if (!fileData.TryGetValue("documentId", out var documentId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing documentId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
+                return (false, "", "", "", "", "", "", "", "");
             }
             if (!fileData.TryGetValue("fileName", out var fileName))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing fileName in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
+                return (false, "", "", "", "", "", "", "", "");
             }
             if (!fileData.TryGetValue("documentIdField", out var documentIdField))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing documentIdField in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
+                return (false, "", "", "", "", "", "", "", "");
             }
             if (!fileData.TryGetValue(documentIdField.ToString(), out var documentIdFieldValue))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing documentIdField in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "", "");
+                return (false, "", "", "", "", "", "", "", "");
             }
 
-            return (true, domain.ToString(), siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString(), documentId.ToString(), fileName.ToString(), documentIdField.ToString(), documentIdFieldValue.ToString());
+            return (true, siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString(), documentId.ToString(), fileName.ToString(), documentIdField.ToString(), documentIdFieldValue.ToString());
         }
     }
 }

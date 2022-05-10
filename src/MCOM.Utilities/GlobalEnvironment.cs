@@ -20,7 +20,8 @@ namespace MCOM.Utilities
             Global.AppInsightsAppId = Environment.GetEnvironmentVariable("AppInsightsAppId");
            
             // SharePoint related
-            Global.SharePointUrl = Environment.GetEnvironmentVariable("SharePointUrl");           
+            Global.SharePointUrl = Environment.GetEnvironmentVariable("SharePointUrl");
+            Global.SharePointDomain = Environment.GetEnvironmentVariable("SharePointDomain");
 
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MandatoryMetadataFields")))
             {

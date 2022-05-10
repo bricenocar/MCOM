@@ -14,6 +14,7 @@ namespace MCOM.Models
         public static bool BlobOverwriteExistingFile { get; set; }
         public static List<string> MandatoryMetadataFields { get; set; }
         public static string SharePointUrl { get; set; }
+        public static string SharePointDomain { get; set; }
         public static string AppInsightsAppId { get; set; }
         public static bool AppInsightsStrcuturedLogs { get; set; }
     }
