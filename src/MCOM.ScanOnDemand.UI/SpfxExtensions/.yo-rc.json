@@ -5,7 +5,7 @@
     "environment": "spo",
     "version": "1.13.1",
     "libraryName": "spfx-extensions",
-    "libraryId": "bbf21206-5b68-4f47-a6aa-fb5d9474e2cf",
+    "libraryId": "68a20ba7-ccae-46cf-be9e-a023381246ef",
     "packageManager": "npm",
     "isDomainIsolated": false,
     "componentType": "extension",

@@ -1,4 +1,4 @@
-# spfx-webparts
+# spfx-web-parts
 
 ## Summary
 
