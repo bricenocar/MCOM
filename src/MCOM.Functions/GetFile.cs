@@ -107,38 +107,41 @@ namespace MCOM.Functions
                 
 
                 // Check presence of drive Id in the request
-                if (string.IsNullOrEmpty(driveId) || driveId.Equals("null"))
-                {
-                    // Check if the document id is a guid (it means that the document came through the archiving pipeline and not from HPECM migration)
-                    if(StringUtilities.IsGuid(documentId))
-                    {
-                        // Return trace logs from app insights with status of the document
-                        return await GetEventsFromAppInsights(req, documentId);
-                    } else
-                    {
-                        using ClientContext clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
-                        // If the file is coming from HPCEM migration then return it via graph search
-                        return SearchArchivedFile(req, clientContext, documentId, documentIdField, accessToken.Token);
-                    }                    
-                }                
+                //if (string.IsNullOrEmpty(driveId) || driveId.Equals("null"))
+                //{
+                //    // Check if the document id is a guid (it means that the document came through the archiving pipeline and not from HPECM migration)
+                //    if(StringUtilities.IsGuid(documentId))
+                //    {
+                //        // Return trace logs from app insights with status of the document
+                //        return await GetEventsFromAppInsights(req, documentId);
+                //    } else
+                //    {
+                //        using ClientContext clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
+                //        // If the file is coming from HPCEM migration then return it via graph search
+                //        return SearchArchivedFile(req, clientContext, documentId, documentIdField, accessToken.Token);
+                //    }                    
+                //}                
 
                 // If drive Id is not empty proceed to check 
                 Drive driveObject = null;
                 try
                 {
                     // Get drive from graph
-                    driveObject = await _graphService.GetDriveAsync(driveId, "webUrl,sharepointIds");
-                    if (driveObject == null)
+                    if (!string.IsNullOrEmpty(driveId) && !driveId.Equals("null"))
                     {
-                        Global.Log.LogError(new NullReferenceException(), "Could not find drive with specified ID. driveId: {DocumentId}", driveId);
-                        response = req.CreateResponse(HttpStatusCode.NotFound);
-                        response.WriteString(JsonConvert.SerializeObject(new
+                        driveObject = await _graphService.GetDriveAsync(driveId, "webUrl,sharepointIds");
+                        if (driveObject == null)
                         {
-                            Message = $"Could not find any drive with specified ID. driveId: {driveId}",
-                            Status = "Error"
-                        }));
-                        return response;
-                    }
+                            Global.Log.LogError(new NullReferenceException(), "Could not find drive with specified ID. driveId: {DocumentId}", driveId);
+                            response = req.CreateResponse(HttpStatusCode.NotFound);
+                            response.WriteString(JsonConvert.SerializeObject(new
+                            {
+                                Message = $"Could not find any drive with specified ID. driveId: {driveId}",
+                                Status = "Error"
+                            }));
+                            return response;
+                        }
+                    }                        
                 }
                 catch (Exception e)
                 {
@@ -154,29 +157,36 @@ namespace MCOM.Functions
 
                 try
                 {
-                    // Validate null values
-                    if (driveObject.WebUrl == null || driveObject.SharePointIds == null)
-                    {
-                        msg = "Could not retrieve web url or SharePoint list id from drive object";
-                        Global.Log.LogError(new NullReferenceException(), msg + ". DriveId: {DriveId.} DocumentId: {DocumentId}.", driveId, documentId);
-                        response = req.CreateResponse(HttpStatusCode.NotFound);
-                        response.WriteString(JsonConvert.SerializeObject(new
-                        {
-                            Message = msg,
-                            Status = "Error"
-                        }));
-                        return response;
-                    }
-                    // Get SharePoint site URL and context
-                    var fileUri = new Uri(driveObject.WebUrl);
-                    var webUrl = fileUri.AbsoluteUri.Substring(0, fileUri.AbsoluteUri.LastIndexOf("/"));
-                    using ClientContext clientContext = _sharePointService.GetClientContext(webUrl, accessToken.Token);
+                    using ClientContext clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
 
-                    // Get list from drive object
-                    var listId = new Guid(driveObject.SharePointIds.ListId);
-                    var list = _sharePointService.GetListById(clientContext, listId);
-                    
-                    response = await GetArchivedFile(req, clientContext, list, documentId, documentIdField);
+                    // Get file from search first, if not found, try with graph
+                    response = SearchArchivedFile(req, clientContext, documentId, documentIdField, accessToken.Token);
+                    if(response.StatusCode != HttpStatusCode.OK)
+                    {
+                        // Check presence of drive Id in the request
+                        if (string.IsNullOrEmpty(driveId) || driveId.Equals("null"))
+                        {
+                            // Check if the document id is a guid (it means that the document came through the archiving pipeline and not from HPECM migration)
+                            if (StringUtilities.IsGuid(documentId))
+                            {
+                                // Return trace logs from app insights with status of the document
+                                return await GetEventsFromAppInsights(req, documentId);
+                            } else
+                            {
+                                Global.Log.LogWarning("The item to be retrieved is migrated from HPCEM and cannot be found. DocumentId: {DocumentId}. DriveId: {DriveId}.", documentId, driveId);
+                                response = req.CreateResponse(HttpStatusCode.NotFound);
+                                response.WriteString(JsonConvert.SerializeObject(new
+                                {
+                                    Message = $"The item to be retrieved is migrated from HPCEM and cannot be found. DocumentId: {documentId}",
+                                    Status = "Error"
+                                }));
+                                return response;
+                            }
+                        } else
+                        {
+                            response = await GetArchivedFile(req, driveId, documentId, documentIdField);
+                        }                        
+                    }                    
                 }
                 catch (Exception e)
                 {
@@ -239,7 +249,7 @@ namespace MCOM.Functions
             {
                 var msg = "Error trying to get items from Archive location";
                 Global.Log.LogError(e, msg + ". File unique id: {DocumentId}. Error: {ErrorMessage}. StackTrace: {ErrorStackTrace}", documentId, e.Message, e.StackTrace);
-                var exResponse = req.CreateResponse(HttpStatusCode.InternalServerError);
+                var exResponse = req.CreateResponse(HttpStatusCode.Conflict);
                 exResponse.WriteString(JsonConvert.SerializeObject(new
                 {
                     Message = msg,
@@ -249,6 +259,48 @@ namespace MCOM.Functions
             }
 
             return response;
+        }
+
+        private async Task<HttpResponseData> GetArchivedFile(HttpRequestData req, string driveId, string documentId, string documentIdField)
+        {
+            HttpResponseData response;
+
+            // Get item from drive
+            var items = await _graphService.SearchDriveAsync(driveId, documentId);
+            var item = items.FirstOrDefault();
+            if (item == null)
+            {
+                Global.Log.LogWarning("File with unique id: {DocumentId} was not found in SharePoint, proceeding to get logs from app insights", documentId);
+                // Return events from app insights                
+                return await GetEventsFromAppInsights(req, documentId);                
+            }
+
+            // Get file from the item found
+            var stream = await _graphService.GetFileContentAsync(driveId, item.Id);
+            if (stream != null)
+            {
+                using var memoryStream = new MemoryStream();
+                stream.CopyTo(memoryStream);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                var fileArray = memoryStream.ToArray();
+                Global.Log.LogInformation("Successfully retrieved file requested. File unique id: {DocumentId}. File name: {Filename} ", documentId, item.Name);
+                response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/octet-stream");
+                response.WriteBytes(fileArray);
+                return response;
+            }
+            else
+            {
+                string msg = "Could not open file in binary stream.";
+                Global.Log.LogError(new NullReferenceException(), msg + " File unique id: {DocumentId}.", documentId);
+                response = req.CreateResponse(HttpStatusCode.Conflict);
+                response.WriteString(JsonConvert.SerializeObject(new
+                {
+                    Message = msg,
+                    Status = "Error"
+                }));
+                return response;
+            }
         }
 
         private async Task<HttpResponseData> GetArchivedFile(HttpRequestData req, ClientContext clientContext, Microsoft.SharePoint.Client.List list, string documentId, string documentIdField)
