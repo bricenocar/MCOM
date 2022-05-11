@@ -5,8 +5,9 @@ namespace MCOM.Models
     public class ScanRequestPayload
     {
         public string ItemId { get; set; }
-        public string SiteUrl { get; set; }
-        public string ListName { get; set; }
+        public string SiteId { get; set; }
+        public string WebId { get; set; }
+        public string ListId { get; set; }
         public string WBS { get; set; }
         public string RequestedBy { get; set; }
         public DateTime RequestedDate { get; set; }

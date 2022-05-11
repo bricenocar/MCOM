@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Azure.Storage.Blobs;
-using MCOM.Models;
-using MCOM.Services;
-using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using Azure.Storage.Blobs;
+using MCOM.Models;
+using MCOM.Services;
+using MCOM.Utilities;
 
 namespace MCOM.Functions
 {
@@ -74,13 +74,20 @@ namespace MCOM.Functions
                                     var fileData = JsonConvert.DeserializeObject<Dictionary<string, object>>(blobData);
 
                                     // Validate internal properties
-                                    var (isValid, domain, siteId, webId, listId, itemId, documentId, fileName, documentIdField) = ValidateFileData(fileData, blobName);
+                                    var (isValid, siteId, webId, listId, itemId, documentId, fileName, documentIdField, documentIdFieldValue) = ValidateFileData(fileData, blobName);
+
+                                    // CHECK IS VALID????
+                                    if (!isValid)
+                                    {
+                                        Global.Log.LogError(new MissingFieldException(), "Could not get all required internal properties from the request: {blobName}", blobName);
+                                        continue;
+                                    }
 
                                     // Remove all internal properties
                                     fileData = CleanFileData(fileData);
 
                                     // Get drive
-                                    var drive = await _graphService.GetDriveAsync(domain.ToString(), siteId.ToString(), webId.ToString(), listId.ToString(), "Id");
+                                    var drive = await _graphService.GetDriveAsync(Global.SharePointDomain, siteId, webId, listId, "Id");
                                     if (drive == null)
                                     {
                                         Global.Log.LogError(new NullReferenceException(), "Could not get drive with specified blobName: {blobName}", blobName);
@@ -96,21 +103,21 @@ namespace MCOM.Functions
                                     }
 
                                     // Check whether the item exists in SharePoint
-                                    var listItem = await _graphService.GetListItemAsync(domain.ToString(), siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString());
-                                    if (listItem.Fields.AdditionalData.TryGetValue(documentIdField.ToString(), out var spCustomField))
+                                    var listItem = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId, webId, listId, itemId);
+                                    if (listItem.Fields.AdditionalData.TryGetValue(documentIdField, out var spCustomField))
                                     {
-                                        if (spCustomField.ToString().Equals(documentIdField.ToString()))
+                                        if (spCustomField.ToString().Equals(documentIdFieldValue))
                                         {
-                                            await DeleteDataFromAzureContainers(metadataBlobClient, filesBlobClient, documentId.ToString());
+                                            await DeleteDataFromAzureContainers(metadataBlobClient, filesBlobClient, documentId);
                                         }
                                         else // Update SHarePoint file and metadata
                                         {
-                                            await UpdateSharePointFileAsync(filesBlobClient, drive, fileData, fileName.ToString(), documentId.ToString());
+                                            await UpdateSharePointFileAsync(filesBlobClient, drive, fileData, fileName, documentId, siteId, listId, itemId);
                                         }
                                     }
                                     else // Update SharePoint file and metadata
                                     {
-                                        await UpdateSharePointFileAsync(filesBlobClient, drive, fileData, fileName.ToString(), documentId.ToString());
+                                        await UpdateSharePointFileAsync(filesBlobClient, drive, fileData, fileName, documentId, siteId, listId, itemId);
                                     }
                                 }
                             }
@@ -132,7 +139,7 @@ namespace MCOM.Functions
             logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
         }
 
-        private async Task UpdateSharePointFileAsync(BlobClient filesBlobClient, Drive drive, Dictionary<string, object> fileData, string fileName, string documentId)
+        private async Task UpdateSharePointFileAsync(BlobClient filesBlobClient, Drive drive, Dictionary<string, object> fileData, string fileName, string documentId, string siteId, string listId, string itemId)
         {
             // Max slice size must be a multiple of 320 KiB
             var maxSliceSize = 320 * 1024;
@@ -161,7 +168,7 @@ namespace MCOM.Functions
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, ex.Message);                   
+                    Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, ex.Message);
                 }
 
                 Global.Log.LogInformation($"The file {documentId} has been uploaded successfully (UploadLargeFile). Deleting from staging area output and files");
@@ -173,11 +180,11 @@ namespace MCOM.Functions
                     var uploadedItem = await _graphService.UploadDriveItemAsync(drive.Id, fileName, filesBlobStream);
                     Global.Log.LogInformation("Completed uploading {BlobFilePath} with id:{DocumentId} to location {SPPath} in drive: {DriveId}", $"files/{documentId}.json", documentId, uploadedItem.WebUrl, drive.Id);
 
-                    await _graphService.SetMetadataByGraphAsync(fileData, uploadedItem);
+                    await _graphService.SetMetadataByGraphAsync(fileData, uploadedItem, siteId, listId, itemId);
                 }
                 catch (Exception uploadSmallFileEx)
                 {
-                    Global.Log.LogCritical(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, uploadSmallFileEx.Message);                   
+                    Global.Log.LogCritical(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, uploadSmallFileEx.Message);
                 }
 
                 Global.Log.LogInformation($"The file {documentId} has been uploaded successfully (UploadSmallFile). Deleting from staging area output and files");
@@ -210,7 +217,6 @@ namespace MCOM.Functions
 
         private Dictionary<string, object> CleanFileData(Dictionary<string, object> fileData)
         {
-            fileData.Remove("domain");
             fileData.Remove("siteId");
             fileData.Remove("webId");
             fileData.Remove("listId");
@@ -224,12 +230,7 @@ namespace MCOM.Functions
 
         private (bool, string, string, string, string, string, string, string, string) ValidateFileData(Dictionary<string, object> fileData, string blobName)
         {
-            // Validate all                               
-            if (!fileData.TryGetValue("domain", out var domain))
-            {
-                Global.Log.LogError(new NullReferenceException(), "Missing domain in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
-            }
+            // Validate all
             if (!fileData.TryGetValue("siteId", out var siteId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing siteId in metadata.: {blobName}", blobName);
@@ -265,8 +266,13 @@ namespace MCOM.Functions
                 Global.Log.LogError(new NullReferenceException(), "Missing documentIdField in metadata.: {blobName}", blobName);
                 return (false, "", "", "", "", "", "", "", "");
             }
+            if (!fileData.TryGetValue(documentIdField.ToString(), out var documentIdFieldValue))
+            {
+                Global.Log.LogError(new NullReferenceException(), "Missing documentIdField in metadata.: {blobName}", blobName);
+                return (false, "", "", "", "", "", "", "", "");
+            }
 
-            return (true, domain.ToString(), siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString(), documentId.ToString(), fileName.ToString(), documentIdField.ToString());
+            return (true, siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString(), documentId.ToString(), fileName.ToString(), documentIdField.ToString(), documentIdFieldValue.ToString());
         }
     }
 }

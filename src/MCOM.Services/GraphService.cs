@@ -38,6 +38,7 @@ namespace MCOM.Services
         Task SetMetadataAsync(ArchiveFileData<string, object> filedata, DriveItem uploadedItem);
 
         Task SetMetadataByGraphAsync(Dictionary<string, object> fileMetadata, DriveItem extendedItem);
+        Task SetMetadataByGraphAsync(Dictionary<string, object> fileMetadata, DriveItem extendedItem, string siteId, string listId, string itemId);
 
         Task SetMetadataByCSOMAsync(Dictionary<string, object> fileMetadata, DriveItem extendedItem);
     }
@@ -229,6 +230,34 @@ namespace MCOM.Services
                 string listId = extendedItem.SharepointIds.ListId;
                 string itemId = extendedItem.SharepointIds.ListItemId;
 
+                Global.Log.LogInformation("Updating siteId {SiteId} listId {ListId} itemId {ListItemId} with {BlobFileMetadataCount} metadata changes.", siteId, listId, itemId, fileMetadata.Count);
+
+                var fieldValueSet = new FieldValueSet
+                {
+                    AdditionalData = fileMetadata
+                };
+
+                Global.Log.LogInformation("Metadata to send: {FileMetadata}", JsonConvert.SerializeObject(fieldValueSet));
+
+                var itemUpdateResult = await GraphServiceClient.Sites[siteId].Lists[listId].Items[itemId]
+                    .Request()
+                    .UpdateAsync(new Microsoft.Graph.ListItem() { Fields = fieldValueSet });
+            }
+            catch (Exception itemUpdateException)
+            {
+                Global.Log.LogError(itemUpdateException, "Update of item metadata failed for {SPPath}. {ErrorMessage}", extendedItem.WebUrl, itemUpdateException.Message);
+                throw;
+            }
+        }
+
+        public virtual async Task SetMetadataByGraphAsync(Dictionary<string, object> fileMetadata, DriveItem extendedItem, string siteId, string listId, string itemId)
+        {
+            GraphServiceClient = await GetGraphServiceClientAsync();
+
+            Global.Log.LogInformation("Using Graph for updating list item");
+
+            try
+            {
                 Global.Log.LogInformation("Updating siteId {SiteId} listId {ListId} itemId {ListItemId} with {BlobFileMetadataCount} metadata changes.", siteId, listId, itemId, fileMetadata.Count);
 
                 var fieldValueSet = new FieldValueSet

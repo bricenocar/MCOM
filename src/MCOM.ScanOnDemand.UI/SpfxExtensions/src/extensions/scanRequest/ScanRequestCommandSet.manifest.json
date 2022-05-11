@@ -1,6 +1,6 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/spfx/command-set-extension-manifest.schema.json",
-  "id": "9d569369-7361-41d3-bf4c-886cb780b28a",
+  "id": "02fe7e06-3f7b-4b1f-84af-8020cff0fea7",
   "alias": "ScanRequestCommandSet",
   "componentType": "Extension",
   "extensionType": "ListViewCommandSet",
