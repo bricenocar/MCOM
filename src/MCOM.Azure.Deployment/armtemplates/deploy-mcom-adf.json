@@ -512,6 +512,26 @@
             }
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_output_file')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "folderPath": "files",
+                        "container": "scanexecutions"
+                    }
+                }
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/mcom_governance_scanrequests')]",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -1726,8 +1746,106 @@
                                     }
                                 },
                                 {
-                                    "name": "Send data to container",
+                                    "name": "Send data to files folder",
                                     "type": "Copy",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "Get Scan request item",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "timeout": "7.00:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "BinarySource",
+                                            "storeSettings": {
+                                                "type": "SftpReadSettings",
+                                                "recursive": true,
+                                                "deleteFilesAfterCompletion": true,
+                                                "disableChunking": false
+                                            },
+                                            "formatSettings": {
+                                                "type": "BinaryReadSettings"
+                                            }
+                                        },
+                                        "sink": {
+                                            "type": "BinarySink",
+                                            "storeSettings": {
+                                                "type": "AzureBlobStorageWriteSettings",
+                                                "metadata": [
+                                                    {
+                                                        "name": "itemid",
+                                                        "value": {
+                                                            "value": "@activity('Get Scan request item').output.firstRow.itemid",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "webid",
+                                                        "value": {
+                                                            "value": "@activity('Get Scan request item').output.firstRow.webid",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "siteid",
+                                                        "value": {
+                                                            "value": "@activity('Get Scan request item').output.firstRow.siteid",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "listid",
+                                                        "value": {
+                                                            "value": "@activity('Get Scan request item').output.firstRow.listid",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "ordernumber",
+                                                        "value": {
+                                                            "value": "@activity('Get Scan request item').output.firstRow.ordernumber",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "internalfield",
+                                                        "value": "OrderNumber"
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "enableStaging": false,
+                                        "dataIntegrationUnits": 2
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "scanexecution_file_dataset",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "FileName": "@item().name"
+                                            }
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "scanexecution_output_file",
+                                            "type": "DatasetReference"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "Get Scan request item",
+                                    "type": "Lookup",
                                     "dependsOn": [
                                         {
                                             "activity": "Upsert Scan Execution",
@@ -1753,35 +1871,12 @@
                                             },
                                             "partitionOption": "None"
                                         },
-                                        "sink": {
-                                            "type": "JsonSink",
-                                            "storeSettings": {
-                                                "type": "AzureBlobStorageWriteSettings"
-                                            },
-                                            "formatSettings": {
-                                                "type": "JsonWriteSettings"
-                                            }
-                                        },
-                                        "enableStaging": false
-                                    },
-                                    "inputs": [
-                                        {
-                                            "referenceName": "mcom_governance_scanrequests",
+                                        "dataset": {
+                                            "referenceName": "scanexecution_db_dataset",
                                             "type": "DatasetReference"
-                                        }
-                                    ],
-                                    "outputs": [
-                                        {
-                                            "referenceName": "scanexecution_output_metadata_dataset",
-                                            "type": "DatasetReference",
-                                            "parameters": {
-                                                "filename": {
-                                                    "value": "@concat(substring(activity('Get File Metadata').output.itemName, 0 , lastIndexOf(activity('Get File Metadata').output.itemName, '.')), '.json')",
-                                                    "type": "Expression"
-                                                }
-                                            }
-                                        }
-                                    ]
+                                        },
+                                        "firstRowOnly": true
+                                    }
                                 }
                             ]
                         }
@@ -1811,7 +1906,7 @@
                     }
                 ],
                 "annotations": [],
-                "lastPublishTime": "2022-05-06T13:43:58Z"
+                "lastPublishTime": "2022-05-10T13:32:53Z"
             }
         },
         {

@@ -3,9 +3,8 @@ Param(
     [string] [Parameter(Mandatory = $true)] $ResourceGroupName,
     [string] [Parameter(Mandatory = $true)] $ResourceGroupLocation,
     [string] [Parameter(Mandatory = $true)] $Environment,
-    [string] [Parameter(Mandatory = $true)] $user,
-    [SecureString] [Parameter(Mandatory = $true)] $pass,
     [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
+    [string] [Parameter(Mandatory = $false)] $recipientEmail,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false    
 )
 
@@ -17,7 +16,7 @@ Write-Host "##[debug]Resource group: $RGName"
 
 # Login to Azure
 if($runLocally) {
-    az login
+    #az login
 }
 Write-Host "##[debug]Run locally: $runLocally"
 
@@ -36,22 +35,26 @@ if($runLocally -eq $true) {
 Write-Host "##[debug]Location of arm templates: $blobStorageUrl"
 
 # Prepare Deploy templates
-$databasesTemplateFile = "$($blobStorageUrl)deploy-mcom-databases.json"
-Write-Host "##[debug]Location of Databases arm template: $databasesTemplateFile"
+$logicappTemplateFile = "$($blobStorageUrl)deploy-mcom-logic-scanondemand.json"
+Write-Host "##[debug]Location of logicapp arm template: $logicappTemplateFile"
+
 
 # Prepare parameters
 if($runLocally -eq $false) {
-    $databasesParametersFile = "ScanOnDemandBuild/dropdeploymentscripts/armtemplates/deploy-mcom-databases.parameters.json"
+    $logicappsParametersFile = "ScanOnDemandBuild/dropdeploymentscripts/armtemplates/deploy-mcom-logic-scanondemand.parameters.json"
 } else {
-    $databasesParametersFile = "$($blobStorageUrl)deploy-mcom-databases.parameters.json"
+    $logicappsParametersFile = "$($blobStorageUrl)deploy-mcom-logic-scanondemand.parameters.json"
 }
-Write-Host "##[debug]Location of databases arm parameters file: $databasesParametersFile"
+Write-Host "##[debug]Location of logicapps arm parameters file: $logicappsParametersFile"
 
 # Initialize variables to use
 $today = Get-Date -Format "ddMMyy-HHmm"
-$DeploymentName = "mcom-db-$Environment-$today"
-$serverName = "sql-mcom-gov-$Environment"
-#$password = ConvertTo-SecureString $pass -AsPlainText -Force
+$DeploymentName = "mcom-$Environment-$today"
+if ($Environment -eq "prod") {
+    $SharePointUrl = "https://statoilsrm.sharepoint.com/"
+} else {
+    $SharePointUrl = "https://statoilintegrationtest.sharepoint.com/"
+}
 
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
@@ -69,16 +72,15 @@ else {
 Write-Host "##[endgroup]"
 
 Write-Host "##[group]Deployment of arm templates"
-# Deploy databases 
-Write-Host "##[command] Running deployment of databases template..."
+# Deploy Logic apps
+Write-Host "##[command] Running deployment of Logic app template..."
 if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-databases" --template-uri $databasesTemplateFile --parameters $databasesParametersFile serverName=$serverName administratorLogin=$user administratorLoginPassword=$pass | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-logicapps" --template-uri $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment scanprovider_email=$recipientEmail | ConvertFrom-Json
 } else {
-    $result = az deployment group create --name "$DeploymentName-databases" --template-file $databasesTemplateFile --parameters $databasesParametersFile serverName=$serverName administratorLogin=$user administratorLoginPassword=$pass | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-logicapps" --template-file $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment scanprovider_email=$recipientEmail| ConvertFrom-Json
 }
 
 # Evaluate result from deployment
 if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
     Write-Host "##[section] Deployment successful"
 }
-Write-Host "##[endgroup]"
