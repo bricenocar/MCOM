@@ -431,26 +431,6 @@
                 "schema": {}
             }
         },
-        {
-            "name": "[concat(variables('dataFactoryName'), '/scanrequest_output_metadata_dataset')]",
-            "type": "Microsoft.DataFactory/factories/datasets",
-            "apiVersion": "2018-06-01",
-            "properties": {
-                "linkedServiceName": {
-                    "referenceName": "Staging area",
-                    "type": "LinkedServiceReference"
-                },
-                "annotations": [],
-                "type": "Json",
-                "typeProperties": {
-                    "location": {
-                        "type": "AzureBlobStorageLocation",
-                        "container": "output"
-                    }
-                },
-                "schema": {}
-            }
-        },
         {            
             "name": "[concat(variables('dataFactoryName'), '/scanexecution_metadata_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
@@ -551,11 +531,15 @@
                         "type": "nvarchar"
                     },
                     {
-                        "name": "SiteUrl",
+                        "name": "webid",
                         "type": "nvarchar"
                     },
                     {
-                        "name": "LibraryId",
+                        "name": "listid",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "siteid",
                         "type": "nvarchar"
                     },
                     {
@@ -632,10 +616,13 @@
                         "ItemId": {
                             "type": "string"
                         },
-                        "SiteUrl": {
+                        "SiteId": {
                             "type": "string"
                         },
-                        "ListName": {
+                        "WebId": {
+                            "type": "string"
+                        },
+                        "ListId": {
                             "type": "string"
                         },
                         "WBS": {
@@ -1607,7 +1594,7 @@
                         "userProperties": [],
                         "typeProperties": {
                             "dataset": {
-                                "referenceName": "scanexecution_metadata_dataset",
+                                "referenceName": "scanexecution_files_dataset",
                                 "type": "DatasetReference"
                             },
                             "fieldList": [
@@ -1629,7 +1616,7 @@
                         "type": "ForEach",
                         "dependsOn": [
                             {
-                                "activity": "Get Files in folder",
+                                "activity": "Filter json files",
                                 "dependencyConditions": [
                                     "Succeeded"
                                 ]
@@ -1638,7 +1625,7 @@
                         "userProperties": [],
                         "typeProperties": {
                             "items": {
-                                "value": "@activity('Get Files in folder').output.childItems",
+                                "value": "@activity('Filter json files').output.value",
                                 "type": "Expression"
                             },
                             "activities": [
@@ -1656,7 +1643,7 @@
                                     "userProperties": [],
                                     "typeProperties": {
                                         "dataset": {
-                                            "referenceName": "scanexecution_metadata_file_dataset",
+                                            "referenceName": "scanexecution_file_dataset",
                                             "type": "DatasetReference",
                                             "parameters": {
                                                 "FileName": {
@@ -1701,7 +1688,7 @@
                                     },
                                     "userProperties": [],
                                     "typeProperties": {
-                                        "storedProcedureName": "[[dbo].[upsert_scanexecution]",
+                                        "storedProcedureName": "[dbo].[upsert_scanexecution]",
                                         "storedProcedureParameters": {
                                             "pFileName": {
                                                 "value": {
@@ -1712,7 +1699,7 @@
                                             },
                                             "pRequestId": {
                                                 "value": {
-                                                    "value": "substring(activity('Get File Metadata').output.itemName, 0 , lastIndexOf(activity('Get File Metadata').output.itemName, '.')",
+                                                    "value": "@substring(activity('Get File Metadata').output.itemName, 0 , lastIndexOf(activity('Get File Metadata').output.itemName, '.'))",
                                                     "type": "Expression"
                                                 },
                                                 "type": "String"
@@ -1737,12 +1724,94 @@
                                         "referenceName": "MCOMGovernanceDB",
                                         "type": "LinkedServiceReference"
                                     }
+                                },
+                                {
+                                    "name": "Send data to container",
+                                    "type": "Copy",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "Upsert Scan Execution",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "timeout": "7.00:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "SqlMISource",
+                                            "sqlReaderQuery": {
+                                                "value": "@concat('select * from MCOMScanRequest where id = ''', substring(activity('Get File Metadata').output.itemName, 0 , lastIndexOf(activity('Get File Metadata').output.itemName, '.')), '''')",
+                                                "type": "Expression"
+                                            },
+                                            "partitionOption": "None"
+                                        },
+                                        "sink": {
+                                            "type": "JsonSink",
+                                            "storeSettings": {
+                                                "type": "AzureBlobStorageWriteSettings"
+                                            },
+                                            "formatSettings": {
+                                                "type": "JsonWriteSettings"
+                                            }
+                                        },
+                                        "enableStaging": false
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "mcom_governance_scanrequests",
+                                            "type": "DatasetReference"
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "scanexecution_output_metadata_dataset",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "filename": {
+                                                    "value": "@concat(substring(activity('Get File Metadata').output.itemName, 0 , lastIndexOf(activity('Get File Metadata').output.itemName, '.')), '.json')",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ]
                                 }
                             ]
                         }
+                    },
+                    {
+                        "name": "Filter json files",
+                        "type": "Filter",
+                        "dependsOn": [
+                            {
+                                "activity": "Get Files in folder",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Get Files in folder').output.childItems",
+                                "type": "Expression"
+                            },
+                            "condition": {
+                                "value": "@equals(item().type,'File')",
+                                "type": "Expression"
+                            }
+                        }
                     }
                 ],
-                "annotations": []
+                "annotations": [],
+                "lastPublishTime": "2022-05-06T13:43:58Z"
             }
         },
         {
@@ -2072,13 +2141,6 @@
                     "sinks": [
                         {
                             "dataset": {
-                                "referenceName": "scanrequest_output_metadata_dataset",
-                                "type": "DatasetReference"
-                            },
-                            "name": "scandatadestination"
-                        },
-                        {
-                            "dataset": {
                                 "referenceName": "mcom_governance_scanrequests",
                                 "type": "DatasetReference"
                             },
@@ -2087,23 +2149,18 @@
                     ],
                     "transformations": [
                         {
-                            "name": "MapSPFields"
-                        },
-                        {
                             "name": "AlterRow"
                         },
                         {
                             "name": "TransformationColumns"
-                        },
-                        {
-                            "name": "ExtraFields"
                         }
                     ],
                     "scriptLines": [
                         "source(output(",
                         "          ItemId as string,",
-                        "          SiteUrl as string,",
-                        "          ListName as string,",
+                        "          SiteId as string,",
+                        "          WebId as string,",
+                        "          ListId as string,",
                         "          WBS as string,",
                         "          RequestedBy as string,",
                         "          RequestedDate as string,",
@@ -2119,38 +2176,17 @@
                         "     ignoreNoFilesFound: true,",
                         "     moveFiles: ['/metadata','metadataprocessed'],",
                         "     documentForm: 'singleDocument') ~> scandatasource",
-                        "scandatasource select(mapColumn(",
-                        "          ItemId,",
-                        "          SiteUrl,",
-                        "          ListName,",
-                        "          WBS,",
-                        "          RequestedBy,",
-                        "          RequestedDate,",
-                        "          DocumentName,",
-                        "          Vendor,",
-                        "          Comments,",
-                        "          OrderNumber,",
-                        "          Status,",
-                        "          IsPhysical",
-                        "     ),",
-                        "     skipDuplicateMapInputs: true,",
-                        "     skipDuplicateMapOutputs: true) ~> MapSPFields",
                         "TransformationColumns alterRow(upsertIf(true())) ~> AlterRow",
                         "scandatasource derive(recordId = OrderNumber,",
                         "          requestedDateTransformed = toDate(RequestedDate)) ~> TransformationColumns",
-                        "MapSPFields derive(destinationFilename = concat(OrderNumber, '.json')) ~> ExtraFields",
-                        "ExtraFields sink(allowSchemaDrift: true,",
-                        "     validateSchema: false,",
-                        "     rowUrlColumn:'destinationFilename',",
-                        "     skipDuplicateMapInputs: true,",
-                        "     skipDuplicateMapOutputs: true) ~> scandatadestination",
                         "AlterRow sink(allowSchemaDrift: false,",
                         "     validateSchema: false,",
                         "     input(",
                         "          id as string,",
                         "          requester as string,",
-                        "          SiteUrl as string,",
-                        "          LibraryId as string,",
+                        "          webid as string,",
+                        "          listid as string,",
+                        "          siteid as string,",
                         "          requestdate as timestamp,",
                         "          wbs as string,",
                         "          businessunit as string,",
@@ -2166,15 +2202,17 @@
                         "     insertable:true,",
                         "     updateable:false,",
                         "     upsertable:true,",
-                        "     keys:['ordernumber'],",
+                        "     keys:['id'],",
                         "     format: 'table',",
                         "     skipDuplicateMapInputs: true,",
                         "     skipDuplicateMapOutputs: true,",
                         "     errorHandlingOption: 'stopOnFirstError',",
                         "     mapColumn(",
+                        "          id = recordId,",
                         "          requester = RequestedBy,",
-                        "          SiteUrl,",
-                        "          LibraryId = ListName,",
+                        "          webid = WebId,",
+                        "          listid = ListId,",
+                        "          siteid = SiteId,",
                         "          requestdate = requestedDateTransformed,",
                         "          wbs = WBS,",
                         "          itemid = ItemId,",
@@ -2183,8 +2221,7 @@
                         "          comments = Comments,",
                         "          ordernumber = OrderNumber,",
                         "          status = Status,",
-                        "          isphysical = IsPhysical,",
-                        "          id = recordId",
+                        "          isphysical = IsPhysical",
                         "     )) ~> SaveDataInDatabase"
                     ]
                 }

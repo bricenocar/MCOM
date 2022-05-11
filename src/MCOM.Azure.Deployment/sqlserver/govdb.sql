@@ -8,8 +8,9 @@ GO
 CREATE TABLE [dbo].[MCOMScanRequest](
 	[id] [uniqueidentifier] NOT NULL,
 	[requester] [nvarchar](150) NULL,
-	[SiteUrl] [nvarchar](max) NULL,
-	[LibraryId] [nvarchar](255) NULL,
+	[webid] [nvarchar](255) NULL,
+	[listid] [nvarchar](255) NULL,
+	[siteid] [nvarchar](255) NULL,
 	[requestdate] [datetime] NULL,
 	[wbs] [nvarchar](100) NULL,
 	[businessunit] [nvarchar](255) NULL,
