@@ -81,7 +81,7 @@ namespace MCOM.Functions
                         try
                         {
                             // Upload the file
-                            var uploadResult = await _graphService.UploadFileAsync(fileData.DriveID, fileName, stream, maxSliceSize, fileData.BlobFilePath);
+                            var uploadResult = await _graphService.UploadLargeDriveItemAsync(fileData.DriveID, fileName, stream, maxSliceSize, fileData.BlobFilePath);
                             if (uploadResult.UploadSucceeded)
                             {
                                 var uploadedItem = uploadResult.ItemResponse;

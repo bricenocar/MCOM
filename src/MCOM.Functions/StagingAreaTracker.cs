@@ -88,7 +88,7 @@ namespace MCOM.Functions
         {
             // Get blob service client, get container and blobItems
             var containerClient = _blobService.GetBlobContainerClient("output");
-            var blobItems = _blobService.GetBlobs(containerClient);
+            var blobItems = _blobService.GetBlobsAsync(containerClient);
 
             await foreach (var blobItem in blobItems)
             {
@@ -181,7 +181,7 @@ namespace MCOM.Functions
                                 try
                                 {
                                     // Upload the file
-                                    var uploadResult = await _graphService.UploadFileAsync(fileData.DriveID, fileName, filesBlobStream, maxSliceSize, fileData.BlobFilePath);
+                                    var uploadResult = await _graphService.UploadLargeDriveItemAsync(fileData.DriveID, fileName, filesBlobStream, maxSliceSize, fileData.BlobFilePath);
 
                                     if (uploadResult.UploadSucceeded)
                                     {
@@ -334,7 +334,7 @@ namespace MCOM.Functions
                 var containerClient = _blobService.GetBlobContainerClient(continerName);
 
                 // Get all blobs based on the given prefix (virtual folder)
-                var blobPages = _blobService.GetBlobs(containerClient,
+                var blobPages = _blobService.GetBlobsAsync(containerClient,
                                                       Azure.Storage.Blobs.Models.BlobTraits.None,
                                                       Azure.Storage.Blobs.Models.BlobStates.None,
                                                       "metadataprocessed/").AsPages();

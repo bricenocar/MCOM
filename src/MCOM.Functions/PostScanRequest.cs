@@ -1,26 +1,30 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Azure;
-using MCOM.Models;
-using MCOM.Services;
-using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using MCOM.Models;
+using MCOM.Services;
+using MCOM.Utilities;
+using MCOM.Extensions;
 
-namespace MCOM.ScanOnDemand.Functions
+namespace MCOM.Functions
 {
     public class PostScanRequest
     {
         private readonly IBlobService _blobService;
+        private IGraphService _graphService;
 
-        public PostScanRequest(IBlobService blobService)
+        public PostScanRequest(IBlobService blobService, IGraphService graphService)
         {
             _blobService = blobService;
+            _graphService = graphService;
         }
 
         [Function("PostScanRequest")]
@@ -48,31 +52,55 @@ namespace MCOM.ScanOnDemand.Functions
                 // Get the request object
                 HttpResponseData response = null;
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var data = JsonConvert.DeserializeObject<ScanRequestPayload>(requestBody);
+                var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(requestBody);
 
-                // Do some logic here based on the data coming from the request...
-
-                // Give a new order number           
-                data.OrderNumber = Guid.NewGuid();
-                data.Status = "Delivered"; // TODO ENUM
-                data.IsPhysical = true;
-
-                var jsonMetadata = JsonConvert.SerializeObject(data);
+                // Validate data parameters
+                if(!data.TryGetValue("SiteId", out var siteId) || !data.TryGetValue("WebId", out var webId) || !data.TryGetValue("ListId", out var listId) || !data.TryGetValue("ItemId", out var itemId))
+                {
+                    Global.Log.LogError(new ArgumentNullException(), "Missing data parameters on the request body");
+                    response = req.CreateResponse(HttpStatusCode.BadRequest);
+                    response.WriteString("Missing data parameters on the request body");
+                    return response;
+                }       
 
                 try
                 {
+                    // Generate new order number
+                    var orderNumber = Guid.NewGuid();
+
+                    // Add new properties to the json object    
+                    data.Add("OrderNumber", orderNumber);
+                    data.Add("Status", "Requested"); // TODO ENUM
+
+                    // Get SharePoint listitem fields and add them to the json object
+                    var listItem = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString());
+                    var listItemFields = listItem.Fields.AdditionalData;
+
+                    // Get string values from listItemFields
+                    var dataFields = new Dictionary<string, object>();
+                    listItemFields.ForEach(x => dataFields.Add(x.Key, x.Value.ToString()));
+
+                    // Merge Dictionaries
+                    data.AddRangeNewOnly(dataFields);
+
+                    // Convert to json string
+                    var jsonMetadata = JsonConvert.SerializeObject(data);
+
                     Global.Log.LogInformation("Proceed to save the metadata file into scanrequests container");
 
-                    var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/scanrequests/metadata/{data.OrderNumber}.json");
-
                     // Get blob client
+                    var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/scanrequests/metadata/{orderNumber}.json");
                     var blobClient = _blobService.GetBlobClient(metadataUri);
                     using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonMetadata)))
                     {
                         await blobClient.UploadAsync(stream, Global.BlobOverwriteExistingFile);
                     }
 
-                    Global.Log.LogInformation("Successfully uploaded metadata file without errors. DocumentId: {DocumentId}", data.OrderNumber);    
+                    Global.Log.LogInformation("Successfully uploaded metadata file without errors. DocumentId: {DocumentId}", orderNumber);
+
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    response.WriteString(jsonMetadata);
+                    return response;
                 }
                 catch (RequestFailedException rEx)
                 {
@@ -105,10 +133,6 @@ namespace MCOM.ScanOnDemand.Functions
                     response.WriteString($"Error Message: {ex.Message}. StackTrace: {ex.StackTrace}");
                     return response;
                 }
-
-                response = req.CreateResponse(HttpStatusCode.OK);
-                response.WriteString(jsonMetadata);
-                return response;
             }
         }
     }
