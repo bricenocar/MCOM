@@ -55,7 +55,7 @@ namespace MCOM.Functions
                 var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(requestBody);
 
                 // Validate data parameters
-                if(data.TryGetValue("SiteId", out var siteId) || data.TryGetValue("WebId", out var webId) || data.TryGetValue("ListId", out var listId) || data.TryGetValue("ItemId", out var itemId))
+                if(!data.TryGetValue("SiteId", out var siteId) || !data.TryGetValue("WebId", out var webId) || !data.TryGetValue("ListId", out var listId) || !data.TryGetValue("ItemId", out var itemId))
                 {
                     Global.Log.LogError(new ArgumentNullException(), "Missing data parameters on the request body");
                     response = req.CreateResponse(HttpStatusCode.BadRequest);
@@ -71,23 +71,25 @@ namespace MCOM.Functions
                     // Add new properties to the json object    
                     data.Add("OrderNumber", orderNumber);
                     data.Add("Status", "Requested"); // TODO ENUM
-                    data.Add("IsPhysical", true);
 
                     // Get SharePoint listitem fields and add them to the json object
                     var listItem = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString());
                     var listItemFields = listItem.Fields.AdditionalData;
 
+                    // Get string values from listItemFields
+                    var dataFields = new Dictionary<string, object>();
+                    listItemFields.ForEach(x => dataFields.Add(x.Key, x.Value.ToString()));
+
                     // Merge Dictionaries
-                    data.AddRangeNewOnly(listItemFields);
+                    data.AddRangeNewOnly(dataFields);
 
                     // Convert to json string
                     var jsonMetadata = JsonConvert.SerializeObject(data);
 
                     Global.Log.LogInformation("Proceed to save the metadata file into scanrequests container");
 
-                    var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/scanrequests/metadata/{orderNumber}.json");
-
                     // Get blob client
+                    var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/scanrequests/metadata/{orderNumber}.json");
                     var blobClient = _blobService.GetBlobClient(metadataUri);
                     using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonMetadata)))
                     {
