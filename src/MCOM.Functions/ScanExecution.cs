@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
-using Newtonsoft.Json;
 using Azure.Storage.Blobs;
 using MCOM.Models;
 using MCOM.Services;
 using MCOM.Utilities;
+using MCOM.Extensions;
 
 namespace MCOM.Functions
 {
@@ -51,73 +51,65 @@ namespace MCOM.Functions
                     // Get blob service client, get container and blobItems
                     var containerClient = _blobService.GetBlobContainerClient("scanexecutions");
                     // Get all blobs based on the given prefix (virtual folder)
-                    var blobPages = _blobService.GetBlobs(containerClient,
-                                                          Azure.Storage.Blobs.Models.BlobTraits.None,
+                    var blobPages = _blobService.GetBlobsAsync(containerClient,
+                                                          Azure.Storage.Blobs.Models.BlobTraits.Metadata,
                                                           Azure.Storage.Blobs.Models.BlobStates.None,
-                                                          "metadata/").AsPages();
+                                                          "files/").AsPages();
                     // Loop through all pages and find blobs
                     await foreach (var blobPage in blobPages)
                     {
                         foreach (var blobItem in blobPage.Values)
                         {
                             var blobName = blobItem.Name;
+                            var blobFileName = blobItem.Name.Replace("files/", "");
+                            var originalBlobMetadata = blobItem.Metadata;
 
                             try
                             {
-                                var metadataBlobClient = _blobService.GetBlobClient(containerClient, blobName);
-                                if (await _blobService.BlobClientExistsAsync(metadataBlobClient))
+                                var filesBlobClient = _blobService.GetBlobClient(containerClient, blobName);
+                                if (await _blobService.BlobClientExistsAsync(filesBlobClient))
                                 {
-                                    // Get blob data
-                                    var blobData = await _blobService.GetBlobDataAsync(metadataBlobClient);
-
-                                    // Convert data
-                                    var fileData = JsonConvert.DeserializeObject<Dictionary<string, object>>(blobData);
-
                                     // Validate internal properties
-                                    var (isValid, siteId, webId, listId, itemId, documentId, fileName, documentIdField, documentIdFieldValue) = ValidateFileData(fileData, blobName);
+                                    var (blobMetadata, isValid, siteId, webId, listId, itemId, metadataFileLeafRef) = ValidateFileData(originalBlobMetadata, blobFileName);
 
-                                    // CHECK IS VALID????
+                                    // Check if valid
                                     if (!isValid)
                                     {
-                                        Global.Log.LogError(new MissingFieldException(), "Could not get all required internal properties from the request: {blobName}", blobName);
+                                        Global.Log.LogError(new MissingFieldException(), "Could not get all required internal properties (siteid, webid, listid, itemid, ordernumber, internalfield) from the request: {BlobName}", blobName);
                                         continue;
                                     }
-
-                                    // Remove all internal properties
-                                    fileData = CleanFileData(fileData);
 
                                     // Get drive
                                     var drive = await _graphService.GetDriveAsync(Global.SharePointDomain, siteId, webId, listId, "Id");
                                     if (drive == null)
                                     {
-                                        Global.Log.LogError(new NullReferenceException(), "Could not get drive with specified blobName: {blobName}", blobName);
+                                        Global.Log.LogError(new NullReferenceException(), "Could not get drive with specified blobName: {BlobName}", blobName);
                                         continue;
                                     }
 
-                                    // Get blob clients files and metadata
-                                    var filesBlobClient = _blobService.GetBlobClient(containerClient, $"files/{documentId}");
-                                    if (!await _blobService.BlobClientExistsAsync(filesBlobClient))
-                                    {
-                                        Global.Log.LogError(new NullReferenceException(), "Could not get files blob client with document id: {documentId}", documentId);
-                                        continue;
-                                    }
+                                    // Init file metadata
+                                    var fileMetaData = new Dictionary<string, object>();
+
+                                    // Add all blob metadata into fileMetadata because addRange won't work on different dictionary types string/object
+                                    blobMetadata.ForEach(bm => fileMetaData.Add(bm.Key, bm.Value));
 
                                     // Check whether the item exists in SharePoint
                                     var listItem = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId, webId, listId, itemId);
-                                    if (listItem.Fields.AdditionalData.TryGetValue(documentIdField, out var spCustomField))
-                                    {
-                                        if (spCustomField.ToString().Equals(documentIdFieldValue))
+                                    if (listItem.Fields.AdditionalData.TryGetValue("FileLeafRef", out var listItemFileLeafRef))
+                                    {   
+                                        // if the internal field is equals to the one coming from the pipeline delete the blob from the container, otherwise update the SharePoint Item
+                                        if (listItemFileLeafRef.ToString().Equals(metadataFileLeafRef, StringComparison.InvariantCultureIgnoreCase))
                                         {
-                                            await DeleteDataFromAzureContainers(metadataBlobClient, filesBlobClient, documentId);
+                                            await DeleteDataFromAzureContainer(filesBlobClient, blobName);
                                         }
-                                        else // Update SHarePoint file and metadata
+                                        else // Update SharePoint file and metadata
                                         {
-                                            await UpdateSharePointFileAsync(filesBlobClient, drive, fileData, fileName, documentId, siteId, listId, itemId);
+                                            await UpdateSharePointFileAsync(filesBlobClient, drive, fileMetaData, blobName, siteId, webId, listId, itemId);
                                         }
                                     }
                                     else // Update SharePoint file and metadata
                                     {
-                                        await UpdateSharePointFileAsync(filesBlobClient, drive, fileData, fileName, documentId, siteId, listId, itemId);
+                                        await UpdateSharePointFileAsync(filesBlobClient, drive, fileMetaData, blobName, siteId, webId, listId, itemId);
                                     }
                                 }
                             }
@@ -139,7 +131,7 @@ namespace MCOM.Functions
             logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
         }
 
-        private async Task UpdateSharePointFileAsync(BlobClient filesBlobClient, Drive drive, Dictionary<string, object> fileData, string fileName, string documentId, string siteId, string listId, string itemId)
+        private async Task UpdateSharePointFileAsync(BlobClient filesBlobClient, Drive drive, Dictionary<string, object> fileData, string blobName, string siteId, string webId, string listId, string itemId)
         {
             // Max slice size must be a multiple of 320 KiB
             var maxSliceSize = 320 * 1024;
@@ -153,126 +145,95 @@ namespace MCOM.Functions
                 try
                 {
                     // Upload the file
-                    var uploadResult = await _graphService.UploadFileAsync(drive.Id, fileName, filesBlobStream, maxSliceSize, $"files/{documentId}.json");
+                    var uploadResult = await _graphService.UploadLargeSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream, maxSliceSize, blobName, "replace");
                     if (uploadResult.UploadSucceeded)
                     {
                         var uploadedItem = uploadResult.ItemResponse;
-                        Global.Log.LogInformation("Completed uploading {BlobFilePath} with id:{DocumentId} to location {SPPath} in drive: {DriveId}", $"files/{documentId}.json", documentId, uploadedItem.WebUrl, drive.Id);
+                        Global.Log.LogInformation("Completed uploading blobName: {BlobName} to location {SPPath} in drive: {DriveId}", blobName, uploadedItem.WebUrl, drive.Id);
 
-                        await _graphService.SetMetadataByGraphAsync(fileData, uploadedItem);
+                        await _graphService.SetMetadataByGraphAsync(fileData, uploadedItem, siteId, listId, itemId);
                     }
                 }
-                catch (Microsoft.Graph.ServiceException ex)
+                catch (ServiceException ex)
                 {
                     Global.Log.LogWarning(ex.Message);
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, ex.Message);
+                    Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading blobName: {BlobName} to drive {DriveId}. {ErrorMessage}", blobName, drive.Id, ex.Message);
                 }
 
-                Global.Log.LogInformation($"The file {documentId} has been uploaded successfully (UploadLargeFile). Deleting from staging area output and files");
+                Global.Log.LogInformation($"The blob {blobName} has been uploaded successfully (UploadLargeFile). Deleting from staging area output and files");
             }
             else
             {
                 try
                 {
-                    var uploadedItem = await _graphService.UploadDriveItemAsync(drive.Id, fileName, filesBlobStream);
-                    Global.Log.LogInformation("Completed uploading {BlobFilePath} with id:{DocumentId} to location {SPPath} in drive: {DriveId}", $"files/{documentId}.json", documentId, uploadedItem.WebUrl, drive.Id);
+                    var uploadedItem = await _graphService.UploadSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream);
+                    Global.Log.LogInformation("Completed uploading blob {BlobName} to location {SPPath} in drive: {DriveId}", blobName, uploadedItem.WebUrl, drive.Id);
 
                     await _graphService.SetMetadataByGraphAsync(fileData, uploadedItem, siteId, listId, itemId);
                 }
                 catch (Exception uploadSmallFileEx)
                 {
-                    Global.Log.LogCritical(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading {BlobFilePath} with id:{DocumentId} to drive {DriveId}. {ErrorMessage}", $"files/{documentId}.json", documentId, drive.Id, uploadSmallFileEx.Message);
+                    Global.Log.LogCritical(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading blob {BlobName} to drive {DriveId}. {ErrorMessage}", blobName, drive.Id, uploadSmallFileEx.Message);
                 }
 
-                Global.Log.LogInformation($"The file {documentId} has been uploaded successfully (UploadSmallFile). Deleting from staging area output and files");
+                Global.Log.LogInformation($"The blob {blobName} has been uploaded successfully (UploadSmallFile). Deleting from staging area output and files");
             }
         }
 
-        private async Task DeleteDataFromAzureContainers(BlobClient metadataBlobClient, BlobClient filesBlobClient, string documentId)
+        private async Task DeleteDataFromAzureContainer(BlobClient filesBlobClient, string blobName)
         {
-            // Delete from metadata and files
-            var metadataDeleted = await _blobService.DeleteBlobClientIfExistsAsync(metadataBlobClient);
-            if (metadataDeleted)
-            {
-                Global.Log.LogInformation($"The metadata {documentId} has been deleted successfully from metadata scanrequests");
-            }
-            else
-            {
-                Global.Log.LogError(new InvalidOperationException(), $"The blob {documentId} could not be deleted from metadata scanrequests");
-            }
-
             var fileDeleted = await _blobService.DeleteBlobClientIfExistsAsync(filesBlobClient);
             if (fileDeleted)
             {
-                Global.Log.LogInformation($"The file {documentId} has been deleted successfully from files scanrequests");
+                Global.Log.LogInformation($"The file {blobName} has been deleted successfully from files scanrequests");
             }
             else
             {
-                Global.Log.LogError(new InvalidOperationException(), $"The blob {documentId} could not be deleted from files scanrequests");
+                Global.Log.LogError(new InvalidOperationException(), $"The file blob {blobName} could not be deleted from files scanrequests");
             }
         }
 
-        private Dictionary<string, object> CleanFileData(Dictionary<string, object> fileData)
-        {
-            fileData.Remove("siteId");
-            fileData.Remove("webId");
-            fileData.Remove("listId");
-            fileData.Remove("itemId");
-            fileData.Remove("documentId");
-            fileData.Remove("documentIdField");
-            fileData.Remove("fileName");
-
-            return fileData;
-        }
-
-        private (bool, string, string, string, string, string, string, string, string) ValidateFileData(Dictionary<string, object> fileData, string blobName)
+        private (IDictionary<string, string>, bool, string, string, string, string, string) ValidateFileData(IDictionary<string, string> blobMetadata, string blobName)
         {
             // Validate all
-            if (!fileData.TryGetValue("siteId", out var siteId))
+            if (!blobMetadata.TryGetValue("siteid", out var siteId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing siteId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
+                return (blobMetadata, false, "", "", "", "", "");
             }
-            if (!fileData.TryGetValue("webId", out var webId))
+            blobMetadata.Remove("siteid");
+
+            if (!blobMetadata.TryGetValue("webid", out var webId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing webId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
+                return (blobMetadata, false, "", "", "", "", "");
             }
-            if (!fileData.TryGetValue("listId", out var listId))
+            blobMetadata.Remove("webid");
+
+            if (!blobMetadata.TryGetValue("listid", out var listId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing listId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
+                return (blobMetadata, false, "", "", "", "", "");
             }
-            if (!fileData.TryGetValue("itemId", out var itemId))
+            blobMetadata.Remove("listid");
+
+            if (!blobMetadata.TryGetValue("itemid", out var itemId))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing itemId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
+                return (blobMetadata, false, "", "", "", "", "");
             }
-            if (!fileData.TryGetValue("documentId", out var documentId))
+            blobMetadata.Remove("itemid");
+
+            if (!blobMetadata.TryGetValue("FileLeafRef", out var metadataFileLeafRef))
             {
-                Global.Log.LogError(new NullReferenceException(), "Missing documentId in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
-            }
-            if (!fileData.TryGetValue("fileName", out var fileName))
-            {
-                Global.Log.LogError(new NullReferenceException(), "Missing fileName in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
-            }
-            if (!fileData.TryGetValue("documentIdField", out var documentIdField))
-            {
-                Global.Log.LogError(new NullReferenceException(), "Missing documentIdField in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
-            }
-            if (!fileData.TryGetValue(documentIdField.ToString(), out var documentIdFieldValue))
-            {
-                Global.Log.LogError(new NullReferenceException(), "Missing documentIdField in metadata.: {blobName}", blobName);
-                return (false, "", "", "", "", "", "", "", "");
+                Global.Log.LogError(new NullReferenceException(), "Missing itemId in metadata.: {blobName}", blobName);
+                return (blobMetadata, false, "", "", "", "", "");
             }
 
-            return (true, siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString(), documentId.ToString(), fileName.ToString(), documentIdField.ToString(), documentIdFieldValue.ToString());
+            return (blobMetadata, true, siteId, webId, listId, itemId, metadataFileLeafRef);
         }
     }
 }

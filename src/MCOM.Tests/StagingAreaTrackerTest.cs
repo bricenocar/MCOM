@@ -224,7 +224,7 @@ namespace MCOM.Tests
             mockBlobServiceClient.SetupAllProperties();
             mockBlobService.Object.BlobServiceClient = mockBlobServiceClient.Object;
             mockBlobService.Setup(b => b.GetBlobContainerClient(It.IsAny<string>())).Returns(blobContainerClientMock.Object);
-            mockBlobService.Setup(b => b.GetBlobs(It.IsAny<BlobContainerClient>(), It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>())).Returns(pageableBlobItem);
+            mockBlobService.Setup(b => b.GetBlobsAsync(It.IsAny<BlobContainerClient>(), It.IsAny<BlobTraits>(), It.IsAny<BlobStates>(), It.IsAny<string>())).Returns(pageableBlobItem);
             mockBlobService.SetupSequence(b => b.GetBlobClient(It.IsAny<BlobContainerClient>(), It.IsAny<string>()))
                 .Returns(mockBlobClient.Object)
                 .Returns(mockBlobClient.Object);

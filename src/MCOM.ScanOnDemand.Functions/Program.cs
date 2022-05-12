@@ -15,6 +15,7 @@ namespace MCOM.ScanOnDemand.Functions
                 {
                     // Adding services to DI               
                     s.AddScoped<IBlobService, BlobService>();
+                    s.AddScoped<IGraphService, GraphService>();
                 })
                 .ConfigureLogging((context, builder) =>
                 {

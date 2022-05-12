@@ -17,5 +17,7 @@ namespace MCOM.Models
         public Guid OrderNumber { get; set; }
         public string Status { get; set; }
         public bool IsPhysical { get; set; }
+        public string BusinessArea { get; set; }
+        public string Priority { get; set; }
     }
 }
