@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace MCOM.Models
 {
@@ -19,5 +20,6 @@ namespace MCOM.Models
         public bool IsPhysical { get; set; }
         public string BusinessArea { get; set; }
         public string Priority { get; set; }
+        public Dictionary<string, object> FileMetaData { get; set; }
     }
 }
