@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -10,21 +9,19 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using MCOM.Models;
+using MCOM.Models.ScanOnDemand;
 using MCOM.Services;
 using MCOM.Utilities;
-using MCOM.Extensions;
 
-namespace MCOM.Functions
+namespace MCOM.ScanOnDemand.Functions
 {
     public class PostScanRequest
     {
         private readonly IBlobService _blobService;
-        private IGraphService _graphService;
 
-        public PostScanRequest(IBlobService blobService, IGraphService graphService)
+        public PostScanRequest(IBlobService blobService)
         {
-            _blobService = blobService;
-            _graphService = graphService;
+            _blobService = blobService;           
         }
 
         [Function("PostScanRequest")]
@@ -66,18 +63,9 @@ namespace MCOM.Functions
                 try
                 {
                     // Generate new order number
-                    var orderNumber = Guid.NewGuid();                    
+                    var orderNumber = Guid.NewGuid();
 
-                    // Get SharePoint listitem fields and add them to the json object
-                    var listItem = await _graphService.GetListItemAsync(Global.SharePointDomain, data.SiteId, data.WebId, data.ListId, data.ItemId);
-                    var listItemFields = listItem.Fields.AdditionalData;
-
-                    // Get string values from listItemFields
-                    var fileMetaData = new Dictionary<string, object>();
-                    listItemFields.ForEach(x => fileMetaData.Add(x.Key, x.Value.ToString()));
-
-                    // Merge Dictionaries
-                    data.FileMetaData = fileMetaData;
+                    // Merge Dictionaries                  
                     data.OrderNumber = orderNumber;
                     data.Status = "Requested";
 

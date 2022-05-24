@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
-using MCOM.Models;
+using MCOM.Models.Azure;
 using MCOM.Utilities;
 
 namespace MCOM.Services

@@ -9,7 +9,7 @@ using Microsoft.WindowsAzure.Storage.Queue;
 using Moq;
 using Newtonsoft.Json;
 using Xunit;
-using MCOM.Models;
+using MCOM.Models.Azure;
 using MCOM.Archiving.Functions;
 using MCOM.Services;
 using MCOM.Business.PostFeedBack;

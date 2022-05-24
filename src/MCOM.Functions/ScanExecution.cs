@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -61,8 +62,9 @@ namespace MCOM.Functions
                         foreach (var blobItem in blobPage.Values)
                         {
                             var blobName = blobItem.Name;
-                            var blobFileName = blobItem.Name.Replace("files/", "");
+                            var blobFileName = blobName.Replace("files/", "");
                             var originalBlobMetadata = blobItem.Metadata;
+                            var blobFileExtension = Path.GetExtension(blobFileName);
 
                             try
                             {
@@ -87,29 +89,30 @@ namespace MCOM.Functions
                                         continue;
                                     }
 
-                                    // Init file metadata
-                                    var fileMetaData = new Dictionary<string, object>();
+                                    // Check if the file has been already uploaded to SharePoint
+                                    var originalFile = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId, webId, listId, itemId);                                    
+                                    var originalFileExtension = Path.GetExtension(originalFile.Name);
 
-                                    // Add all blob metadata into fileMetadata because addRange won't work on different dictionary types string/object
-                                    blobMetadata.ForEach(bm => fileMetaData.Add(bm.Key, bm.Value));
+                                    // Get updating flag to know whether the file is going to be created or updated in SharePoint
+                                    var updatingFile = (blobFileExtension == originalFileExtension);
 
-                                    // Check whether the item exists in SharePoint
-                                    var listItem = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId, webId, listId, itemId);
-                                    if (listItem.Fields.AdditionalData.TryGetValue("FileLeafRef", out var listItemFileLeafRef))
-                                    {   
-                                        // if the internal field is equals to the one coming from the pipeline delete the blob from the container, otherwise update the SharePoint Item
-                                        if (listItemFileLeafRef.ToString().Equals(metadataFileLeafRef, StringComparison.InvariantCultureIgnoreCase))
-                                        {
-                                            await DeleteDataFromAzureContainer(filesBlobClient, blobName);
-                                        }
-                                        else // Update SharePoint file and metadata
-                                        {
-                                            await UpdateSharePointFileAsync(filesBlobClient, drive, fileMetaData, blobName, siteId, webId, listId, itemId);
-                                        }
-                                    }
-                                    else // Update SharePoint file and metadata
+                                    var checkIfFileExists = await _graphService.SearchDriveAsync(drive.Id, blobFileName);
+                                    if (checkIfFileExists.Count > 0)
                                     {
-                                        await UpdateSharePointFileAsync(filesBlobClient, drive, fileMetaData, blobName, siteId, webId, listId, itemId);
+                                        await DeleteDataFromAzureContainer(filesBlobClient, blobName);
+                                    }
+                                    else
+                                    {
+                                        // Init file metadata
+                                        var fileMetaData = new Dictionary<string, object>();
+
+                                        // Add all blob metadata into fileMetadata because addRange won't work on different dictionary types string/object
+                                        blobMetadata.ForEach(bm =>
+                                        {
+                                            fileMetaData.Add(bm.Key, bm.Value);
+                                        });
+
+                                        await CreateOrUpdateSharePointFileAsync(filesBlobClient, drive, fileMetaData, blobFileName, siteId, webId, listId, itemId);
                                     }
                                 }
                             }
@@ -131,7 +134,7 @@ namespace MCOM.Functions
             logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
         }
 
-        private async Task UpdateSharePointFileAsync(BlobClient filesBlobClient, Drive drive, Dictionary<string, object> fileData, string blobName, string siteId, string webId, string listId, string itemId)
+        private async Task CreateOrUpdateSharePointFileAsync(BlobClient filesBlobClient, Drive drive, Dictionary<string, object> fileData, string blobName, string siteId, string webId, string listId, string itemId)
         {
             // Max slice size must be a multiple of 320 KiB
             var maxSliceSize = 320 * 1024;
@@ -145,13 +148,20 @@ namespace MCOM.Functions
                 try
                 {
                     // Upload the file
-                    var uploadResult = await _graphService.UploadLargeSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream, maxSliceSize, blobName, "replace");
+                    var uploadResult = await _graphService.UploadLargeSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream, maxSliceSize, blobName);
                     if (uploadResult.UploadSucceeded)
                     {
+                        // Get uploaded driveitem from the response
                         var uploadedItem = uploadResult.ItemResponse;
+
+                        // Logging
                         Global.Log.LogInformation("Completed uploading blobName: {BlobName} to location {SPPath} in drive: {DriveId}", blobName, uploadedItem.WebUrl, drive.Id);
 
-                        await _graphService.SetMetadataByGraphAsync(fileData, uploadedItem, siteId, listId, itemId);
+                        // Get SharePoint list item based on the drive item id
+                        var uploadedListItem = await _graphService.GetListItemAsync(drive.Id, uploadedItem.Id);
+
+                        // Set metdata on the newly created list item
+                        await _graphService.SetMetadataByGraphAsync(fileData, siteId, listId, uploadedListItem.Id);
                     }
                 }
                 catch (ServiceException ex)
@@ -163,23 +173,30 @@ namespace MCOM.Functions
                     Global.Log.LogCritical(ex, "UploadLargeFileException: An error occured when uploading blobName: {BlobName} to drive {DriveId}. {ErrorMessage}", blobName, drive.Id, ex.Message);
                 }
 
-                Global.Log.LogInformation($"The blob {blobName} has been uploaded successfully (UploadLargeFile). Deleting from staging area output and files");
+                Global.Log.LogInformation($"The blob {blobName} has been uploaded successfully (UploadLargeFile).");
             }
             else
             {
                 try
                 {
-                    var uploadedItem = await _graphService.UploadSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream);
+                    // Get uploaded driveitem from the response
+                    var uploadedItem = await _graphService.UploadSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, itemId, blobName, filesBlobStream);
+
+                    // Logging
                     Global.Log.LogInformation("Completed uploading blob {BlobName} to location {SPPath} in drive: {DriveId}", blobName, uploadedItem.WebUrl, drive.Id);
 
-                    await _graphService.SetMetadataByGraphAsync(fileData, uploadedItem, siteId, listId, itemId);
+                    // Get SharePoint list item based on the drive item id
+                    var uploadedListItem = await _graphService.GetListItemAsync(drive.Id, uploadedItem.Id);
+
+                    // Set metdata on the newly created list item
+                    await _graphService.SetMetadataByGraphAsync(fileData, siteId, listId, uploadedListItem.Id);
                 }
                 catch (Exception uploadSmallFileEx)
                 {
                     Global.Log.LogCritical(uploadSmallFileEx, "UploadSmallFileException: An error occured when uploading blob {BlobName} to drive {DriveId}. {ErrorMessage}", blobName, drive.Id, uploadSmallFileEx.Message);
                 }
 
-                Global.Log.LogInformation($"The blob {blobName} has been uploaded successfully (UploadSmallFile). Deleting from staging area output and files");
+                Global.Log.LogInformation($"The blob {blobName} has been uploaded successfully (UploadSmallFile).");
             }
         }
 
@@ -227,7 +244,7 @@ namespace MCOM.Functions
             }
             blobMetadata.Remove("itemid");
 
-            if (!blobMetadata.TryGetValue("FileLeafRef", out var metadataFileLeafRef))
+            if (!blobMetadata.TryGetValue("fileleafref", out var metadataFileLeafRef))
             {
                 Global.Log.LogError(new NullReferenceException(), "Missing itemId in metadata.: {blobName}", blobName);
                 return (blobMetadata, false, "", "", "", "", "");

@@ -2,6 +2,7 @@
 **/Files/PostFileTest/config.local.json
 bin
 obj
-config
 **/*.sdf
 **/*.suo
+.ntvs_analysis.dat
+.vs

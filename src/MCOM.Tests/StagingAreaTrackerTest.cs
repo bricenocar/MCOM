@@ -17,7 +17,7 @@ using Moq;
 using Xunit;
 using MCOM.Functions;
 using MCOM.Services;
-using MCOM.Models;
+using MCOM.Models.UnitTesting;
 
 namespace MCOM.Tests
 {
