@@ -22,6 +22,7 @@ CREATE TABLE [dbo].[MCOMScanRequest](
 	[status] [nvarchar](50) NULL,
 	[isphysical] [bit] NULL,
 	[filemetadata] [nvarchar](max) NULL,
+	[priority] [nvarchar](255) NULL,
  CONSTRAINT [PK_MCOMScanRequest] PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
