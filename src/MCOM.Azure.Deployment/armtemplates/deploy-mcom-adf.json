@@ -432,7 +432,7 @@
             }
         },
         {
-            "name": "[concat(variables('dataFactoryName'), '/scanexecution_metadata_dataset')]",
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_files_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -451,7 +451,7 @@
             }
         },
         {
-            "name": "[concat(variables('dataFactoryName'), '/scanexecution_metadata_file_dataset')]",
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_file_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -484,6 +484,56 @@
             "apiVersion": "2018-06-01",
             "properties": {
                 "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "filename": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": {
+                            "value": "@dataset().filename",
+                            "type": "Expression"
+                        },
+                        "folderPath": "metadata",
+                        "container": "scanexecutions"
+                    }
+                },
+                "schema": {}
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_output_file')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "folderPath": "files",
+                        "container": "scanexecutions"
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/scanexecution_db_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
                     "referenceName": "MCOMGovernanceDB",
                     "type": "LinkedServiceReference"
                 },
@@ -507,27 +557,7 @@
                 ],
                 "typeProperties": {
                     "schema": "dbo",
-                    "table": "MCOMScanExecution"
-                }
-            }
-        },
-        {
-            "name": "[concat(variables('dataFactoryName'), '/scanexecution_output_file')]",
-            "type": "Microsoft.DataFactory/factories/datasets",
-            "apiVersion": "2018-06-01",
-            "properties": {
-                "linkedServiceName": {
-                    "referenceName": "Staging area",
-                    "type": "LinkedServiceReference"
-                },
-                "annotations": [],
-                "type": "Binary",
-                "typeProperties": {
-                    "location": {
-                        "type": "AzureBlobStorageLocation",
-                        "folderPath": "files",
-                        "container": "scanexecutions"
-                    }
+                    "table": "MCOMScanRequest"
                 }
             }
         },
@@ -678,6 +708,98 @@
                         },
                         "IsPhysical": {
                             "type": "boolean"
+                        },
+                        "BusinessArea": {
+                            "type": "string"
+                        },
+                        "Priority": {
+                            "type": "string"
+                        },
+                        "FileMetaData": {
+                            "type": "object",
+                            "properties": {
+                                "FileLeafRef": {
+                                    "type": "string"
+                                },
+                                "Title": {
+                                    "type": "string"
+                                },
+                                "EIMBusinessArea": {
+                                    "type": "string"
+                                },
+                                "EIMCountry": {
+                                    "type": "string"
+                                },
+                                "EIMInformationAsset": {
+                                    "type": "string"
+                                },
+                                "EIMLegalEntity": {
+                                    "type": "string"
+                                },
+                                "EIMProcessArea": {
+                                    "type": "string"
+                                },
+                                "EIMProcess": {
+                                    "type": "string"
+                                },
+                                "EIMSecurityClassification": {
+                                    "type": "string"
+                                },
+                                "EIMSource": {
+                                    "type": "string"
+                                },
+                                "EIMStatus": {
+                                    "type": "string"
+                                },
+                                "OrderNumber": {
+                                    "type": "string"
+                                },
+                                "EIMStorageId": {
+                                    "type": "string"
+                                },
+                                "ContentType": {
+                                    "type": "string"
+                                },
+                                "Created": {
+                                    "type": "string"
+                                },
+                                "AuthorLookupId": {
+                                    "type": "string"
+                                },
+                                "Modified": {
+                                    "type": "string"
+                                },
+                                "EditorLookupId": {
+                                    "type": "string"
+                                },
+                                "LinkFilenameNoMenu": {
+                                    "type": "string"
+                                },
+                                "LinkFilename": {
+                                    "type": "string"
+                                },
+                                "DocIcon": {
+                                    "type": "string"
+                                },
+                                "FileSizeDisplay": {
+                                    "type": "string"
+                                },
+                                "ItemChildCount": {
+                                    "type": "string"
+                                },
+                                "FolderChildCount": {
+                                    "type": "string"
+                                },
+                                "Edit": {
+                                    "type": "string"
+                                },
+                                "ParentVersionStringLookupId": {
+                                    "type": "string"
+                                },
+                                "ParentLeafNameLookupId": {
+                                    "type": "string"
+                                }
+                            }
                         }
                     }
                 }
@@ -1385,7 +1507,7 @@
                             "functionName": "GetDriveId",
                             "method": "POST",
                             "body": {
-                                "value": "@concat('{\"siteUrl\":\"',variables('SharePointSiteUrl'), '\",\"libraryName\":\"', formatDateTime(utcnow(), 'yyyy'), ' Gas', '\"}')",
+                                "value": "@concat('{\"siteUrl\":\"',variables('SharePointSiteUrl'), '\",\"libraryName\":\"', formatDateTime(utcnow(), 'yyyy'), '\"}')",
                                 "type": "Expression"
                             }
                         },
@@ -1424,7 +1546,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "[parameters('SharePointUrlGAS')]"
+                        "defaultValue": "[parameters('SharePointUrlGOM')]"
                     },
                     "LibraryName": {
                         "type": "String",
@@ -1450,9 +1572,145 @@
             "properties": {
                 "activities": [
                     {
-                        "name": "Process scan request",
+                        "name": "Get request ids",
+                        "type": "Lookup",
+                        "dependsOn": [
+                            {
+                                "activity": "Check if container has items",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "wildcardFolderPath": "metadata",
+                                    "wildcardFileName": "*.json",
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "dataset": {
+                                "referenceName": "scanrequest_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEachId",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "Save in DB",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Get request ids').output.value",
+                                "type": "Expression"
+                            },
+                            "activities": [
+                                {
+                                    "name": "Get file properties",
+                                    "type": "AzureFunctionActivity",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "7.00:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "functionName": "GetFileProperties",
+                                        "method": "POST",
+                                        "body": {
+                                            "value": "@item()",
+                                            "type": "Expression"
+                                        }
+                                    },
+                                    "linkedServiceName": {
+                                        "referenceName": "MCOMFunctions",
+                                        "type": "LinkedServiceReference"
+                                    }
+                                },
+                                {
+                                    "name": "UpdateItemFields",
+                                    "type": "SqlServerStoredProcedure",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "Get file properties",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "timeout": "7.00:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "storedProcedureName": "[dbo].[update_scanproperties]",
+                                        "storedProcedureParameters": {
+                                            "pProperties": {
+                                                "value": {
+                                                    "value": "@activity('Get file properties').output.Response",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "String"
+                                            },
+                                            "pRequestId": {
+                                                "value": {
+                                                    "value": "@item().OrderNumber",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "String"
+                                            }
+                                        }
+                                    },
+                                    "linkedServiceName": {
+                                        "referenceName": "MCOMGovernanceDB",
+                                        "type": "LinkedServiceReference"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "Save in DB",
                         "type": "ExecuteDataFlow",
-                        "dependsOn": [],
+                        "dependsOn": [
+                            {
+                                "activity": "Get request ids",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
                         "policy": {
                             "timeout": "1.00:00:00",
                             "retry": 0,
@@ -1472,9 +1730,25 @@
                             },
                             "traceLevel": "Fine"
                         }
+                    },
+                    {
+                        "name": "Check if container has items",
+                        "type": "Validation",
+                        "dependsOn": [],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "scanrequest_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "timeout": "0.00:01:00",
+                            "sleep": 10,
+                            "childItems": true
+                        }
                     }
                 ],
-                "annotations": []
+                "annotations": [],
+                "lastPublishTime": "2022-05-10T08:53:29Z"
             }
         },
         {
@@ -1830,13 +2104,6 @@
                                                             "value": "@activity('Get File Metadata').output.itemName\r\n",
                                                             "type": "Expression"
                                                         }
-                                                    },
-                                                    {
-                                                        "name": "EIMStorageId",
-                                                        "value": {
-                                                            "value": "@coalesce(json(activity('Get Scan request item').output.firstRow.filemetadata).EIMStorageId, '')",
-                                                            "type": "Expression"
-                                                        }
                                                     }
                                                 ]
                                             }
@@ -1923,7 +2190,7 @@
                     }
                 ],
                 "annotations": [],
-                "lastPublishTime": "2022-05-12T08:49:21Z"
+                "lastPublishTime": "2022-05-18T13:39:03Z"
             }
         },
         {
