@@ -87,19 +87,26 @@ BEGIN
     -- interfering with SELECT statements.
     SET NOCOUNT ON;
 
-    BEGIN TRANSACTION
+    BEGIN TRY
+		BEGIN TRANSACTION
+			-- Upsert scan execution first
+			UPDATE dbo.MCOMScanExecution WITH (SERIALIZABLE)
+			SET datescanned = @pScannedDate,
+				size = @pSize,
+				filename =	@pFileName
+			WHERE @pRequestId = @pRequestId
 
-        UPDATE dbo.MCOMScanExecution WITH (SERIALIZABLE)
-        SET datescanned = @pScannedDate,
-            size = @pSize,
-			filename =	@pFileName
-        WHERE @pRequestId = @pRequestId
+			IF @@rowcount = 0
+				INSERT INTO dbo.MCOMScanExecution (RequestId, datescanned, size, filename)
+				VALUES (@pRequestId, @pScannedDate, @pSize, @pFileName)
+					   
+			UPDATE dbo.MCOMScanRequest Set status='Scanned' where id=@pRequestId
 
-        IF @@rowcount = 0
-            INSERT INTO dbo.MCOMScanExecution (RequestId, datescanned, size, filename)
-            VALUES (@pRequestId, @pScannedDate, @pSize, @pFileName)
-
-    COMMIT TRANSACTION
+		COMMIT TRANSACTION
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION
+	END CATCH
 END
 GO
 
