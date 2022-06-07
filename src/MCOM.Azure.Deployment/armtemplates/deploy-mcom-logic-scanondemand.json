@@ -9,6 +9,10 @@
             "defaultValue": "logic-mcom-scan-output",
             "type": "String"
         },
+        "workflows_logic_mcom_scan_output_name": {
+            "defaultValue": "logic-mcom-scan-input",
+            "type": "String"
+        },
         "connections_office365": {
             "defaultValue": "con-mcomoffice365",
             "type": "String"
@@ -24,14 +28,15 @@
     "variables": {
         "connOffice365": "[concat(parameters('connections_office365'), '-', parameters('environment'))]",
         "conSQL": "[concat(parameters('connections_sql'), '-', parameters('environment'))]",
-        "logicappname": "[concat(parameters('workflows_logic_mcom_scan_output_name'), '-', parameters('environment'))]",
+        "logicappnameoutput": "[concat(parameters('workflows_logic_mcom_scan_output_name'), '-', parameters('environment'))]",
+        "logicappnameinput": "[concat(parameters('workflows_logic_mcom_scan_input_name'), '-', parameters('environment'))]",
         "sqlservername":"[concat('sql-mcom-gov-', parameters('environment'), '.database.windows.net')]"
     },
     "resources": [
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[variables('logicappname')]",
+            "name": "[variables('logicappnameoutput')]",
             "location": "norwayeast",
             "identity": {
                 "type": "SystemAssigned"
@@ -123,6 +128,175 @@
                                 "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/']",
                                 "queries": {
                                     "$filter": "status eq 'Requested'"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "office365": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('connOffice365'))]",
+                                "connectionName": "office365",
+                                "id": "/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/norwayeast/managedApis/office365"
+                            },
+                            "sql": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('connSQL'))]",
+                                "connectionName": "sql",
+                                "connectionProperties": {
+                                    "authentication": {
+                                        "type": "ManagedServiceIdentity"
+                                    }
+                                },
+                                "id": "/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/norwayeast/managedApis/sql"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[variables('logicappnameinput')]",
+            "location": "norwayeast",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "Recurrence": {
+                            "recurrence": {
+                                "frequency": "Minute",
+                                "interval": 10
+                            },
+                            "evaluatedRecurrence": {
+                                "frequency": "Minute",
+                                "interval": 10
+                            },
+                            "type": "Recurrence"
+                        }
+                    },
+                    "actions": {
+                        "For_each": {
+                            "foreach": "@body('Get_Requested_Items')?['value']",
+                            "actions": {
+                                "Send_an_email_(V2)": {
+                                    "runAfter": {},
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "body": {
+                                            "Body": "<p><span style=\"font-size: 16px\">Equinor<br>\n<br>\n</span><span style=\"font-size: 12px\"></span><span style=\"font-size: 30px\">Your request with ID: </span><span style=\"font-size: 30px\">@{items('For_each')?['ordernumber']}</span><span style=\"font-size: 30px\"> has been successfully registered<br>\n</span><span style=\"font-size: 14px\">Request date: </span><span style=\"font-size: 14px\">@{items('For_each')?['requestdate']}</span><span style=\"font-size: 30px\"><br>\n</span><span style=\"font-size: 14px\">Document name: </span><span style=\"font-size: 14px\">@{items('For_each')?['documentname']}</span><span style=\"font-size: 14px\"><br>\nWBS:</span><span style=\"font-size: 16px\"> </span><span style=\"font-size: 16px\">@{items('For_each')?['wbs']}</span><span style=\"font-size: 16px\"></span><br>\n<span style=\"font-size: 14px\">Comments: </span><span style=\"font-size: 14px\">@{items('For_each')?['comments']}</span></p>",
+                                            "Subject": "Scan on demand: your request for scan of file has been successfully registered",
+                                            "To": "@items('For_each')?['requester']"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['office365']['connectionId']"
+                                            }
+                                        },
+                                        "method": "post",
+                                        "path": "/v2/Mail"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Get_Requested_Items": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Foreach"
+                        },
+                        "For_each_received_item": {
+                            "foreach": "@body('Get_Received_Items')?['value']",
+                            "actions": {
+                                "Send_an_email_(V2)_2": {
+                                    "runAfter": {},
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "body": {
+                                            "Body": "<p><span style=\"font-size: 14px\">Equinor</span><br>\n<br>\n<span style=\"font-size: 30px\">Your request with ID: </span><span style=\"font-size: 30px\">@{items('For_each_received_item')?['ordernumber']}</span><span style=\"font-size: 30px\"> has been successfully scanned and updated</span><br>\n<span style=\"font-size: 14px\">Request date:  </span><span style=\"font-size: 14px\">@{items('For_each_received_item')?['requestdate']}</span><span style=\"font-size: 14px\"><br>\nDocument name: </span><span style=\"font-size: 14px\">@{items('For_each_received_item')?['documentname']}</span><span style=\"font-size: 14px\"><br>\nWBS: </span><span style=\"font-size: 14px\">@{items('For_each_received_item')?['wbs']}</span><span style=\"font-size: 14px\"><br>\nComments: </span><span style=\"font-size: 14px\">@{items('For_each_received_item')?['comments']}</span><span style=\"font-size: 14px\"><br>\nFile URL:&nbsp;</span></p>",
+                                            "Subject": "Scan on demand: your request for scan of file has been executed and received",
+                                            "To": "@items('For_each_received_item')?['requester']"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['office365']['connectionId']"
+                                            }
+                                        },
+                                        "method": "post",
+                                        "path": "/v2/Mail"
+                                    }
+                                },
+                                "Update_row_(V2)": {
+                                    "runAfter": {
+                                        "Send_an_email_(V2)_2": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "body": {
+                                            "status": "Completed"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['sql']['connectionId']"
+                                            }
+                                        },
+                                        "method": "patch",
+                                        "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/', @{encodeURIComponent(encodeURIComponent(items('For_each_received_item')?['id']))}]"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Get_Received_Items": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Foreach"
+                        },
+                        "Get_Received_Items": {
+                            "runAfter": {},
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sql']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/']",
+                                "queries": {
+                                    "$filter": "Status eq 'Scanned'"
+                                }
+                            }
+                        },
+                        "Get_Requested_Items": {
+                            "runAfter": {},
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sql']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/']",
+                                "queries": {
+                                    "$filter": "Status eq 'Requested'"
                                 }
                             }
                         }

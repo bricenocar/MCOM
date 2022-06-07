@@ -8,11 +8,13 @@ GO
 CREATE TABLE [dbo].[MCOMScanRequest](
 	[id] [uniqueidentifier] NOT NULL,
 	[requester] [nvarchar](150) NULL,
+	[creator] [nvarchar](255) NULL,
 	[webid] [nvarchar](255) NULL,
 	[listid] [nvarchar](255) NULL,
 	[siteid] [nvarchar](255) NULL,
 	[requestdate] [datetime] NULL,
 	[wbs] [nvarchar](100) NULL,
+	[companycode] [nvarchar](255) NULL,
 	[businessunit] [nvarchar](255) NULL,
 	[itemid] [int] NULL,
 	[documentname] [nvarchar](max) NULL,
@@ -22,7 +24,7 @@ CREATE TABLE [dbo].[MCOMScanRequest](
 	[status] [nvarchar](50) NULL,
 	[isphysical] [bit] NULL,
 	[filemetadata] [nvarchar](max) NULL,
-	[priority] [nvarchar](255) NULL,
+	[priority] [nvarchar](255) NULL,	
  CONSTRAINT [PK_MCOMScanRequest] PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
@@ -34,7 +36,13 @@ CREATE TABLE [dbo].[MCOMScanExecution](
 	[filename] [nvarchar](255) NULL,
 	[datescanned] [datetime] NULL,
 	[requestId] [uniqueidentifier] NULL,
-	[size] [int] NULL
+	[size] [int] NULL,
+	[documentdate] [datetime] NULL,
+	[author] [nvarchar](255) NULL,
+	[license] [nvarchar](255) NULL,
+	[field] [nvarchar](255) NULL,
+	[well] [nvarchar](255) NULL,
+	[installation] [nvarchar](255) NULL
 ) ON [PRIMARY]
 GO
 
@@ -156,10 +164,17 @@ GO
 ALTER ROLE [db_owner] ADD MEMBER [adf-mcom-inttest]
 GO
 
+CREATE USER [logic-mcom-scan-output] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+GO
+
+ALTER ROLE [db_datawriter] ADD MEMBER [logic-mcom-scan-output]
+GO
+
+
 CREATE USER [logic-mcom-scan-input] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
 GO
 
-ALTER ROLE [db_datareader] ADD MEMBER [logic-mcom-scan-input]
+ALTER ROLE [db_datawriter] ADD MEMBER [logic-mcom-scan-input]
 GO
 
 
