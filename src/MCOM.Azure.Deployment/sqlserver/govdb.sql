@@ -21,6 +21,8 @@ CREATE TABLE [dbo].[MCOMScanRequest](
 	[ordernumber] [nvarchar](50) NULL,
 	[status] [nvarchar](50) NULL,
 	[isphysical] [bit] NULL,
+	[filemetadata] [nvarchar](max) NULL,
+	[priority] [nvarchar](255) NULL,
  CONSTRAINT [PK_MCOMScanRequest] PRIMARY KEY CLUSTERED 
 (
 	[id] ASC
@@ -85,18 +87,57 @@ BEGIN
     -- interfering with SELECT statements.
     SET NOCOUNT ON;
 
+    BEGIN TRY
+		BEGIN TRANSACTION
+			-- Upsert scan execution first
+			UPDATE dbo.MCOMScanExecution WITH (SERIALIZABLE)
+			SET datescanned = @pScannedDate,
+				size = @pSize,
+				filename =	@pFileName
+			WHERE @pRequestId = @pRequestId
+
+			IF @@rowcount = 0
+				INSERT INTO dbo.MCOMScanExecution (RequestId, datescanned, size, filename)
+				VALUES (@pRequestId, @pScannedDate, @pSize, @pFileName)
+					   
+			UPDATE dbo.MCOMScanRequest Set status='Scanned' where id=@pRequestId
+
+		COMMIT TRANSACTION
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRANSACTION
+	END CATCH
+END
+GO
+
+/****** Object:  StoredProcedure [dbo].[update_scanproperties]    Script Date: 31.05.2022 12:26:09 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author:      Carlos Briceno
+-- Create Date: 27.05.2022
+-- Description: Insert or update a scan execution record
+-- =============================================
+CREATE PROCEDURE [dbo].[update_scanproperties]
+(
+    -- Add the parameters for the stored procedure here
+    @pRequestId varchar(50) = null,
+    @pProperties varchar(MAX) = null
+)
+AS
+BEGIN
+    -- SET NOCOUNT ON added to prevent extra result sets from
+    -- interfering with SELECT statements.
+    SET NOCOUNT ON
+
     BEGIN TRANSACTION
-
-        UPDATE dbo.MCOMScanExecution WITH (SERIALIZABLE)
-        SET datescanned = @pScannedDate,
-            size = @pSize,
-			filename =	@pFileName
-        WHERE @pRequestId = @pRequestId
-
-        IF @@rowcount = 0
-            INSERT INTO dbo.MCOMScanExecution (RequestId, datescanned, size, filename)
-            VALUES (@pRequestId, @pScannedDate, @pSize, @pFileName)
-
+        UPDATE dbo.MCOMScanRequest WITH (SERIALIZABLE)
+        SET filemetadata = @pProperties
+        WHERE id = @pRequestId
     COMMIT TRANSACTION
 END
 GO
@@ -113,6 +154,12 @@ CREATE USER [adf-mcom-inttest] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo
 GO
 
 ALTER ROLE [db_owner] ADD MEMBER [adf-mcom-inttest]
+GO
+
+CREATE USER [logic-mcom-scan-input] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+GO
+
+ALTER ROLE [db_datareader] ADD MEMBER [logic-mcom-scan-input]
 GO
 
 
