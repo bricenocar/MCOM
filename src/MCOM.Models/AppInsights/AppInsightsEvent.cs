@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MCOM.Models
+namespace MCOM.Models.AppInsights
 {
     public class AppInsightsEvent
     {

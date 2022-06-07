@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MCOM.Models
+namespace MCOM.Models.Archiving
 {
     public class ArchiveFileData<TKey, TValue> : Dictionary<string, object>
     {

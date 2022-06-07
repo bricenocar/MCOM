@@ -1,0 +1,216 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment": {
+            "type": "String"
+        },
+        "workflows_logic_mcom_scan_output_name": {
+            "defaultValue": "logic-mcom-scan-output",
+            "type": "String"
+        },
+        "connections_office365": {
+            "defaultValue": "con-mcomoffice365",
+            "type": "String"
+        },
+        "connections_sql": {
+            "defaultValue": "con-mcomsql",
+            "type": "String"
+        },
+        "scanprovider_email": {
+            "type": "String"
+        }
+    },
+    "variables": {
+        "connOffice365": "[concat(parameters('connections_office365'), '-', parameters('environment'))]",
+        "conSQL": "[concat(parameters('connections_sql'), '-', parameters('environment'))]",
+        "logicappname": "[concat(parameters('workflows_logic_mcom_scan_output_name'), '-', parameters('environment'))]",
+        "sqlservername":"[concat('sql-mcom-gov-', parameters('environment'), '.database.windows.net')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2017-07-01",
+            "name": "[variables('logicappname')]",
+            "location": "norwayeast",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "state": "Enabled",
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "$connections": {
+                            "defaultValue": {},
+                            "type": "Object"
+                        }
+                    },
+                    "triggers": {
+                        "Sliding_Window": {
+                            "recurrence": {
+                                "frequency": "Minute",
+                                "interval": 10
+                            },
+                            "evaluatedRecurrence": {
+                                "frequency": "Minute",
+                                "interval": 10
+                            },
+                            "type": "SlidingWindow"
+                        }
+                    },
+                    "actions": {
+                        "For_each": {
+                            "foreach": "@body('Get_rows_(V2)')?['value']",
+                            "actions": {
+                                "Send_an_email_(V2)": {
+                                    "runAfter": {},
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "body": {
+                                            "Body": "<p>Hi Iron Mountain Vestby,<br>\n<br>\nEquinor request for scan of archived document.<br>\nOrder number: @{items('For_each')?['ordernumber']}<br>\n<br>\nPlease scan this document and upload to sftp site.<br>\n<br>\nStorage information:<br>\nPhysical Location: Iron Mountain Vestby<br>\nStorage ID: R-034302_VK01;R-034302_VK02;VCFH0A0100174;VCFH0A0199381<br>\n<br>\nDocument information<br>\nMedium: ---;---<br>\nTitle: @{items('For_each')?['documentname']}<br>\nAuthors: ---<br>\nCreation Date: 09/30/1988 11:00 PM<br>\nRegistration Date: 11/04/2000 8:42 PM<br>\nRecord Notes: comments : 110P | responsible : NORDSJØEN | action_finished : false | communication_type : Incoming to NH | keywords : OPERATION;WELL DATA;MUD;DRILL STRING;WELL HEAD | object_name : EAST FRIGG DEVELOPMENT DRILLING AND COMPLETION REPORT, WELL 25/2-B1 | subject : R-034302<br>\nDocument No: R-034302<br>\n<br>\nOur reference<br>\nOwner: Technology, Projects &amp; Drilling (TPD)<br>\nContianer: 0B0014888016796E:1988 10<br>\nRecord Number: OILDOC/D19/705461<br>\nUnique Identifier: @{items('For_each')?['ordernumber']}<br>\nRecord URL:<br>\n<br>\nBest Regards,<br>\nEquinor Corporate Archival Team<br>\n</p>",
+                                            "Subject": "Scan request: ",
+                                            "To": "[parameters('scanprovider_email')]"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['office365']['connectionId']"
+                                            }
+                                        },
+                                        "method": "post",
+                                        "path": "/v2/Mail"
+                                    }
+                                },
+                                "Update_row_(V2)": {
+                                    "runAfter": {
+                                        "Send_an_email_(V2)": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "ApiConnection",
+                                    "inputs": {
+                                        "body": {
+                                            "status": "Delivered"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['sql']['connectionId']"
+                                            }
+                                        },
+                                        "method": "patch",
+                                        "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/', @{encodeURIComponent(encodeURIComponent(items('For_each')?['id']))}]"
+                                    }
+                                }
+                            },
+                            "runAfter": {
+                                "Get_rows_(V2)": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "type": "Foreach"
+                        },
+                        "Get_rows_(V2)": {
+                            "runAfter": {},
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['sql']['connectionId']"
+                                    }
+                                },
+                                "method": "get",
+                                "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/']",
+                                "queries": {
+                                    "$filter": "status eq 'Requested'"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {
+                    "$connections": {
+                        "value": {
+                            "office365": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('connOffice365'))]",
+                                "connectionName": "office365",
+                                "id": "/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/norwayeast/managedApis/office365"
+                            },
+                            "sql": {
+                                "connectionId": "[resourceId('Microsoft.Web/connections', variables('connSQL'))]",
+                                "connectionName": "sql",
+                                "connectionProperties": {
+                                    "authentication": {
+                                        "type": "ManagedServiceIdentity"
+                                    }
+                                },
+                                "id": "/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/norwayeast/managedApis/sql"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[variables('connOffice365')]",
+            "location": "[parameters('location')]",
+            "kind": "V1",
+            "properties": {
+                "displayName": "Scan on demand service account",
+                "statuses": [
+                    {
+                        "status": "Connected"
+                    }
+                ],
+                "api": {
+                    "name": "office365",
+                    "displayName": "Office 365 Outlook",
+                    "description": "Microsoft Office 365 is a cloud-based service that is designed to help meet your organization's needs for robust security, reliability, and user productivity.",
+                    "iconUri": "[concat('https://connectoricons-prod.azureedge.net/releases/v1.0.1573/1.0.1573.2770/', 'office365', '/icon.png')]",
+                    "brandColor": "#0078D4",
+                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/norwayeast/managedApis/', 'office365')]",
+                    "type": "Microsoft.Web/locations/managedApis"
+                },
+                "testLinks": [
+                    {
+                        "requestUri": "[concat('https://management.azure.com:443/subscriptions/', subscription().subscriptionId, '/resourceGroups/mcom-', parameters('environment'),'/providers/Microsoft.Web/connections/', 'office365', '/extensions/proxy/testconnection?api-version=2016-06-01')]",
+                        "method": "get"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Web/connections",
+            "apiVersion": "2016-06-01",
+            "name": "[variables('connSQL')]",
+            "location": "[parameters('location')]",
+            "kind": "V1",
+            "properties": {
+                "displayName": "[variables('connSQL')]",
+                "statuses": [
+                    {
+                        "status": "Ready"
+                    }
+                ],
+                "api": {
+                    "name": "sql",
+                    "displayName": "SQL Server",
+                    "description": "Microsoft SQL Server is a relational database management system developed by Microsoft. Connect to SQL Server to manage data. You can perform various actions such as create, update, get, and delete on rows in a table.",
+                    "iconUri": "[concat('https://connectoricons-prod.azureedge.net/non_zr_connectors/1.0.1575.2789/', 'sql', '/icon.png')]",
+                    "brandColor": "#ba141a",
+                    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/norwayeast/managedApis/', 'sql')]",
+                    "type": "Microsoft.Web/locations/managedApis"
+                },
+                "testLinks": [
+                    {
+                        "requestUri": "[concat('https://management.azure.com:443/subscriptions/', subscription().subscriptionId, '/resourceGroups/mcom-', parameters('environment'),'/providers/Microsoft.Web/connections/', 'sql', '/extensions/proxy/testconnection?api-version=2016-06-01')]",
+                        "method": "get"
+                    }
+                ]
+            }
+        }
+    ]
+}

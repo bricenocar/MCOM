@@ -5,6 +5,7 @@ using Microsoft.Azure.Functions.Worker;
 using Newtonsoft.Json;
 using MCOM.Services;
 using MCOM.Models;
+using MCOM.Models.Azure;
 using MCOM.Utilities;
 using MCOM.Business.PostFeedBack;
 

@@ -17,7 +17,7 @@ namespace MCOM.Services
         void GetBlobServiceClient();
         BlobClient GetBlobClient(Uri fileUri);
         BlobContainerClient GetBlobContainerClient(string container);
-        AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient, BlobTraits blobTraits = BlobTraits.None, BlobStates blobStates = BlobStates.None, string prefix = null);
+        AsyncPageable<BlobItem> GetBlobsAsync(BlobContainerClient containerClient, BlobTraits blobTraits = BlobTraits.None, BlobStates blobStates = BlobStates.None, string prefix = null);
         BlobClient GetBlobClient(BlobContainerClient containerClient, string blobName);
         AsyncPageable<BlobContainerItem> GetBlobContainers();
         Task<string> GetBlobDataAsync(BlobClient blobClient);
@@ -96,7 +96,7 @@ namespace MCOM.Services
             return await blobContainerClient.GetPropertiesAsync();
         }
 
-        public virtual AsyncPageable<BlobItem> GetBlobs(BlobContainerClient containerClient, BlobTraits blobTraits = BlobTraits.None, BlobStates blobStates = BlobStates.None, string prefix = null)
+        public virtual AsyncPageable<BlobItem> GetBlobsAsync(BlobContainerClient containerClient, BlobTraits blobTraits = BlobTraits.None, BlobStates blobStates = BlobStates.None, string prefix = null)
         {
             if (BlobServiceClient == null)
                 throw new Exception("BlobServiceClient has to be called first");

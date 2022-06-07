@@ -4,13 +4,14 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Azure;
-using MCOM.Models;
-using MCOM.Services;
-using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using MCOM.Models;
+using MCOM.Models.ScanOnDemand;
+using MCOM.Services;
+using MCOM.Utilities;
 
 namespace MCOM.ScanOnDemand.Functions
 {
@@ -20,7 +21,7 @@ namespace MCOM.ScanOnDemand.Functions
 
         public PostScanRequest(IBlobService blobService)
         {
-            _blobService = blobService;
+            _blobService = blobService;           
         }
 
         [Function("PostScanRequest")]
@@ -50,29 +51,42 @@ namespace MCOM.ScanOnDemand.Functions
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<ScanRequestPayload>(requestBody);
 
-                // Do some logic here based on the data coming from the request...
-
-                // Give a new order number           
-                data.OrderNumber = Guid.NewGuid();
-                data.Status = "Delivered"; // TODO ENUM
-                data.IsPhysical = true;
-
-                var jsonMetadata = JsonConvert.SerializeObject(data);
+                // Validate data parameters
+                if (string.IsNullOrEmpty(data.SiteId) || string.IsNullOrEmpty(data.WebId) || string.IsNullOrEmpty(data.ListId) || string.IsNullOrEmpty(data.ItemId))
+                {
+                    Global.Log.LogError(new ArgumentNullException(), "Missing data parameters on the request body");
+                    response = req.CreateResponse(HttpStatusCode.BadRequest);
+                    response.WriteString("Missing data parameters on the request body");
+                    return response;
+                }
 
                 try
                 {
+                    // Generate new order number
+                    var orderNumber = Guid.NewGuid();
+
+                    // Merge Dictionaries                  
+                    data.OrderNumber = orderNumber;
+                    data.Status = "Requested";
+
+                    // Convert to json string
+                    var jsonMetadata = JsonConvert.SerializeObject(data);
+
                     Global.Log.LogInformation("Proceed to save the metadata file into scanrequests container");
 
-                    var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/scanrequests/metadata/{data.OrderNumber}.json");
-
                     // Get blob client
+                    var metadataUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/scanrequests/metadata/{orderNumber}.json");
                     var blobClient = _blobService.GetBlobClient(metadataUri);
                     using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(jsonMetadata)))
                     {
                         await blobClient.UploadAsync(stream, Global.BlobOverwriteExistingFile);
                     }
 
-                    Global.Log.LogInformation("Successfully uploaded metadata file without errors. DocumentId: {DocumentId}", data.OrderNumber);    
+                    Global.Log.LogInformation("Successfully uploaded metadata file without errors. DocumentId: {DocumentId}", orderNumber);
+
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    response.WriteString(jsonMetadata);
+                    return response;
                 }
                 catch (RequestFailedException rEx)
                 {
@@ -105,10 +119,6 @@ namespace MCOM.ScanOnDemand.Functions
                     response.WriteString($"Error Message: {ex.Message}. StackTrace: {ex.StackTrace}");
                     return response;
                 }
-
-                response = req.CreateResponse(HttpStatusCode.OK);
-                response.WriteString(jsonMetadata);
-                return response;
             }
         }
     }

@@ -13,7 +13,8 @@ using Moq;
 using Xunit;
 using Newtonsoft.Json;
 using MCOM.Functions;
-using MCOM.Models;
+using MCOM.Models.Archiving;
+using MCOM.Models.Azure;
 using MCOM.Services;
 
 namespace MCOM.Tests
@@ -143,7 +144,7 @@ namespace MCOM.Tests
 
             mockGraphService.Setup(g => g.UploadDriveItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>())).ReturnsAsync(driveItem);
             mockGraphService.Setup(g => g.SetMetadataAsync(It.IsAny<ArchiveFileData<string, object>>(), It.IsAny<DriveItem>()));
-            mockGraphService.Setup(g => g.UploadFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<int>(), It.IsAny<string>())).ReturnsAsync(result);
+            mockGraphService.Setup(g => g.UploadLargeDriveItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(result);
 
             return (mockBlobService, mockGraphService);
         }

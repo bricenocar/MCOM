@@ -38,14 +38,13 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
     const compareOneCommand: Command = this.tryGetCommand('ScanRequest');
     if (compareOneCommand) {
       // Check if only one row is selected
-      const visible = event.selectedRows.length === 1;
+      const visible = event.selectedRows.length === 1 && event.selectedRows[0].getValueByName('FSObjType') == "0";
 
       // This command should be hidden unless exactly one row is selected.
       compareOneCommand.visible = visible;
 
       // Get file info
-      // TODO: make the fields dynamic...
-      if (visible) {
+      if (visible) { // Add content type id check
         this.fileInfo = {
           FileType: event.selectedRows[0].getValueByName('File_x0020_Type'),
           IsFile: event.selectedRows[0].getValueByName('FSObjType') == "0",
@@ -63,12 +62,15 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
     switch (event.itemId) {
       case 'ScanRequest':
         const siteUrl = this.context.pageContext.site.absoluteUrl;
-        const listName = this.context.pageContext.list.title;
+        const siteId = this.context.pageContext.site.id;
+        const webId = this.context.pageContext.web.id;
+        const listId = this.context.pageContext.list.id;
         const pathUrl = this.properties.targetUrl
-          .replace('{id}', this.fileInfo.ID)
-          .replace('{filename}', this.fileInfo.FileName)
-          .replace('{siteurl}', siteUrl)
-          .replace('{listname}', listName);
+          .replace('{iid}', this.fileInfo.ID)
+          .replace('{name}', this.fileInfo.FileName)
+          .replace('{sid}', siteId.toString())
+          .replace('{wid}', webId.toString())
+          .replace('{lid}', listId.toString());
 
         window.open(`${siteUrl}${pathUrl}`, '_blank').focus();
         break;

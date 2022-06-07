@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using MCOM.Archiving.Functions;
-using MCOM.Models;
+using MCOM.Models.UnitTesting;
 using MCOM.Services;
 using MCOM.Utilities;
 using MCOM.Tests.Utilities;

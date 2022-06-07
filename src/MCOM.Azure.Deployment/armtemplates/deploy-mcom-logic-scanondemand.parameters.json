@@ -1,0 +1,21 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment": {
+            "value": ""
+        },
+        "workflows_logic_mcom_scan_output_name": {
+            "value": null
+        },
+        "connections_office365_externalid": {
+            "value": null
+        },
+        "connections_sql_externalid": {
+            "value": null
+        },
+        "scanprovider_email": {
+            "value": null
+        }
+    }
+}

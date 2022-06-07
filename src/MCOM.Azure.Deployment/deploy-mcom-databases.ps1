@@ -4,7 +4,7 @@ Param(
     [string] [Parameter(Mandatory = $true)] $ResourceGroupLocation,
     [string] [Parameter(Mandatory = $true)] $Environment,
     [string] [Parameter(Mandatory = $true)] $user,
-    [string] [Parameter(Mandatory = $true)] $pass,
+    [SecureString] [Parameter(Mandatory = $true)] $pass,
     [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false    
 )
@@ -51,7 +51,7 @@ Write-Host "##[debug]Location of databases arm parameters file: $databasesParame
 $today = Get-Date -Format "ddMMyy-HHmm"
 $DeploymentName = "mcom-db-$Environment-$today"
 $serverName = "sql-mcom-gov-$Environment"
-$password = ConvertTo-SecureString $pass -AsPlainText -Force
+#$password = ConvertTo-SecureString $pass -AsPlainText -Force
 
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
@@ -72,9 +72,9 @@ Write-Host "##[group]Deployment of arm templates"
 # Deploy databases 
 Write-Host "##[command] Running deployment of databases template..."
 if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-databases" --template-uri $databasesTemplateFile --parameters $databasesParametersFile serverName=$serverName administratorLogin=$user administratorLoginPassword=$password | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-databases" --template-uri $databasesTemplateFile --parameters $databasesParametersFile serverName=$serverName administratorLogin=$user administratorLoginPassword=$pass | ConvertFrom-Json
 } else {
-    $result = az deployment group create --name "$DeploymentName-databases" --template-file $databasesTemplateFile --parameters $databasesParametersFile serverName=$serverName administratorLogin=$user administratorLoginPassword=$password | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-databases" --template-file $databasesTemplateFile --parameters $databasesParametersFile serverName=$serverName administratorLogin=$user administratorLoginPassword=$pass | ConvertFrom-Json
 }
 
 # Evaluate result from deployment

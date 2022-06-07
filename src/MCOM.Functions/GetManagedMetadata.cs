@@ -89,7 +89,7 @@ namespace MCOM.Functions
                     _sharePointService.Load(clientContext, termStore, store => store.Groups.Include(group => group.TermSets, groups => groups.Name));
                     _sharePointService.ExecuteQuery(clientContext);
 
-                    var termsResult = new List<Models.Term>();
+                    var termsResult = new List<Models.Taxonomy.Term>();
                     var groups = termStore.Groups.Where(g => g.Name.Equals(termGroup));
                     if (!groups.Any())
                     {
@@ -123,7 +123,7 @@ namespace MCOM.Functions
 
                                 foreach (var term in myTerms)
                                 {
-                                    termsResult.Add(new Models.Term()
+                                    termsResult.Add(new Models.Taxonomy.Term()
                                     {
                                         Label = term.Name,
                                         TermId = term.Id.ToString(),
@@ -142,7 +142,7 @@ namespace MCOM.Functions
 
                                 foreach (var term in allTermsInTermSet)
                                 {
-                                    termsResult.Add(new Models.Term()
+                                    termsResult.Add(new Models.Taxonomy.Term()
                                     {
                                         Label = term.Name,
                                         TermId = term.Id.ToString(),

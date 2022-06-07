@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
@@ -12,6 +11,8 @@ using Microsoft.SharePoint.Client.Search.Query;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using MCOM.Models;
+using MCOM.Models.Archiving;
+using MCOM.Models.UnitTesting;
 using MCOM.Services;
 using MCOM.Utilities;
 
@@ -88,7 +89,7 @@ namespace MCOM.Functions
         {
             // Get blob service client, get container and blobItems
             var containerClient = _blobService.GetBlobContainerClient("output");
-            var blobItems = _blobService.GetBlobs(containerClient);
+            var blobItems = _blobService.GetBlobsAsync(containerClient);
 
             await foreach (var blobItem in blobItems)
             {
@@ -181,7 +182,7 @@ namespace MCOM.Functions
                                 try
                                 {
                                     // Upload the file
-                                    var uploadResult = await _graphService.UploadFileAsync(fileData.DriveID, fileName, filesBlobStream, maxSliceSize, fileData.BlobFilePath);
+                                    var uploadResult = await _graphService.UploadLargeDriveItemAsync(fileData.DriveID, fileName, filesBlobStream, maxSliceSize, fileData.BlobFilePath);
 
                                     if (uploadResult.UploadSucceeded)
                                     {
@@ -334,7 +335,7 @@ namespace MCOM.Functions
                 var containerClient = _blobService.GetBlobContainerClient(continerName);
 
                 // Get all blobs based on the given prefix (virtual folder)
-                var blobPages = _blobService.GetBlobs(containerClient,
+                var blobPages = _blobService.GetBlobsAsync(containerClient,
                                                       Azure.Storage.Blobs.Models.BlobTraits.None,
                                                       Azure.Storage.Blobs.Models.BlobStates.None,
                                                       "metadataprocessed/").AsPages();
@@ -434,7 +435,7 @@ namespace MCOM.Functions
             try
             {
                 // Get events
-                ResultTable table = _sharePointService.SearchItems(clientContext, documentId);
+                var table = _sharePointService.SearchItems(clientContext, $"HPECMRecordID:{documentId}");
                 if (table.RowCount == 0)
                 {
                     var msg = "Could not find file in SharePoint indexed. Trying again in next round";
