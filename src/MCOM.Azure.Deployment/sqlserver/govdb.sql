@@ -164,10 +164,17 @@ GO
 ALTER ROLE [db_owner] ADD MEMBER [adf-mcom-inttest]
 GO
 
+CREATE USER [logic-mcom-scan-output] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+GO
+
+ALTER ROLE [db_datawriter] ADD MEMBER [logic-mcom-scan-output]
+GO
+
+
 CREATE USER [logic-mcom-scan-input] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
 GO
 
-ALTER ROLE [db_datareader] ADD MEMBER [logic-mcom-scan-input]
+ALTER ROLE [db_datawriter] ADD MEMBER [logic-mcom-scan-input]
 GO
 
 
