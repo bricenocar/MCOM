@@ -27,7 +27,7 @@ namespace MCOM.Functions
         }
 
         [Function("GetFileProperties")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req, FunctionContext context)
         {
             var logger = context.GetLogger("GetFileProperties");
 
@@ -43,8 +43,6 @@ namespace MCOM.Functions
 
             Activity.Current?.AddTag("MCOMOperation", "GetFile");
 
-            
-
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetFileProperties", "Functions"))
             {
 
@@ -54,6 +52,9 @@ namespace MCOM.Functions
                 {
                     // Read from request
                     var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+
+                    Global.Log.LogInformation($"RequestBody: {requestBody}");
+
                     var data = JsonConvert.DeserializeObject<ScanRequestPayload>(requestBody);
 
                     // Get SharePoint listitem fields and add them to the json object
@@ -61,7 +62,10 @@ namespace MCOM.Functions
                     var listItemFields = listItem.Fields.AdditionalData;
 
                     // Get string values from listItemFields and remove special properties
-                    var fileMetaData = new Dictionary<string, object>();
+                    var fileMetaData = new Dictionary<string, object>()
+                    {
+                        { "FilePath", listItem.WebUrl }
+                    };
                     listItemFields.Where(x => !x.Key.StartsWith("_") && !x.Key.StartsWith("@")).ForEach(x => fileMetaData.Add(x.Key, x.Value.ToString()));
 
                     // Convert to json string
@@ -69,7 +73,7 @@ namespace MCOM.Functions
 
                     response = req.CreateResponse(HttpStatusCode.OK);
                     response.Headers.Add("Content-Type", "application/json; charset=utf-8");
-                    response.WriteString("Welcome to Azure Functions!");
+                    response.WriteString(JsonConvert.SerializeObject(new { Response = jsonMetadata }));
 
                     return response;
                 }
@@ -81,7 +85,7 @@ namespace MCOM.Functions
 
                     return response;
                 }
-            }            
+            }
         }
     }
 }

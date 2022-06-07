@@ -161,7 +161,7 @@ namespace MCOM.Functions
                     using ClientContext clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
 
                     // Get file from search first, if not found, try with graph
-                    response = SearchArchivedFile(req, clientContext, documentId, documentIdField, accessToken.Token);
+                    response = SearchArchivedFile(req, clientContext, documentId, accessToken.Token);
                     if(response.StatusCode != HttpStatusCode.OK)
                     {
                         // Check presence of drive Id in the request
@@ -185,7 +185,7 @@ namespace MCOM.Functions
                             }
                         } else
                         {
-                            response = await GetArchivedFile(req, driveId, documentId, documentIdField);
+                            response = await GetArchivedFile(req, driveId, documentId);
                         }                        
                     }                    
                 }
@@ -205,13 +205,13 @@ namespace MCOM.Functions
             }
         }
 
-        private HttpResponseData SearchArchivedFile(HttpRequestData req, ClientContext clientContext, string documentId, string documentIdField, string token)
+        private HttpResponseData SearchArchivedFile(HttpRequestData req, ClientContext clientContext, string documentId, string token)
         {            
             HttpResponseData response;
             try
             {
                 // Get events
-                ResultTable table = _sharePointService.SearchItems(clientContext, documentId);
+                var table = _sharePointService.SearchItems(clientContext, $"HPECMRecordID:{documentId}");
                 if (table.RowCount == 0)
                 {
                     response = req.CreateResponse(HttpStatusCode.NotFound);
@@ -262,7 +262,7 @@ namespace MCOM.Functions
             return response;
         }
 
-        private async Task<HttpResponseData> GetArchivedFile(HttpRequestData req, string driveId, string documentId, string documentIdField)
+        private async Task<HttpResponseData> GetArchivedFile(HttpRequestData req, string driveId, string documentId)
         {
             HttpResponseData response;
 

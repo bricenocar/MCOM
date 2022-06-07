@@ -435,7 +435,7 @@ namespace MCOM.Functions
             try
             {
                 // Get events
-                ResultTable table = _sharePointService.SearchItems(clientContext, documentId);
+                var table = _sharePointService.SearchItems(clientContext, $"HPECMRecordID:{documentId}");
                 if (table.RowCount == 0)
                 {
                     var msg = "Could not find file in SharePoint indexed. Trying again in next round";

@@ -4,25 +4,23 @@
   "https": true,
   "serveConfigurations": {
     "default": {
-      "pageUrl": "https://contoso.sharepoint.com/sites/mySite/SitePages/myPage.aspx",
+      "pageUrl": "https://statoilintegrationtest.sharepoint.com/sites/ScanOnDemandTestSite/Shared%20Documents/Forms/AllItems.aspx",
       "customActions": {
         "02fe7e06-3f7b-4b1f-84af-8020cff0fea7": {
-          "location": "ClientSideExtension.ListViewCommandSet.CommandBar",
+          "location": "ClientSideExtension.ListViewCommandSet",
           "properties": {
-            "sampleTextOne": "One item is selected in the list",
-            "sampleTextTwo": "This command is always visible."
+            "targetUrl": "/SitePages/ScanOnDemand.aspx?iid={iid}&name={name}&sid={sid}&wid={wid}&lid={lid}"
           }
         }
       }
     },
     "scanRequest": {
-      "pageUrl": "https://contoso.sharepoint.com/sites/mySite/SitePages/myPage.aspx",
+      "pageUrl": "https://statoilintegrationtest.sharepoint.com/sites/ScanOnDemandTestSite/Shared%20Documents/Forms/AllItems.aspx",
       "customActions": {
         "02fe7e06-3f7b-4b1f-84af-8020cff0fea7": {
-          "location": "ClientSideExtension.ListViewCommandSet.CommandBar",
+          "location": "ClientSideExtension.ListViewCommandSet",
           "properties": {
-            "sampleTextOne": "One item is selected in the list",
-            "sampleTextTwo": "This command is always visible."
+            "targetUrl": "/SitePages/ScanOnDemand.aspx?iid={iid}&name={name}&sid={sid}&wid={wid}&lid={lid}"
           }
         }
       }

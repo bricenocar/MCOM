@@ -19,19 +19,20 @@ namespace MCOM.Services
         Task<GraphServiceClient> GetGraphServiceClientAsync();
 
         Task<DriveItem> ReplaceSharePointFileContentAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream);
-        Task<DriveItem> UploadSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, string fileName, Stream stream);
+        Task<UploadResult<DriveItem>> ReplaceLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail");
+        Task<DriveItem> UploadSharePointFileAsync(string domain, string siteId, string webId, string listId, string fileName, Stream stream);
         Task<DriveItem> UploadDriveItemAsync(string driveId, string fileName, Stream stream);
         Task<DriveItem> CopySharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, string name, ItemReference parentReference);
-        Task<UploadResult<DriveItem>> UploadLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail");
+        Task<UploadResult<DriveItem>> UploadLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail");
         Task<UploadResult<DriveItem>> UploadLargeDriveItemAsync(string driveId, string fileName, Stream stream, int maxSliceSize, string blobFilePath, string conflictBehaviour = "fail");
 
         Task<IListItemsCollectionPage> SearchItemAsync(string domain, string siteId, string webId, string listId, string filter);
-        Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string driveId, string fileName);
+        Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string driveId, string queryString);
         Task<List<Models.Search.SearchResult>> SearchItemAsync(string documentId);
 
         Task<Microsoft.Graph.ListItem> GetListItemAsync(string driveId, string driveItemId);
-        Task<Microsoft.Graph.ListItem> GetListItemAsync(string domain, string siteId, string webId, string listId, string itemId);        
-        Task<ISiteDrivesCollectionPage> GetDriveCollectionPageAsync(Uri uri);        
+        Task<Microsoft.Graph.ListItem> GetListItemAsync(string domain, string siteId, string webId, string listId, string itemId);
+        Task<ISiteDrivesCollectionPage> GetDriveCollectionPageAsync(Uri uri);
         Task<Stream> GetFileContentAsync(string driveId, string driveItemId);
         Task<Drive> GetDriveAsync(string driveId, string select);
         Task<Drive> GetDriveAsync(string domain, string siteId, string webId, string listId, string select);
@@ -78,7 +79,34 @@ namespace MCOM.Services
             return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items[itemId].DriveItem.Content.Request().PutAsync<DriveItem>(stream);
         }
 
-        public virtual async Task<DriveItem> UploadSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, string fileName, Stream stream)
+        public virtual async Task<UploadResult<DriveItem>> ReplaceLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail")
+        {
+            GraphServiceClient = await GetGraphServiceClientAsync();
+
+            // Use properties to specify the conflict behavior
+            var uploadProps = new DriveItemUploadableProperties
+            {
+                ODataType = null,
+                AdditionalData = new Dictionary<string, object>
+                {
+                    { "@microsoft.graph.conflictBehavior", conflictBehaviour},
+                }
+            };
+
+            var uploadSession = await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items[itemId].DriveItem.CreateUploadSession(uploadProps).Request().PostAsync();
+            var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, stream, maxSliceSize);
+
+            // Create a callback that is invoked after each slice is uploaded
+            var progress = new Progress<long>(prog =>
+            {
+                Global.Log.LogInformation("Uploaded {UploadProgress} bytes of {StreamLength} bytes for {BlobName}", prog, stream.Length, fileName);
+            });
+
+            // Upload the file
+            return await fileUploadTask.UploadAsync(progress);
+        }
+
+        public virtual async Task<DriveItem> UploadSharePointFileAsync(string domain, string siteId, string webId, string listId, string fileName, Stream stream)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
 
@@ -92,7 +120,7 @@ namespace MCOM.Services
             return await GraphServiceClient.Drives[driveId].Root.ItemWithPath(fileName).Content.Request().PutAsync<DriveItem>(stream);
         }
 
-        public virtual async Task<UploadResult<DriveItem>> UploadLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail")
+        public virtual async Task<UploadResult<DriveItem>> UploadLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail")
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
 
@@ -205,7 +233,7 @@ namespace MCOM.Services
             }
 
             return results;
-        }        
+        }
 
 
         public virtual async Task<Microsoft.Graph.ListItem> GetListItemAsync(string driveId, string driveItemId)
@@ -249,7 +277,7 @@ namespace MCOM.Services
 
             return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Drive.Request().Select(select).GetAsync();
         }
-        
+
 
         public virtual async Task SetMetadataAsync(ArchiveFileData<string, object> filedata, DriveItem uploadedItem)
         {

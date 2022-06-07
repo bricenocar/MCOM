@@ -17,7 +17,7 @@ namespace MCOM.ScanOnDemand.Functions
                 {
                     // Adding services to DI               
                     services.AddScoped<IBlobService, BlobService>();
-                    services.AddScoped<IGraphService, GraphService>();
+
                     // DB Context
                     services.AddDbContext<GovernanceDBContext>(options => options.UseSqlServer(context.Configuration["GOVERNANCEDB_CONNECTIONSTRING"]));
                 })
