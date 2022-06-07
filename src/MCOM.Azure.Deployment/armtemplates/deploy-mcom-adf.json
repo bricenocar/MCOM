@@ -641,6 +641,10 @@
                     {
                         "name": "priority",
                         "type": "nvarchar"
+                    },
+                    {
+                        "name": "companycode",
+                        "type": "nvarchar"
                     }
                 ],
                 "typeProperties": {
@@ -715,91 +719,8 @@
                         "Priority": {
                             "type": "string"
                         },
-                        "FileMetaData": {
-                            "type": "object",
-                            "properties": {
-                                "FileLeafRef": {
-                                    "type": "string"
-                                },
-                                "Title": {
-                                    "type": "string"
-                                },
-                                "EIMBusinessArea": {
-                                    "type": "string"
-                                },
-                                "EIMCountry": {
-                                    "type": "string"
-                                },
-                                "EIMInformationAsset": {
-                                    "type": "string"
-                                },
-                                "EIMLegalEntity": {
-                                    "type": "string"
-                                },
-                                "EIMProcessArea": {
-                                    "type": "string"
-                                },
-                                "EIMProcess": {
-                                    "type": "string"
-                                },
-                                "EIMSecurityClassification": {
-                                    "type": "string"
-                                },
-                                "EIMSource": {
-                                    "type": "string"
-                                },
-                                "EIMStatus": {
-                                    "type": "string"
-                                },
-                                "OrderNumber": {
-                                    "type": "string"
-                                },
-                                "EIMStorageId": {
-                                    "type": "string"
-                                },
-                                "ContentType": {
-                                    "type": "string"
-                                },
-                                "Created": {
-                                    "type": "string"
-                                },
-                                "AuthorLookupId": {
-                                    "type": "string"
-                                },
-                                "Modified": {
-                                    "type": "string"
-                                },
-                                "EditorLookupId": {
-                                    "type": "string"
-                                },
-                                "LinkFilenameNoMenu": {
-                                    "type": "string"
-                                },
-                                "LinkFilename": {
-                                    "type": "string"
-                                },
-                                "DocIcon": {
-                                    "type": "string"
-                                },
-                                "FileSizeDisplay": {
-                                    "type": "string"
-                                },
-                                "ItemChildCount": {
-                                    "type": "string"
-                                },
-                                "FolderChildCount": {
-                                    "type": "string"
-                                },
-                                "Edit": {
-                                    "type": "string"
-                                },
-                                "ParentVersionStringLookupId": {
-                                    "type": "string"
-                                },
-                                "ParentLeafNameLookupId": {
-                                    "type": "string"
-                                }
-                            }
+                        "CompanyCode": {
+                            "type": "string"
                         }
                     }
                 }
@@ -1748,7 +1669,7 @@
                     }
                 ],
                 "annotations": [],
-                "lastPublishTime": "2022-05-10T08:53:29Z"
+                "lastPublishTime": "2022-05-31T08:50:59Z"
             }
         },
         {
@@ -2551,7 +2472,7 @@
                         "          IsPhysical as boolean,",
                         "          BusinessArea as string,",
                         "          Priority as string,",
-                        "          FileMetaData as (FileLeafRef as string, Title as string, EIMBusinessArea as string, EIMCountry as string, EIMInformationAsset as string, EIMLegalEntity as string, EIMProcessArea as string, EIMProcess as string, EIMSecurityClassification as string, EIMSource as string, EIMStatus as string, OrderNumber as string, EIMStorageId as string, ContentType as string, Created as string, AuthorLookupId as string, Modified as string, EditorLookupId as string, LinkFilenameNoMenu as string, LinkFilename as string, DocIcon as string, FileSizeDisplay as string, ItemChildCount as string, FolderChildCount as string, Edit as string, ParentVersionStringLookupId as string, ParentLeafNameLookupId as string)",
+                        "          CompanyCode as string",
                         "     ),",
                         "     allowSchemaDrift: false,",
                         "     validateSchema: false,",
@@ -2560,8 +2481,7 @@
                         "     documentForm: 'singleDocument') ~> scandatasource",
                         "TransformationColumns alterRow(upsertIf(true())) ~> AlterRow",
                         "scandatasource derive(recordId = OrderNumber,",
-                        "          requestedDateTransformed = toDate(RequestedDate),",
-                        "          FileMetadataString = toString(FileMetaData)) ~> TransformationColumns",
+                        "          requestedDateTransformed = toDate(RequestedDate)) ~> TransformationColumns",
                         "AlterRow sink(allowSchemaDrift: false,",
                         "     validateSchema: false,",
                         "     input(",
@@ -2581,7 +2501,8 @@
                         "          status as string,",
                         "          isphysical as boolean,",
                         "          filemetadata as string,",
-                        "          priority as string",
+                        "          priority as string,",
+                        "          companycode as string",
                         "     ),",
                         "     deletable:false,",
                         "     insertable:true,",
@@ -2608,8 +2529,8 @@
                         "          status = Status,",
                         "          isphysical = IsPhysical,",
                         "          requestdate = requestedDateTransformed,",
-                        "          filemetadata = FileMetadataString,",
-                        "          priority = Priority",
+                        "          priority = Priority,",
+                        "          companycode = CompanyCode",
                         "     )) ~> SaveToDB"
                     ]
                 }
