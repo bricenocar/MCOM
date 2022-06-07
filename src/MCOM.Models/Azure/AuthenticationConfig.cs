@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace MCOM.Models
+namespace MCOM.Models.Azure
 {
     /// <summary>
     /// Description of the configuration of an AzureAD public client application (desktop/mobile application). This should

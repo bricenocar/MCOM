@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using MCOM.Models;
+using MCOM.Models.Azure;
 
 namespace MCOM.Business.PostFeedBack.DCF
 {

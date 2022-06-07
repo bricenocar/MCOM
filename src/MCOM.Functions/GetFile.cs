@@ -1,6 +1,10 @@
-using MCOM.Models;
-using MCOM.Services;
-using MCOM.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -9,13 +13,10 @@ using Microsoft.Graph;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Search.Query;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
+using MCOM.Models;
+using MCOM.Models.AppInsights;
+using MCOM.Services;
+using MCOM.Utilities;
 
 namespace MCOM.Functions
 {
@@ -160,7 +161,7 @@ namespace MCOM.Functions
                     using ClientContext clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
 
                     // Get file from search first, if not found, try with graph
-                    response = SearchArchivedFile(req, clientContext, documentId, documentIdField, accessToken.Token);
+                    response = SearchArchivedFile(req, clientContext, documentId, accessToken.Token);
                     if(response.StatusCode != HttpStatusCode.OK)
                     {
                         // Check presence of drive Id in the request
@@ -184,7 +185,7 @@ namespace MCOM.Functions
                             }
                         } else
                         {
-                            response = await GetArchivedFile(req, driveId, documentId, documentIdField);
+                            response = await GetArchivedFile(req, driveId, documentId);
                         }                        
                     }                    
                 }
@@ -204,13 +205,13 @@ namespace MCOM.Functions
             }
         }
 
-        private HttpResponseData SearchArchivedFile(HttpRequestData req, ClientContext clientContext, string documentId, string documentIdField, string token)
+        private HttpResponseData SearchArchivedFile(HttpRequestData req, ClientContext clientContext, string documentId, string token)
         {            
             HttpResponseData response;
             try
             {
                 // Get events
-                ResultTable table = _sharePointService.SearchItems(clientContext, documentId);
+                var table = _sharePointService.SearchItems(clientContext, $"HPECMRecordID:{documentId}");
                 if (table.RowCount == 0)
                 {
                     response = req.CreateResponse(HttpStatusCode.NotFound);
@@ -219,7 +220,7 @@ namespace MCOM.Functions
                 else
                 {
                     var resultRow = table.ResultRows.FirstOrDefault();
-                    MCOMSearchResult searchResult = new MCOMSearchResult()
+                    var searchResult = new Models.Search.SearchResult()
                     {
                         Name = resultRow["Title"].ToString(),
                         SiteId = resultRow["SPSiteURL"].ToString(),
@@ -261,7 +262,7 @@ namespace MCOM.Functions
             return response;
         }
 
-        private async Task<HttpResponseData> GetArchivedFile(HttpRequestData req, string driveId, string documentId, string documentIdField)
+        private async Task<HttpResponseData> GetArchivedFile(HttpRequestData req, string driveId, string documentId)
         {
             HttpResponseData response;
 

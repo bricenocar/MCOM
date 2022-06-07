@@ -5,6 +5,8 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using MCOM.Models;
+using MCOM.Models.Archiving;
+using MCOM.Models.Azure;
 using MCOM.Services;
 using MCOM.Utilities;
 
@@ -23,7 +25,7 @@ namespace MCOM.Functions
 
         [Function("ArchiveFile")]
         [QueueOutput("feedbackqueue", Connection = "QueueConnectionString")]
-        public async Task<QueueItem> Run([Microsoft.Azure.Functions.Worker.BlobTrigger("output/{name}", Connection = "BlobStorageConnectionString")] string data, string name, FunctionContext context)
+        public async Task<QueueItem> Run([BlobTrigger("output/{name}", Connection = "BlobStorageConnectionString")] string data, string name, FunctionContext context)
         {
             var logger = context.GetLogger("ArchiveFile");
 

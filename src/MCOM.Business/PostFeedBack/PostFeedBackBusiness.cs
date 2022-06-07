@@ -1,4 +1,4 @@
-﻿using MCOM.Models;
+﻿using MCOM.Models.Azure;
 
 namespace MCOM.Business.PostFeedBack
 {

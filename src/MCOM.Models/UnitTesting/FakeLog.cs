@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace MCOM.Models
+namespace MCOM.Models.UnitTesting
 {
     public class FakeLog
     {

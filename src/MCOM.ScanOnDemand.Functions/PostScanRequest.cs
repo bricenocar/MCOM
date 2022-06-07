@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -10,21 +9,19 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using MCOM.Models;
+using MCOM.Models.ScanOnDemand;
 using MCOM.Services;
 using MCOM.Utilities;
-using MCOM.Extensions;
 
-namespace MCOM.Functions
+namespace MCOM.ScanOnDemand.Functions
 {
     public class PostScanRequest
     {
         private readonly IBlobService _blobService;
-        private IGraphService _graphService;
 
-        public PostScanRequest(IBlobService blobService, IGraphService graphService)
+        public PostScanRequest(IBlobService blobService)
         {
-            _blobService = blobService;
-            _graphService = graphService;
+            _blobService = blobService;           
         }
 
         [Function("PostScanRequest")]
@@ -52,36 +49,25 @@ namespace MCOM.Functions
                 // Get the request object
                 HttpResponseData response = null;
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(requestBody);
+                var data = JsonConvert.DeserializeObject<ScanRequestPayload>(requestBody);
 
                 // Validate data parameters
-                if(!data.TryGetValue("SiteId", out var siteId) || !data.TryGetValue("WebId", out var webId) || !data.TryGetValue("ListId", out var listId) || !data.TryGetValue("ItemId", out var itemId))
+                if (string.IsNullOrEmpty(data.SiteId) || string.IsNullOrEmpty(data.WebId) || string.IsNullOrEmpty(data.ListId) || string.IsNullOrEmpty(data.ItemId))
                 {
                     Global.Log.LogError(new ArgumentNullException(), "Missing data parameters on the request body");
                     response = req.CreateResponse(HttpStatusCode.BadRequest);
                     response.WriteString("Missing data parameters on the request body");
                     return response;
-                }       
+                }
 
                 try
                 {
                     // Generate new order number
                     var orderNumber = Guid.NewGuid();
 
-                    // Add new properties to the json object    
-                    data.Add("OrderNumber", orderNumber);
-                    data.Add("Status", "Requested"); // TODO ENUM
-
-                    // Get SharePoint listitem fields and add them to the json object
-                    var listItem = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId.ToString(), webId.ToString(), listId.ToString(), itemId.ToString());
-                    var listItemFields = listItem.Fields.AdditionalData;
-
-                    // Get string values from listItemFields
-                    var dataFields = new Dictionary<string, object>();
-                    listItemFields.ForEach(x => dataFields.Add(x.Key, x.Value.ToString()));
-
-                    // Merge Dictionaries
-                    data.AddRangeNewOnly(dataFields);
+                    // Merge Dictionaries                  
+                    data.OrderNumber = orderNumber;
+                    data.Status = "Requested";
 
                     // Convert to json string
                     var jsonMetadata = JsonConvert.SerializeObject(data);

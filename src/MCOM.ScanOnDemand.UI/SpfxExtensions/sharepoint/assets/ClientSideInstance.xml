@@ -4,6 +4,6 @@
         Title="ScanRequest"
         Location="ClientSideExtension.ListViewCommandSet"
         ListTemplateId="101"
-        Properties="{&quot;targetUrl&quot;:&quot;/SitePages/ScanOnDemand.aspx?id={id}&amp;name={name}&amp;sid={sid}&amp;wid={wid}&amp;lid={lid}&quot;}"
+        Properties="{&quot;targetUrl&quot;:&quot;/SitePages/ScanOnDemand.aspx?iid={iid}&amp;name={name}&amp;sid={sid}&amp;wid={wid}&amp;lid={lid}&quot;}"
         ComponentId="02fe7e06-3f7b-4b1f-84af-8020cff0fea7" />
 </Elements>

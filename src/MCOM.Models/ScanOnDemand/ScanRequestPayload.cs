@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MCOM.Models
+namespace MCOM.Models.ScanOnDemand
 {
     public class ScanRequestPayload
     {
@@ -10,6 +10,7 @@ namespace MCOM.Models
         public string ListId { get; set; }
         public string WBS { get; set; }
         public string RequestedBy { get; set; }
+        public string CreatedBy { get; set; }
         public DateTime RequestedDate { get; set; }
         public string DocumentName { get; set; }
         public string Vendor { get; set; }
@@ -19,5 +20,6 @@ namespace MCOM.Models
         public bool IsPhysical { get; set; }
         public string BusinessArea { get; set; }
         public string Priority { get; set; }
+        public string CompanyCode { get; set; }
     }
 }

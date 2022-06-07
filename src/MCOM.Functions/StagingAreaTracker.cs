@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
@@ -12,6 +11,8 @@ using Microsoft.SharePoint.Client.Search.Query;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using MCOM.Models;
+using MCOM.Models.Archiving;
+using MCOM.Models.UnitTesting;
 using MCOM.Services;
 using MCOM.Utilities;
 
@@ -434,7 +435,7 @@ namespace MCOM.Functions
             try
             {
                 // Get events
-                ResultTable table = _sharePointService.SearchItems(clientContext, documentId);
+                var table = _sharePointService.SearchItems(clientContext, $"HPECMRecordID:{documentId}");
                 if (table.RowCount == 0)
                 {
                     var msg = "Could not find file in SharePoint indexed. Trying again in next round";

@@ -44,8 +44,7 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
       compareOneCommand.visible = visible;
 
       // Get file info
-      // TODO: make the fields dynamic...
-      if (visible) {
+      if (visible) { // Add content type id check
         this.fileInfo = {
           FileType: event.selectedRows[0].getValueByName('File_x0020_Type'),
           IsFile: event.selectedRows[0].getValueByName('FSObjType') == "0",
@@ -67,7 +66,7 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
         const webId = this.context.pageContext.web.id;
         const listId = this.context.pageContext.list.id;
         const pathUrl = this.properties.targetUrl
-          .replace('{id}', this.fileInfo.ID)
+          .replace('{iid}', this.fileInfo.ID)
           .replace('{name}', this.fileInfo.FileName)
           .replace('{sid}', siteId.toString())
           .replace('{wid}', webId.toString())

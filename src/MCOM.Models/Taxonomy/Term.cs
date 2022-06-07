@@ -1,4 +1,4 @@
-﻿namespace MCOM.Models
+﻿namespace MCOM.Models.Taxonomy
 {
     public class Term
     {

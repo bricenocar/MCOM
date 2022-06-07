@@ -75,23 +75,29 @@ namespace MCOM.Services
         #endregion
 
         #region Search
+
         public virtual ResultTable SearchItems(ClientContext clientContext, string queryText)
         {
-            KeywordQuery keywordQuery = new KeywordQuery(clientContext);
-            keywordQuery.QueryText = $"HPECMRecordID:{queryText}";
+            var keywordQuery = new KeywordQuery(clientContext)
+            {
+                QueryText = queryText
+            };
+
             keywordQuery.SelectProperties.Add("Title");
             keywordQuery.SelectProperties.Add("SPSiteURL");
             keywordQuery.SelectProperties.Add("ListID");
             keywordQuery.SelectProperties.Add("UniqueID");
             keywordQuery.TrimDuplicates = false;
 
-            SearchExecutor searchExecutor = new SearchExecutor(clientContext);
-            ClientResult<ResultTableCollection> results = searchExecutor.ExecuteQuery(keywordQuery);
+            var searchExecutor = new SearchExecutor(clientContext);
+            var results = searchExecutor.ExecuteQuery(keywordQuery);
+
             clientContext.ExecuteQuery();
 
-            ResultTable resultTable = results.Value.FirstOrDefault();
+            var resultTable = results.Value.FirstOrDefault();
             return resultTable;
         }
+
         #endregion
 
         #region Taxonomy
