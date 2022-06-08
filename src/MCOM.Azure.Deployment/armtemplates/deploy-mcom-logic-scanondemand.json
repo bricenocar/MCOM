@@ -9,7 +9,7 @@
             "defaultValue": "logic-mcom-scan-output",
             "type": "String"
         },
-        "workflows_logic_mcom_scan_output_name": {
+        "workflows_logic_mcom_scan_input_name": {
             "defaultValue": "logic-mcom-scan-input",
             "type": "String"
         },
@@ -27,7 +27,7 @@
     },
     "variables": {
         "connOffice365": "[concat(parameters('connections_office365'), '-', parameters('environment'))]",
-        "conSQL": "[concat(parameters('connections_sql'), '-', parameters('environment'))]",
+        "connSQL": "[concat(parameters('connections_sql'), '-', parameters('environment'))]",
         "logicappnameoutput": "[concat(parameters('workflows_logic_mcom_scan_output_name'), '-', parameters('environment'))]",
         "logicappnameinput": "[concat(parameters('workflows_logic_mcom_scan_input_name'), '-', parameters('environment'))]",
         "sqlservername":"[concat('sql-mcom-gov-', parameters('environment'), '.database.windows.net')]"
@@ -104,7 +104,7 @@
                                             }
                                         },
                                         "method": "patch",
-                                        "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/', @{encodeURIComponent(encodeURIComponent(items('For_each')?['id']))}]"
+                                        "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', variables('sqlservername'),'''))},@{encodeURIComponent(encodeURIComponent(''GovernanceDB''))}/tables/@{encodeURIComponent(encodeURIComponent(''[dbo].[MCOMScanRequest]''))}/items/@{encodeURIComponent(encodeURIComponent(items(''For_each'')?[''id'']))}')]"
                                     }
                                 }
                             },
@@ -125,7 +125,7 @@
                                     }
                                 },
                                 "method": "get",
-                                "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/']",
+                                "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', variables('sqlservername'),'''))},@{encodeURIComponent(encodeURIComponent(''GovernanceDB''))}/tables/@{encodeURIComponent(encodeURIComponent(''[dbo].[MCOMScanRequest]''))}/items')]",
                                 "queries": {
                                     "$filter": "status eq 'Requested'"
                                 }
@@ -155,7 +155,11 @@
                         }
                     }
                 }
-            }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/connections/', variables('connOffice365'))]",
+                "[concat('Microsoft.Web/connections/', variables('connSQL'))]"
+            ]
         },
         {
             "type": "Microsoft.Logic/workflows",
@@ -257,7 +261,7 @@
                                             }
                                         },
                                         "method": "patch",
-                                        "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/', @{encodeURIComponent(encodeURIComponent(items('For_each_received_item')?['id']))}]"
+                                        "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', variables('sqlservername'),'''))},@{encodeURIComponent(encodeURIComponent(''GovernanceDB''))}/tables/@{encodeURIComponent(encodeURIComponent(''[dbo].[MCOMScanRequest]''))}/items/@{encodeURIComponent(encodeURIComponent(items(''For_each_received_item'')?[''id'']))}')]"
                                     }
                                 }
                             },
@@ -278,7 +282,7 @@
                                     }
                                 },
                                 "method": "get",
-                                "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/']",
+                                "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', variables('sqlservername'),'''))},@{encodeURIComponent(encodeURIComponent(''GovernanceDB''))}/tables/@{encodeURIComponent(encodeURIComponent(''[dbo].[MCOMScanRequest]''))}/items')]",
                                 "queries": {
                                     "$filter": "Status eq 'Scanned'"
                                 }
@@ -294,7 +298,7 @@
                                     }
                                 },
                                 "method": "get",
-                                "path": "[concat('/v2/datasets/', @{encodeURIComponent(encodeURIComponent(variables('sqlservername'))), ',', @{encodeURIComponent(encodeURIComponent('GovernanceDB'))}, '/tables/', @{encodeURIComponent(encodeURIComponent('[dbo].[MCOMScanRequest]'))}, '/items/']",
+                                "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', variables('sqlservername'),'''))},@{encodeURIComponent(encodeURIComponent(''GovernanceDB''))}/tables/@{encodeURIComponent(encodeURIComponent(''[dbo].[MCOMScanRequest]''))}/items')]",
                                 "queries": {
                                     "$filter": "Status eq 'Requested'"
                                 }
@@ -324,13 +328,17 @@
                         }
                     }
                 }
-            }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/connections/', variables('connOffice365'))]",
+                "[concat('Microsoft.Web/connections/', variables('connSQL'))]"
+            ]
         },
         {
             "type": "Microsoft.Web/connections",
             "apiVersion": "2016-06-01",
             "name": "[variables('connOffice365')]",
-            "location": "[parameters('location')]",
+            "location": "norwayeast",
             "kind": "V1",
             "properties": {
                 "displayName": "Scan on demand service account",
@@ -340,7 +348,7 @@
                     }
                 ],
                 "api": {
-                    "name": "office365",
+                    "name": "[variables('connOffice365')]",
                     "displayName": "Office 365 Outlook",
                     "description": "Microsoft Office 365 is a cloud-based service that is designed to help meet your organization's needs for robust security, reliability, and user productivity.",
                     "iconUri": "[concat('https://connectoricons-prod.azureedge.net/releases/v1.0.1573/1.0.1573.2770/', 'office365', '/icon.png')]",
@@ -360,7 +368,7 @@
             "type": "Microsoft.Web/connections",
             "apiVersion": "2016-06-01",
             "name": "[variables('connSQL')]",
-            "location": "[parameters('location')]",
+            "location": "norwayeast",
             "kind": "V1",
             "properties": {
                 "displayName": "[variables('connSQL')]",
@@ -370,13 +378,17 @@
                     }
                 ],
                 "api": {
-                    "name": "sql",
+                    "name": "[variables('connSQL')]",
                     "displayName": "SQL Server",
                     "description": "Microsoft SQL Server is a relational database management system developed by Microsoft. Connect to SQL Server to manage data. You can perform various actions such as create, update, get, and delete on rows in a table.",
                     "iconUri": "[concat('https://connectoricons-prod.azureedge.net/non_zr_connectors/1.0.1575.2789/', 'sql', '/icon.png')]",
                     "brandColor": "#ba141a",
                     "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/norwayeast/managedApis/', 'sql')]",
                     "type": "Microsoft.Web/locations/managedApis"
+                },
+                "parameterValueSet": {
+                    "name": "oauthMI",
+                    "values": {}
                 },
                 "testLinks": [
                     {

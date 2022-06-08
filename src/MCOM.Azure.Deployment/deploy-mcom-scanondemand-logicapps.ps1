@@ -16,7 +16,7 @@ Write-Host "##[debug]Resource group: $RGName"
 
 # Login to Azure
 if($runLocally) {
-    #az login
+    az login
 }
 Write-Host "##[debug]Run locally: $runLocally"
 
@@ -75,9 +75,9 @@ Write-Host "##[group]Deployment of arm templates"
 # Deploy Logic apps
 Write-Host "##[command] Running deployment of Logic app template..."
 if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-logicapps" --template-uri $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment scanprovider_email=$recipientEmail | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-logicapps" --template-uri $logicappTemplateFile --parameters $logicappsParametersFile environment=$Environment scanprovider_email=$recipientEmail | ConvertFrom-Json
 } else {
-    $result = az deployment group create --name "$DeploymentName-logicapps" --template-file $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment scanprovider_email=$recipientEmail| ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-logicapps" --template-file $logicappTemplateFile --parameters $logicappsParametersFile environment=$Environment scanprovider_email=$recipientEmail| ConvertFrom-Json
 }
 
 # Evaluate result from deployment
