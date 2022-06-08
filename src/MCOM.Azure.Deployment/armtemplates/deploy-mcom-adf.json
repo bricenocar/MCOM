@@ -1595,7 +1595,7 @@
                                     },
                                     "userProperties": [],
                                     "typeProperties": {
-                                        "storedProcedureName": "[dbo].[update_scanproperties]",
+                                        "storedProcedureName": "[[dbo].[update_scanproperties]",
                                         "storedProcedureParameters": {
                                             "pProperties": {
                                                 "value": {
@@ -1910,7 +1910,7 @@
                                     },
                                     "userProperties": [],
                                     "typeProperties": {
-                                        "storedProcedureName": "[dbo].[upsert_scanexecution]",
+                                        "storedProcedureName": "[[dbo].[upsert_scanexecution]",
                                         "storedProcedureParameters": {
                                             "pFileName": {
                                                 "value": {
