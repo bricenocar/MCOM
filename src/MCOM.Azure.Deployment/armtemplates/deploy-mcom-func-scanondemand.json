@@ -77,7 +77,7 @@
       "type": "string",
       "defaultValue": "mcom",
       "metadata": {
-        "description": "Name for Azure queue"
+        "description": "Name for default mcom rg"
       }
     }
   },
