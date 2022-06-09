@@ -6,16 +6,19 @@
             "value": ""
         },
         "workflows_logic_mcom_scan_output_name": {
-            "value": null
+            "value": "logic-mcom-scan-output"
         },
-        "connections_office365_externalid": {
-            "value": null
+        "workflows_logic_mcom_scan_input_name": {
+            "value": "logic-mcom-scan-input"
         },
-        "connections_sql_externalid": {
-            "value": null
+        "connections_office365": {
+            "value": "con-mcomoffice365"
+        },
+        "connections_sql": {
+            "value": "con-mcomsql"
         },
         "scanprovider_email": {
-            "value": null
+            "value": ""
         }
     }
 }

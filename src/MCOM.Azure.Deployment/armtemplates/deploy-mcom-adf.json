@@ -1670,7 +1670,11 @@
                 ],
                 "annotations": [],
                 "lastPublishTime": "2022-05-31T08:50:59Z"
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/dataflows/ProcessScanRequest')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/Exchange Pipeline')]",
@@ -2112,7 +2116,15 @@
                 ],
                 "annotations": [],
                 "lastPublishTime": "2022-05-18T13:39:03Z"
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/datasets/scanexecution_files_dataset')]",
+                "[concat(variables('factoryId'), '/datasets/scanexecution_file_dataset')]",
+                "[concat(variables('factoryId'), '/datasets/scanexecution_output_file')]",
+                "[concat(variables('factoryId'), '/datasets/scanexecution_db_dataset')]",
+                "[concat(variables('factoryId'), '/linkedServices/MCOMGovernanceDB')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/ProcessDCFdata')]",
