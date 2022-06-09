@@ -72,6 +72,13 @@
       "metadata": {
         "description": "Name for Azure queue"
       }
+    },
+    "mcomRG": {
+      "type": "string",
+      "defaultValue": "mcom",
+      "metadata": {
+        "description": "Name for default mcom rg"
+      }
     }
   },
   "variables": {
@@ -81,7 +88,7 @@
     "hostingPlanName": "[concat(parameters('appServicePlanName'), '-scanondemand-', parameters('environment'))]",
     "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]"
   },
-  "resources": [   
+  "resources": [
     {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2020-06-01",
@@ -89,27 +96,14 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "Y1",
-        "tier": "Dynamic"
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
       },
       "properties": {
         "name": "[variables('hostingPlanName')]",
         "computeMode": "Dynamic"
-      }
-    }, 
-    // Application insights
-    {
-      "type": "microsoft.insights/components",
-      "apiVersion": "2020-02-02-preview",
-      "name": "[variables('applicationInsightsName')]",
-      "location": "[parameters('location')]",
-      "kind": "web",
-      "tags": {
-        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('applicationInsightsName')))]": "Resource"
-      },
-      "properties": {
-        "Application_Type": "web",
-        "ApplicationId": "[variables('applicationInsightsName')]",
-        "Request_Source": "rest"
       }
     },
     // Function App
@@ -123,8 +117,7 @@
         "type": "SystemAssigned"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-        "[resourceId('microsoft.insights/components', variables('applicationInsightsName'))]"
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
       ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
@@ -152,11 +145,11 @@
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').InstrumentationKey]"
+              "value": "[reference(resourceId(parameters('mcomRG'),'microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').InstrumentationKey]"
             },
             {
               "name": "APPINSIGHTS_CONNECTION_STRING",
-              "value": "[reference(resourceId('microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').ConnectionString]"
+              "value": "[reference(resourceId(parameters('mcomRG'),'microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').ConnectionString]"
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -168,7 +161,7 @@
             },
             {
               "name": "BlobStorageConnectionString",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('stagingareaStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName')), '2019-06-01').keys[0].value)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('stagingareaStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId(parameters('mcomRG'),'Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "QueueConnectionString",
@@ -200,7 +193,7 @@
             },
             {
               "name": "AppInsightsAppId",
-              "value": "[reference(resourceId('microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').AppId]"
+              "value": "[reference(resourceId(parameters('mcomRG'), 'microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').AppId]"
             },
             {
               "name": "SharePointUrl",

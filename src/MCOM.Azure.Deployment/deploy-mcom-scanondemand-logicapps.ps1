@@ -11,7 +11,8 @@ Param(
 Write-Host "##[group]Initializing variables and configurations"
 
 # Initialize resource group name based on environment
-$RGName = "$ResourceGroupName-$Environment"
+$RGName = "$ResourceGroupName-scan-$Environment"
+$mcomRGName = "$ResourceGroupName-$Environment"
 Write-Host "##[debug]Resource group: $RGName"
 
 # Login to Azure
