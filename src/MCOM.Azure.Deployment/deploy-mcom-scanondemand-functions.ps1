@@ -16,7 +16,7 @@ Write-Host "##[debug]Resource group: $RGName"
 
 # Login to Azure
 if($runLocally) {
-    #az login
+    az login
 }
 Write-Host "##[debug]Run locally: $runLocally"
 
