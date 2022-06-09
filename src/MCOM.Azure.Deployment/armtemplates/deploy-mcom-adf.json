@@ -2534,7 +2534,12 @@
                         "     )) ~> SaveToDB"
                     ]
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/datasets/scanrequest_metadata_dataset')]",
+                "[concat(variables('factoryId'), '/datasets/mcom_governance_scanrequests')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/MCOMIntegrationRuntime')]",
