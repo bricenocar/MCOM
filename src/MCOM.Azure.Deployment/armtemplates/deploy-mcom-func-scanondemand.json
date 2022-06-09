@@ -72,6 +72,13 @@
       "metadata": {
         "description": "Name for Azure queue"
       }
+    },
+    "mcomRG": {
+      "type": "string",
+      "defaultValue": "mcom",
+      "metadata": {
+        "description": "Name for Azure queue"
+      }
     }
   },
   "variables": {
@@ -79,7 +86,8 @@
     "stagingareaStorageAccountName": "[concat(parameters('storageAccountName'), 'stgarea', parameters('environment'))]",
     "functionAppName": "[concat(parameters('appName'), '-scanondemand-', parameters('environment'))]",
     "hostingPlanName": "[concat(parameters('appServicePlanName'), '-scanondemand-', parameters('environment'))]",
-    "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]"
+    "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]",
+    "mcomResourceGroup": "[concat(parameters('mcomRG'), '-', parameters('environment'))]"
   },
   "resources": [   
     {
@@ -168,7 +176,7 @@
             },
             {
               "name": "BlobStorageConnectionString",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('stagingareaStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName')), '2019-06-01').keys[0].value)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('stagingareaStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId(variables('mcomResourceGroup'),'Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "QueueConnectionString",
