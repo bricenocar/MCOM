@@ -127,7 +127,7 @@
                                 "method": "get",
                                 "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', variables('sqlservername'),'''))},@{encodeURIComponent(encodeURIComponent(''GovernanceDB''))}/tables/@{encodeURIComponent(encodeURIComponent(''[dbo].[MCOMScanRequest]''))}/items')]",
                                 "queries": {
-                                    "$filter": "status eq 'Requested'"
+                                    "$filter": "status eq 'RequestNotified'"
                                 }
                             }
                         }
@@ -214,6 +214,26 @@
                                         "method": "post",
                                         "path": "/v2/Mail"
                                     }
+                                },
+                                "Update_request_notified": {
+                                    "inputs": {
+                                        "body": {
+                                            "status": "RequestNotified"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['sql']['connectionId']"
+                                            }
+                                        },
+                                        "method": "patch",
+                                        "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', variables('sqlservername'),'''))},@{encodeURIComponent(encodeURIComponent(''GovernanceDB''))}/tables/@{encodeURIComponent(encodeURIComponent(''[dbo].[MCOMScanRequest]''))}/items/@{encodeURIComponent(encodeURIComponent(items(''For_each'')?[''id'']))}')]"
+                                    },
+                                    "runAfter": {
+                                        "Send_an_email_(V2)": [
+                                            "Succeeded"
+                                        ]
+                                    },
+                                    "type": "ApiConnection"
                                 }
                             },
                             "runAfter": {

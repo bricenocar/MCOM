@@ -152,28 +152,34 @@ GO
 
 
 /****** Users and roles ******/
-CREATE USER [function-mcom-scanondemand-inttest] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+CREATE USER [function-mcom-scanondemand-prod] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
 GO
 
-ALTER ROLE [db_datareader] ADD MEMBER [function-mcom-scanondemand-inttest]
+ALTER ROLE [db_datareader] ADD MEMBER [function-mcom-scanondemand-prod]
 GO
 
-CREATE USER [adf-mcom-inttest] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+CREATE USER [adf-mcom-prod] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
 GO
 
-ALTER ROLE [db_owner] ADD MEMBER [adf-mcom-inttest]
+ALTER ROLE [db_owner] ADD MEMBER [adf-mcom-prod]
 GO
 
-CREATE USER [logic-mcom-scan-output-inttest] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+CREATE USER [logic-mcom-scan-output-prod] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
 GO
 
-ALTER ROLE [db_datawriter] ADD MEMBER [logic-mcom-scan-output-inttest]
+ALTER ROLE [db_datawriter] ADD MEMBER [logic-mcom-scan-output-prod]
 GO
 
-CREATE USER [logic-mcom-scan-input-inttest] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+ALTER ROLE [db_datareader] ADD MEMBER [logic-mcom-scan-output-prod]
 GO
 
-ALTER ROLE [db_datawriter] ADD MEMBER [logic-mcom-scan-input-inttest]
+CREATE USER [logic-mcom-scan-input-prod] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+GO
+
+ALTER ROLE [db_datawriter] ADD MEMBER [logic-mcom-scan-input-prod]
+GO
+
+ALTER ROLE [db_datareader] ADD MEMBER [logic-mcom-scan-input-prod]
 GO
 
 
