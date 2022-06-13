@@ -69,12 +69,174 @@
                         "For_each": {
                             "foreach": "@body('Get_rows_(V2)')?['value']",
                             "actions": {
+                                "Parse_JSON": {
+                                    "inputs": {
+                                        "content": "@items('For_each')?['filemetadata']",
+                                        "schema": {
+                                            "properties": {
+                                                "AuthorLookupId": {
+                                                    "type": "string"
+                                                },
+                                                "BatchName": {
+                                                    "type": "string"
+                                                },
+                                                "ContentType": {
+                                                    "type": "string"
+                                                },
+                                                "Created": {
+                                                    "type": "string"
+                                                },
+                                                "DocIcon": {
+                                                    "type": "string"
+                                                },
+                                                "EIMBlock": {
+                                                    "type": "string"
+                                                },
+                                                "EIMBusinessArea": {
+                                                    "type": "string"
+                                                },
+                                                "EIMCounterparty": {
+                                                    "type": "string"
+                                                },
+                                                "EIMCountry": {
+                                                    "type": "string"
+                                                },
+                                                "EIMDiscipline": {
+                                                    "type": "string"
+                                                },
+                                                "EIMField": {
+                                                    "type": "string"
+                                                },
+                                                "EIMInformationAsset": {
+                                                    "type": "string"
+                                                },
+                                                "EIMLegalEntity": {
+                                                    "type": "string"
+                                                },
+                                                "EIMLicense": {
+                                                    "type": "string"
+                                                },
+                                                "EIMPlant": {
+                                                    "type": "string"
+                                                },
+                                                "EIMProcess": {
+                                                    "type": "string"
+                                                },
+                                                "EIMProcessArea": {
+                                                    "type": "string"
+                                                },
+                                                "EIMSecurityClassification": {
+                                                    "type": "string"
+                                                },
+                                                "EIMSource": {
+                                                    "type": "string"
+                                                },
+                                                "EIMStatus": {
+                                                    "type": "string"
+                                                },
+                                                "EIMWellbore": {
+                                                    "type": "string"
+                                                },
+                                                "Edit": {
+                                                    "type": "string"
+                                                },
+                                                "EditorLookupId": {
+                                                    "type": "string"
+                                                },
+                                                "FileLeafRef": {
+                                                    "type": "string"
+                                                },
+                                                "FilePath": {
+                                                    "type": "string"
+                                                },
+                                                "FileSizeDisplay": {
+                                                    "type": "string"
+                                                },
+                                                "FolderChildCount": {
+                                                    "type": "string"
+                                                },
+                                                "ItemChildCount": {
+                                                    "type": "string"
+                                                },
+                                                "LRMAlternateAuthor": {
+                                                    "type": "string"
+                                                },
+                                                "LRMArchiveStatus": {
+                                                    "type": "string"
+                                                },
+                                                "LRMArchivedDate": {
+                                                    "type": "string"
+                                                },
+                                                "LRMArea": {
+                                                    "type": "string"
+                                                },
+                                                "LRMAreaCodes": {
+                                                    "type": "string"
+                                                },
+                                                "LRMAuthorityCommunication": {
+                                                    "type": "string"
+                                                },
+                                                "LRMDocumentNumber": {
+                                                    "type": "string"
+                                                },
+                                                "LRMDocumentType": {
+                                                    "type": "string"
+                                                },
+                                                "LRMExternalReference": {
+                                                    "type": "string"
+                                                },
+                                                "LRMMediaType": {
+                                                    "type": "string"
+                                                },
+                                                "LRMOilDocMediaType": {
+                                                    "type": "string"
+                                                },
+                                                "LRMOilDocfullpath": {
+                                                    "type": "string"
+                                                },
+                                                "LRMOildocReference": {
+                                                    "type": "string"
+                                                },
+                                                "LRMOriginalSource": {
+                                                    "type": "string"
+                                                },
+                                                "LRMPhysicalLocation": {
+                                                    "type": "string"
+                                                },
+                                                "LRMStorageID": {
+                                                    "type": "string"
+                                                },
+                                                "LinkFilename": {
+                                                    "type": "string"
+                                                },
+                                                "LinkFilenameNoMenu": {
+                                                    "type": "string"
+                                                },
+                                                "Modified": {
+                                                    "type": "string"
+                                                },
+                                                "ParentLeafNameLookupId": {
+                                                    "type": "string"
+                                                },
+                                                "ParentVersionStringLookupId": {
+                                                    "type": "string"
+                                                },
+                                                "Title": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "runAfter": {},
+                                    "type": "ParseJson"
+                                },
                                 "Send_an_email_(V2)": {
                                     "runAfter": {},
                                     "type": "ApiConnection",
                                     "inputs": {
                                         "body": {
-                                            "Body": "<p>Hi Iron Mountain Vestby,<br>\n<br>\nEquinor request for scan of archived document.<br>\nOrder number: @{items('For_each')?['ordernumber']}<br>\n<br>\nPlease scan this document and upload to sftp site.<br>\n<br>\nStorage information:<br>\nPhysical Location: Iron Mountain Vestby<br>\nStorage ID: R-034302_VK01;R-034302_VK02;VCFH0A0100174;VCFH0A0199381<br>\n<br>\nDocument information<br>\nMedium: ---;---<br>\nTitle: @{items('For_each')?['documentname']}<br>\nAuthors: ---<br>\nCreation Date: 09/30/1988 11:00 PM<br>\nRegistration Date: 11/04/2000 8:42 PM<br>\nRecord Notes: comments : 110P | responsible : NORDSJØEN | action_finished : false | communication_type : Incoming to NH | keywords : OPERATION;WELL DATA;MUD;DRILL STRING;WELL HEAD | object_name : EAST FRIGG DEVELOPMENT DRILLING AND COMPLETION REPORT, WELL 25/2-B1 | subject : R-034302<br>\nDocument No: R-034302<br>\n<br>\nOur reference<br>\nOwner: Technology, Projects &amp; Drilling (TPD)<br>\nContianer: 0B0014888016796E:1988 10<br>\nRecord Number: OILDOC/D19/705461<br>\nUnique Identifier: @{items('For_each')?['ordernumber']}<br>\nRecord URL:<br>\n<br>\nBest Regards,<br>\nEquinor Corporate Archival Team<br>\n</p>",
+                                            "Body": "<p>Hi Iron Mountain Vestby,<br>\n<br>\nEquinor request for scan of archived document.<br>\nOrder number: @{items('For_each')?['ordernumber']}<br>\n<br>\nPlease scan this document and upload to sftp site.<br>\n<br>\nStorage information:<br>\nPhysical Location: @{body('Parse_JSON')?['LRMPhysicalLocation']}<br>\nStorage ID: @{body('Parse_JSON')?['LRMStorageID']}<br>\n<br>\nDocument information<br>\nMedia type: @{body('Parse_JSON')?['LRMMediaType']}<br>\nTitle: @{body('Parse_JSON')?['Title']}<br>\nAuthors: @{body('Parse_JSON')?['LRMAlternateAuthor']}<br>\nCreation Date: @{body('Parse_JSON')?['Created']}<br>\nRegistration Date: @{body('Parse_JSON')?['LRMArchivedDate']}<br>\nRecord Notes:<br>\nDocument No: @{body('Parse_JSON')?['LRMDocumentNumber']}<br>\n<br>\nOur reference<br>\nRequester: @{items('For_each')?['businessunit']}<br>\nOwner: @{body('Parse_JSON')?['EIMBusinessArea']}<br>\nContianer: @{body('Parse_JSON')?['LRMOilDocfullpath']}<br>\nRecord Number:<br>\nUnique Identifier: @{items('For_each')?['ordernumber']}<br>\nRecord URL: @{body('Parse_JSON')?['FilePath']}<br>\n<br>\nBest Regards,<br>\nEquinor Corporate Archival Team<br>\n</p>",
                                             "Subject": "Scan request: ",
                                             "To": "[parameters('scanprovider_email')]"
                                         },
