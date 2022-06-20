@@ -1635,9 +1635,9 @@
                                 "referenceName": "ProcessScanRequest",
                                 "type": "DataFlowReference"
                             },
-                            "compute": {
-                                "coreCount": 8,
-                                "computeType": "General"
+                            "integrationRuntime": {
+                                "referenceName": "ScanOnDemandIR",
+                                "type": "IntegrationRuntimeReference"
                             },
                             "traceLevel": "Fine"
                         }
@@ -1694,7 +1694,7 @@
                         },
                         "userProperties": [],
                         "typeProperties": {
-                            "storedProcedureName": "[[dbo].[update_scanproperties]",
+                            "storedProcedureName": "[dbo].[update_scanproperties]",
                             "storedProcedureParameters": {
                                 "pProperties": {
                                     "value": {
@@ -1724,11 +1724,12 @@
                     }
                 },
                 "annotations": [],
-                "lastPublishTime": "2022-06-16T08:35:59Z"
+                "lastPublishTime": "2022-06-20T19:57:17Z"
             },
             "dependsOn": [
                 "[variables('factoryId')]",
-                "[concat(variables('factoryId'), '/dataflows/ProcessScanRequestFile')]"
+                "[concat(variables('factoryId'), '/dataflows/ProcessScanRequestFile')]",
+                "[concat(variables('factoryId'), '/integrationRuntimes/ScanOnDemandIR')]"
             ]
         },
         {
@@ -2624,7 +2625,7 @@
                             "name": "SharePointFieldMapping"
                         }
                     ],
-                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tLibraryId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\trowUrlColumn: 'TempDataFile',\n\tdocumentForm: 'singleDocument') ~> gomfilesource\nSharePointFieldMapping derive(each(match(instr(name,'date')>0), $$ = toString(toDate(toString($$), 'yyyy-MM-dd'), 'MM/dd/yyyy HH:mm:ss')),\n\t\tdriveid = $LibraryId,\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tDestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tFilename = concat(LRMHPECMRecordID,'_',Filename),\n\t\tTitle = Filename,\n\t\tusecsom = false(),\n\t\tdocumentIdField = 'LRMHPECMRecordID') ~> DataTransformation\ngomfilesource derive(Filename = toString(byName('Filename')),\n\t\tSource = toString(byName('Source')),\n\t\tgom_document_id = toString(byName('gom_document_id')),\n\t\tgom_document_number = toString(byName('gom_document_number')),\n\t\tgom_document_name = toString(byName('gom_document_name')),\n\t\tgom_origunal_file_name = toString(byName('gom_origunal_file_name')),\n\t\tgom_issue_date = toString(byName('gom_issue_date')),\n\t\tgom_issued_by = toString(byName('gom_issued_by')),\n\t\tgom_commodity_type = toString(byName('gom_commodity_type')),\n\t\tgom_activity_start_date = toString(byName('gom_activity_start_date')),\n\t\tgom_activity_end_date = toString(byName('gom_activity_end_date')),\n\t\tdocumentId = toString(byName('documentId'))) ~> DynamicFetchData\nDynamicFetchData select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMMessageDirection = gom_document_id,\n\t\tLRMLoggerId = gom_document_name,\n\t\tLRMPartner = gom_origunal_file_name,\n\t\tLRMPublished = gom_issue_date,\n\t\tLRMHPECMRecordID = documentId\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SharePointFieldMapping\nDataTransformation sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> gomfiledestination"
+                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tLibraryId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\trowUrlColumn: 'TempDataFile',\n\tdocumentForm: 'singleDocument') ~> gomfilesource\nSharePointFieldMapping derive(each(match(instr(name,'date')>0), $$ = toString(toDate(toString($$), 'yyyy-MM-dd'), 'MM/dd/yyyy HH:mm:ss')),\n\t\tdriveid = $LibraryId,\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tDestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTitle = Filename,\n\t\tusecsom = false(),\n\t\tdocumentIdField = 'LRMHPECMRecordID') ~> DataTransformation\ngomfilesource derive(Filename = toString(byName('Filename')),\n\t\tSource = toString(byName('Source')),\n\t\tgom_document_id = toString(byName('gom_document_id')),\n\t\tgom_document_number = toString(byName('gom_document_number')),\n\t\tgom_document_name = toString(byName('gom_document_name')),\n\t\tgom_origunal_file_name = toString(byName('gom_origunal_file_name')),\n\t\tgom_issue_date = toString(byName('gom_issue_date')),\n\t\tgom_issued_by = toString(byName('gom_issued_by')),\n\t\tgom_commodity_type = toString(byName('gom_commodity_type')),\n\t\tgom_activity_start_date = toString(byName('gom_activity_start_date')),\n\t\tgom_activity_end_date = toString(byName('gom_activity_end_date')),\n\t\tdocumentId = toString(byName('documentId'))) ~> DynamicFetchData\nDynamicFetchData select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMMessageDirection = gom_document_id,\n\t\tLRMLoggerId = gom_document_name,\n\t\tLRMPartner = gom_origunal_file_name,\n\t\tLRMPublished = gom_issue_date,\n\t\tLRMHPECMRecordID = documentId\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SharePointFieldMapping\nDataTransformation sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> gomfiledestination"
                 }
             },
             "dependsOn": [
@@ -2997,6 +2998,25 @@
             }
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/ScanOnDemandIR')]",
+            "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "Managed",
+                "typeProperties": {
+                    "computeProperties": {
+                        "location": "AutoResolve",
+                        "dataFlowProperties": {
+                            "computeType": "General",
+                            "coreCount": 8,
+                            "timeToLive": 10,
+                            "cleanup": false
+                        }
+                    }
+                }
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/EdiBankIR')]",
             "type": "Microsoft.DataFactory/factories/integrationRuntimes",
             "apiVersion": "2018-06-01",
@@ -3056,12 +3076,16 @@
                 "typeProperties": {
                     "blobPathBeginsWith": "/scanrequests/blobs/metadata/",
                     "ignoreEmptyBlobs": true,
-                    "scope": "/subscriptions/ae80baed-802a-49ca-86c6-632c57065c15/resourceGroups/rg-prod/providers/Microsoft.Storage/storageAccounts/stmcomstgareaprod",
+                    "scope": "[parameters('triggerScope')]",
                     "events": [
                         "Microsoft.Storage.BlobCreated"
                     ]
                 }
-            }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/pipelines/ScanRequest Pipeline')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/DCF Blob trigger')]",
