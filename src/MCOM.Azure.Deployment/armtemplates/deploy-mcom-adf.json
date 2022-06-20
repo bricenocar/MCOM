@@ -728,6 +728,88 @@
             "type": "Microsoft.DataFactory/factories/datasets"
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/scanrequest_metadata_file')]",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "Filename": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": {
+                            "value": "@dataset().Filename",
+                            "type": "Expression"
+                        },
+                        "folderPath": "metadata",
+                        "container": "scanrequests"
+                    }
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "ItemId": {
+                            "type": "string"
+                        },
+                        "SiteId": {
+                            "type": "string"
+                        },
+                        "WebId": {
+                            "type": "string"
+                        },
+                        "ListId": {
+                            "type": "string"
+                        },
+                        "WBS": {
+                            "type": "string"
+                        },
+                        "RequestedBy": {
+                            "type": "string"
+                        },
+                        "RequestedDate": {
+                            "type": "string"
+                        },
+                        "DocumentName": {
+                            "type": "string"
+                        },
+                        "Vendor": {
+                            "type": "string"
+                        },
+                        "Comments": {
+                            "type": "string"
+                        },
+                        "OrderNumber": {
+                            "type": "string"
+                        },
+                        "Status": {
+                            "type": "string"
+                        },
+                        "IsPhysical": {
+                            "type": "boolean"
+                        },
+                        "BusinessArea": {
+                            "type": "string"
+                        },
+                        "Priority": {
+                            "type": "string"
+                        },
+                        "CompanyCode": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "type": "Microsoft.DataFactory/factories/datasets"
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/DCF Pipeline')]",
             "type": "Microsoft.DataFactory/factories/pipelines",
             "apiVersion": "2018-06-01",
@@ -1493,6 +1575,169 @@
             "properties": {
                 "activities": [
                     {
+                        "name": "Get request id",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "dataset": {
+                                "referenceName": "scanrequest_metadata_file",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "Filename": {
+                                        "value": "@pipeline().parameters.MetadataFileName",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "Save in DB",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [
+                            {
+                                "activity": "Get request id",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "1.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "ProcessScanRequest",
+                                "type": "DataFlowReference"
+                            },
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    },
+                    {
+                        "name": "Get file properties",
+                        "type": "AzureFunctionActivity",
+                        "dependsOn": [
+                            {
+                                "activity": "Save in DB",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "functionName": "GetFileProperties",
+                            "method": "POST",
+                            "body": {
+                                "value": "@activity('Get request id').output.value[0]",
+                                "type": "Expression"
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "MCOMFunctions",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "UpdateItemFields",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "Get file properties",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "[dbo].[update_scanproperties]",
+                            "storedProcedureParameters": {
+                                "pProperties": {
+                                    "value": {
+                                        "value": "@activity('Get file properties').output.Response",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "pRequestId": {
+                                    "value": {
+                                        "value": "@activity('Get request id').output.value.OrderNumber",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "MCOMGovernanceDB",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "parameters": {
+                    "MetadataFileName": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2022-06-16T08:35:59Z"
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/dataflows/ProcessScanRequestFile')]"
+            ]
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/ScanRequest Pipeline scheduled')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
                         "name": "Get request ids",
                         "type": "Lookup",
                         "dependsOn": [
@@ -1595,7 +1840,7 @@
                                     },
                                     "userProperties": [],
                                     "typeProperties": {
-                                        "storedProcedureName": "[[dbo].[update_scanproperties]",
+                                        "storedProcedureName": "[dbo].[update_scanproperties]",
                                         "storedProcedureParameters": {
                                             "pProperties": {
                                                 "value": {
@@ -1669,8 +1914,8 @@
                     }
                 ],
                 "annotations": [],
-                "lastPublishTime": "2022-05-31T08:50:59Z"
-            },
+                "lastPublishTime": "2022-06-09T22:04:36Z"
+            },            
             "dependsOn": [
                 "[variables('factoryId')]",
                 "[concat(variables('factoryId'), '/dataflows/ProcessScanRequest')]"
@@ -2550,6 +2795,128 @@
             "dependsOn": [
                 "[variables('factoryId')]",
                 "[concat(variables('factoryId'), '/datasets/scanrequest_metadata_dataset')]",
+                "[concat(variables('factoryId'), '/datasets/mcom_governance_scanrequests')]"
+            ]
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/ProcessScanRequestFile')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "scanrequest_metadata_file",
+                                "type": "DatasetReference"
+                            },
+                            "name": "scandatasource"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "mcom_governance_scanrequests",
+                                "type": "DatasetReference"
+                            },
+                            "name": "SaveToDB"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "AlterRow"
+                        },
+                        {
+                            "name": "TransformationColumns"
+                        }
+                    ],
+                    "scriptLines": [
+                        "parameters{",
+                        "     Filename as string",
+                        "}",
+                        "source(output(",
+                        "          ItemId as string,",
+                        "          SiteId as string,",
+                        "          WebId as string,",
+                        "          ListId as string,",
+                        "          WBS as string,",
+                        "          RequestedBy as string,",
+                        "          RequestedDate as string,",
+                        "          DocumentName as string,",
+                        "          Vendor as string,",
+                        "          Comments as string,",
+                        "          OrderNumber as string,",
+                        "          Status as string,",
+                        "          IsPhysical as boolean,",
+                        "          BusinessArea as string,",
+                        "          Priority as string,",
+                        "          CompanyCode as string",
+                        "     ),",
+                        "     allowSchemaDrift: false,",
+                        "     validateSchema: false,",
+                        "     ignoreNoFilesFound: true,",
+                        "     moveFiles: ['/metadata','metadataprocessed'],",
+                        "     documentForm: 'singleDocument') ~> scandatasource",
+                        "TransformationColumns alterRow(upsertIf(true())) ~> AlterRow",
+                        "scandatasource derive(recordId = OrderNumber,",
+                        "          requestedDateTransformed = toDate(RequestedDate)) ~> TransformationColumns",
+                        "AlterRow sink(allowSchemaDrift: false,",
+                        "     validateSchema: false,",
+                        "     input(",
+                        "          id as string,",
+                        "          requester as string,",
+                        "          webid as string,",
+                        "          listid as string,",
+                        "          siteid as string,",
+                        "          requestdate as timestamp,",
+                        "          wbs as string,",
+                        "          businessunit as string,",
+                        "          itemid as string,",
+                        "          documentname as string,",
+                        "          vendor as string,",
+                        "          comments as string,",
+                        "          ordernumber as string,",
+                        "          status as string,",
+                        "          isphysical as boolean,",
+                        "          filemetadata as string,",
+                        "          priority as string,",
+                        "          companycode as string",
+                        "     ),",
+                        "     deletable:false,",
+                        "     insertable:true,",
+                        "     updateable:false,",
+                        "     upsertable:true,",
+                        "     keys:['id'],",
+                        "     format: 'table',",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true,",
+                        "     errorHandlingOption: 'stopOnFirstError',",
+                        "     mapColumn(",
+                        "          id = recordId,",
+                        "          requester = RequestedBy,",
+                        "          webid = WebId,",
+                        "          listid = ListId,",
+                        "          siteid = SiteId,",
+                        "          wbs = WBS,",
+                        "          businessunit = BusinessArea,",
+                        "          itemid = ItemId,",
+                        "          documentname = DocumentName,",
+                        "          vendor = Vendor,",
+                        "          comments = Comments,",
+                        "          ordernumber = OrderNumber,",
+                        "          status = Status,",
+                        "          isphysical = IsPhysical,",
+                        "          requestdate = requestedDateTransformed,",
+                        "          priority = Priority,",
+                        "          companycode = CompanyCode",
+                        "     )) ~> SaveToDB"
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/datasets/scanrequest_metadata_file')]",
                 "[concat(variables('factoryId'), '/datasets/mcom_governance_scanrequests')]"
             ]
         },
