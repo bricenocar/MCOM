@@ -156,7 +156,7 @@
                 "annotations": [],
                 "type": "AzureSqlMI",
                 "typeProperties": {
-                    "connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sql-mcom-gov-inttest.database.windows.net;Initial Catalog=GovernanceDB"
+                    "connectionString": "[concat('Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=sql-mcom-gov-', parameters('environment'), '.database.windows.net;Initial Catalog=GovernanceDB')]"
                 }
             }
         },
@@ -1705,7 +1705,7 @@
                                 },
                                 "pRequestId": {
                                     "value": {
-                                        "value": "@activity('Get request id').output.value.OrderNumber",
+                                        "value": "@activity('Get request id').output.value[0].OrderNumber",
                                         "type": "Expression"
                                     },
                                     "type": "String"
@@ -3030,6 +3030,35 @@
             }
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/ScanRequestBlobTrigger')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "ScanRequest Pipeline",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {
+                            "MetadataFileName": "@triggerBody().fileName"
+                        }
+                    }
+                ],
+                "type": "BlobEventsTrigger",
+                "typeProperties": {
+                    "blobPathBeginsWith": "/scanrequests/blobs/metadata/",
+                    "ignoreEmptyBlobs": true,
+                    "scope": "/subscriptions/ae80baed-802a-49ca-86c6-632c57065c15/resourceGroups/rg-prod/providers/Microsoft.Storage/storageAccounts/stmcomstgareaprod",
+                    "events": [
+                        "Microsoft.Storage.BlobCreated"
+                    ]
+                }
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/DCF Blob trigger')]",
             "type": "Microsoft.DataFactory/factories/triggers",
             "apiVersion": "2018-06-01",
@@ -3164,7 +3193,7 @@
             "apiVersion": "2018-06-01",
             "properties": {
                 "annotations": [],
-                "runtimeState": "Stopped",
+                "runtimeState": "Started",
                 "pipeline": {
                     "pipelineReference": {
                         "referenceName": "GoM Pipeline",
@@ -3198,7 +3227,7 @@
             "apiVersion": "2018-06-01",
             "properties": {
                 "annotations": [],
-                "runtimeState": "Started",
+                "runtimeState": "Stopped",
                 "pipelines": [
                     {
                         "pipelineReference": {
