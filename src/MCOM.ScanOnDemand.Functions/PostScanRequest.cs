@@ -68,6 +68,7 @@ namespace MCOM.ScanOnDemand.Functions
                     // Merge Dictionaries                  
                     data.OrderNumber = orderNumber;
                     data.Status = "Requested";
+                    data.RequestedDate = DateTime.UtcNow;
 
                     // Convert to json string
                     var jsonMetadata = JsonConvert.SerializeObject(data);
