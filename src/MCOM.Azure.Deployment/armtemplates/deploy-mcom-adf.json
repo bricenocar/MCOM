@@ -1635,9 +1635,9 @@
                                 "referenceName": "ProcessScanRequest",
                                 "type": "DataFlowReference"
                             },
-                            "compute": {
-                                "coreCount": 8,
-                                "computeType": "General"
+                            "integrationRuntime": {
+                                "referenceName": "ScanOnDemandIR",
+                                "type": "IntegrationRuntimeReference"
                             },
                             "traceLevel": "Fine"
                         }
@@ -1694,7 +1694,7 @@
                         },
                         "userProperties": [],
                         "typeProperties": {
-                            "storedProcedureName": "[[dbo].[update_scanproperties]",
+                            "storedProcedureName": "[dbo].[update_scanproperties]",
                             "storedProcedureParameters": {
                                 "pProperties": {
                                     "value": {
@@ -1724,11 +1724,12 @@
                     }
                 },
                 "annotations": [],
-                "lastPublishTime": "2022-06-16T08:35:59Z"
+                "lastPublishTime": "2022-06-20T19:57:17Z"
             },
             "dependsOn": [
                 "[variables('factoryId')]",
-                "[concat(variables('factoryId'), '/dataflows/ProcessScanRequestFile')]"
+                "[concat(variables('factoryId'), '/dataflows/ProcessScanRequestFile')]",
+                "[concat(variables('factoryId'), '/integrationRuntimes/ScanOnDemandIR')]"
             ]
         },
         {
@@ -2985,6 +2986,25 @@
                             "computeType": "MemoryOptimized",
                             "coreCount": 16,
                             "timeToLive": 30,
+                            "cleanup": false
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/ScanOnDemandIR')]",
+            "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "Managed",
+                "typeProperties": {
+                    "computeProperties": {
+                        "location": "AutoResolve",
+                        "dataFlowProperties": {
+                            "computeType": "General",
+                            "coreCount": 8,
+                            "timeToLive": 10,
                             "cleanup": false
                         }
                     }
