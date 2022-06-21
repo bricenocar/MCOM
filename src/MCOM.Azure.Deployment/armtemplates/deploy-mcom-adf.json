@@ -1694,7 +1694,7 @@
                         },
                         "userProperties": [],
                         "typeProperties": {
-                            "storedProcedureName": "[dbo].[update_scanproperties]",
+                            "storedProcedureName": "[[dbo].[update_scanproperties]",
                             "storedProcedureParameters": {
                                 "pProperties": {
                                     "value": {
