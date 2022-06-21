@@ -2791,7 +2791,7 @@
                         "          webid = WebId,",
                         "          listid = ListId,",
                         "          siteid = SiteId,",
-                        "          requestdate = RequestedDate,",
+                        "          requestdate = requestedDateTransformed,",
                         "          wbs = WBS,",
                         "          companycode = CompanyCode,",
                         "          businessunit = BusinessArea,",
