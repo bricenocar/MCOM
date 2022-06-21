@@ -581,6 +581,10 @@
                         "type": "nvarchar"
                     },
                     {
+                        "name": "creator",
+                        "type": "nvarchar"
+                    },
+                    {
                         "name": "webid",
                         "type": "nvarchar"
                     },
@@ -603,12 +607,17 @@
                         "type": "nvarchar"
                     },
                     {
+                        "name": "companycode",
+                        "type": "nvarchar"
+                    },
+                    {
                         "name": "businessunit",
                         "type": "nvarchar"
                     },
                     {
                         "name": "itemid",
-                        "type": "nvarchar"
+                        "type": "int",
+                        "precision": 10
                     },
                     {
                         "name": "documentname",
@@ -640,10 +649,6 @@
                     },
                     {
                         "name": "priority",
-                        "type": "nvarchar"
-                    },
-                    {
-                        "name": "companycode",
                         "type": "nvarchar"
                     }
                 ],
@@ -690,6 +695,9 @@
                             "type": "string"
                         },
                         "RequestedBy": {
+                            "type": "string"
+                        },
+                        "CreatedBy": {
                             "type": "string"
                         },
                         "RequestedDate": {
@@ -772,6 +780,9 @@
                             "type": "string"
                         },
                         "RequestedBy": {
+                            "type": "string"
+                        },
+                        "CreatedBy": {
                             "type": "string"
                         },
                         "RequestedDate": {
@@ -2721,6 +2732,7 @@
                         "          ListId as string,",
                         "          WBS as string,",
                         "          RequestedBy as string,",
+                        "          CreatedBy as string,",
                         "          RequestedDate as string,",
                         "          DocumentName as string,",
                         "          Vendor as string,",
@@ -2745,13 +2757,15 @@
                         "     input(",
                         "          id as string,",
                         "          requester as string,",
+                        "          creator as string,",
                         "          webid as string,",
                         "          listid as string,",
                         "          siteid as string,",
                         "          requestdate as timestamp,",
                         "          wbs as string,",
+                        "          companycode as string,",
                         "          businessunit as string,",
-                        "          itemid as string,",
+                        "          itemid as integer,",
                         "          documentname as string,",
                         "          vendor as string,",
                         "          comments as string,",
@@ -2759,8 +2773,7 @@
                         "          status as string,",
                         "          isphysical as boolean,",
                         "          filemetadata as string,",
-                        "          priority as string,",
-                        "          companycode as string",
+                        "          priority as string",
                         "     ),",
                         "     deletable:false,",
                         "     insertable:true,",
@@ -2774,10 +2787,13 @@
                         "     mapColumn(",
                         "          id = recordId,",
                         "          requester = RequestedBy,",
+                        "          creator = CreatedBy,",
                         "          webid = WebId,",
                         "          listid = ListId,",
                         "          siteid = SiteId,",
+                        "          requestdate = RequestedDate,",
                         "          wbs = WBS,",
+                        "          companycode = CompanyCode,",
                         "          businessunit = BusinessArea,",
                         "          itemid = ItemId,",
                         "          documentname = DocumentName,",
@@ -2786,9 +2802,7 @@
                         "          ordernumber = OrderNumber,",
                         "          status = Status,",
                         "          isphysical = IsPhysical,",
-                        "          requestdate = requestedDateTransformed,",
-                        "          priority = Priority,",
-                        "          companycode = CompanyCode",
+                        "          priority = Priority",
                         "     )) ~> SaveToDB"
                     ]
                 }
@@ -2838,6 +2852,7 @@
                         "          ListId as string,",
                         "          WBS as string,",
                         "          RequestedBy as string,",
+                        "          CreatedBy as string,",
                         "          RequestedDate as string,",
                         "          DocumentName as string,",
                         "          Vendor as string,",
@@ -2862,13 +2877,15 @@
                         "     input(",
                         "          id as string,",
                         "          requester as string,",
+                        "          creator as string,",
                         "          webid as string,",
                         "          listid as string,",
                         "          siteid as string,",
                         "          requestdate as timestamp,",
                         "          wbs as string,",
+                        "          companycode as string,",
                         "          businessunit as string,",
-                        "          itemid as string,",
+                        "          itemid as integer,",
                         "          documentname as string,",
                         "          vendor as string,",
                         "          comments as string,",
@@ -2876,8 +2893,7 @@
                         "          status as string,",
                         "          isphysical as boolean,",
                         "          filemetadata as string,",
-                        "          priority as string,",
-                        "          companycode as string",
+                        "          priority as string",
                         "     ),",
                         "     deletable:false,",
                         "     insertable:true,",
@@ -2905,7 +2921,8 @@
                         "          isphysical = IsPhysical,",
                         "          requestdate = requestedDateTransformed,",
                         "          priority = Priority,",
-                        "          companycode = CompanyCode",
+                        "          companycode = CompanyCode,",
+                        "          creator = CreatedBy",
                         "     )) ~> SaveToDB"
                     ]
                 }
