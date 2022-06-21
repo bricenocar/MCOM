@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MCOM.Models.EntityFramework.Governance;
 
-namespace MCOM.Data.DBContexts
+namespace MCOM.Data
 {
     public partial class GovernanceDBContext : DbContext
     {
@@ -26,17 +26,41 @@ namespace MCOM.Data.DBContexts
 
                 entity.ToTable("MCOMScanExecution");
 
+                entity.Property(e => e.Author)
+                    .HasMaxLength(255)
+                    .HasColumnName("author");
+
                 entity.Property(e => e.Datescanned)
                     .HasColumnType("datetime")
                     .HasColumnName("datescanned");
+
+                entity.Property(e => e.Documentdate)
+                    .HasMaxLength(255)
+                    .HasColumnName("documentdate");
+
+                entity.Property(e => e.Field)
+                    .HasMaxLength(255)
+                    .HasColumnName("field");
 
                 entity.Property(e => e.Filename)
                     .HasMaxLength(255)
                     .HasColumnName("filename");
 
+                entity.Property(e => e.Installation)
+                    .HasMaxLength(255)
+                    .HasColumnName("installation");
+
+                entity.Property(e => e.License)
+                    .HasMaxLength(255)
+                    .HasColumnName("license");
+
                 entity.Property(e => e.RequestId).HasColumnName("requestId");
 
                 entity.Property(e => e.Size).HasColumnName("size");
+
+                entity.Property(e => e.Well)
+                    .HasMaxLength(255)
+                    .HasColumnName("well");
 
                 entity.HasOne(d => d.Request)
                     .WithMany()
@@ -58,15 +82,21 @@ namespace MCOM.Data.DBContexts
 
                 entity.Property(e => e.Comments).HasColumnName("comments");
 
+                entity.Property(e => e.Companycode)
+                    .HasMaxLength(255)
+                    .HasColumnName("companycode");
+
+                entity.Property(e => e.Creator)
+                    .HasMaxLength(255)
+                    .HasColumnName("creator");
+
                 entity.Property(e => e.Documentname).HasColumnName("documentname");
 
                 entity.Property(e => e.Filemetadata).HasColumnName("filemetadata");
 
                 entity.Property(e => e.Isphysical).HasColumnName("isphysical");
 
-                entity.Property(e => e.Itemid)
-                    .HasMaxLength(255)
-                    .HasColumnName("itemid");
+                entity.Property(e => e.Itemid).HasColumnName("itemid");
 
                 entity.Property(e => e.Listid)
                     .HasMaxLength(255)
@@ -75,6 +105,10 @@ namespace MCOM.Data.DBContexts
                 entity.Property(e => e.Ordernumber)
                     .HasMaxLength(50)
                     .HasColumnName("ordernumber");
+
+                entity.Property(e => e.Priority)
+                    .HasMaxLength(255)
+                    .HasColumnName("priority");
 
                 entity.Property(e => e.Requestdate)
                     .HasColumnType("datetime")

@@ -18,7 +18,7 @@ namespace MCOM.Models.EntityFramework.Governance
         public DateTime? Requestdate { get; set; }
         public string? Wbs { get; set; }
         public string? Businessunit { get; set; }
-        public string? Itemid { get; set; }
+        public int? Itemid { get; set; }
         public string? Documentname { get; set; }
         public string? Vendor { get; set; }
         public string? Comments { get; set; }
@@ -26,6 +26,9 @@ namespace MCOM.Models.EntityFramework.Governance
         public string? Status { get; set; }
         public bool? Isphysical { get; set; }
         public string? Filemetadata { get; set; }
+        public string? Priority { get; set; }
+        public string? Companycode { get; set; }
+        public string? Creator { get; set; }
 
         public virtual ICollection<McomscanRequestMessage> McomscanRequestMessages { get; set; }
     }
