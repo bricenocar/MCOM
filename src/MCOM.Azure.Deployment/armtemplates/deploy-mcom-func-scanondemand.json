@@ -209,7 +209,7 @@
             },
             {
               "name": "GOVERNANCEDB_CONNECTIONSTRING",
-              "value": "Server=sql-mcom-gov-inttest.database.windows.net; Authentication=Active Directory Managed Identity; Database=GovernanceDB;"
+              "value": "[concat('Server=sql-mcom-gov-', parameters('environment'), '.database.windows.net; Authentication=Active Directory Managed Identity; Database=GovernanceDB;')]"
             }
           ]
         }
