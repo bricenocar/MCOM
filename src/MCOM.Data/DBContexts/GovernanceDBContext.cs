@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MCOM.Models.EntityFramework.Governance;
 
-namespace MCOM.Data
+namespace MCOM.Data.DBContexts
 {
     public partial class GovernanceDBContext : DbContext
     {
