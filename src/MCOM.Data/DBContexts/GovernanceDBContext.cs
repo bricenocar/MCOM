@@ -90,6 +90,10 @@ namespace MCOM.Data.DBContexts
                     .HasMaxLength(255)
                     .HasColumnName("creator");
 
+                entity.Property(e => e.Creatorname)
+                    .HasMaxLength(255)
+                    .HasColumnName("creatorname");
+
                 entity.Property(e => e.Documentname).HasColumnName("documentname");
 
                 entity.Property(e => e.Filemetadata).HasColumnName("filemetadata");
@@ -117,6 +121,10 @@ namespace MCOM.Data.DBContexts
                 entity.Property(e => e.Requester)
                     .HasMaxLength(150)
                     .HasColumnName("requester");
+
+                entity.Property(e => e.Requestername)
+                    .HasMaxLength(255)
+                    .HasColumnName("requestername");
 
                 entity.Property(e => e.Siteid)
                     .HasMaxLength(255)

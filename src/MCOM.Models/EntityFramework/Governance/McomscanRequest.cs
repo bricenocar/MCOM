@@ -29,6 +29,8 @@ namespace MCOM.Models.EntityFramework.Governance
         public string? Priority { get; set; }
         public string? Companycode { get; set; }
         public string? Creator { get; set; }
+        public string? Requestername { get; set; }
+        public string? Creatorname { get; set; }
 
         public virtual ICollection<McomscanRequestMessage> McomscanRequestMessages { get; set; }
     }
