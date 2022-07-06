@@ -9,6 +9,8 @@ CREATE TABLE [dbo].[MCOMScanRequest](
 	[id] [uniqueidentifier] NOT NULL,
 	[requester] [nvarchar](150) NULL,
 	[creator] [nvarchar](255) NULL,
+	[requestername] [nvarchar](255) NULL,
+	[creatorname] [nvarchar](255) NULL,
 	[webid] [nvarchar](255) NULL,
 	[listid] [nvarchar](255) NULL,
 	[siteid] [nvarchar](255) NULL,

@@ -10,7 +10,9 @@ namespace MCOM.Models.ScanOnDemand
         public string ListId { get; set; }
         public string WBS { get; set; }
         public string RequestedBy { get; set; }
+        public string RequestedByName { get; set; }
         public string CreatedBy { get; set; }
+        public string CreatedByName { get; set; }
         public DateTime RequestedDate { get; set; }
         public string DocumentName { get; set; }
         public string Vendor { get; set; }

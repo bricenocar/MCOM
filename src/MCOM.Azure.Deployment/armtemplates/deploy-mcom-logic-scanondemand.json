@@ -363,8 +363,49 @@
                         "For_each": {
                             "foreach": "@body('Get_Requested_Items')?['value']",
                             "actions": {
-                                "Send_an_email_(V2)": {
+                                "Condition": {
+                                    "actions": {},
+                                    "else": {
+                                        "actions": {
+                                            "Send_an_email_to_creator": {
+                                                "inputs": {
+                                                    "body": {
+                                                        "Body": "<p><span style=\"font-size: 18px\">Equinor</span><br>\n<br>\n<span style=\"font-size: 24px\">Your request with ID: </span><span style=\"font-size: 24px\">@{items('For_each')?['ordernumber']}</span><span style=\"font-size: 24px\"> has been successfully registered</span><br>\n<span style=\"font-size: 18px\">Request date: </span><span style=\"font-size: 18px\">@{items('For_each')?['requestdate']}</span><span style=\"font-size: 18px\"><br>\nDocument name: </span><span style=\"font-size: 18px\">@{items('For_each')?['documentname']}</span><span style=\"font-size: 18px\"><br>\nWBS: </span><span style=\"font-size: 18px\">@{items('For_each')?['wbs']}</span><span style=\"font-size: 18px\"><br>\nComments: </span><span style=\"font-size: 18px\">@{items('For_each')?['comments']}</span></p>",
+                                                        "Subject": "Scan on demand: your request for scan of file has been successfully registered",
+                                                        "To": "@items('For_each')?['creator']"
+                                                    },
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['office365']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "post",
+                                                    "path": "/v2/Mail"
+                                                },
+                                                "runAfter": {},
+                                                "type": "ApiConnection"
+                                            }
+                                        }
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "equals": [
+                                                    "@items('For_each')?['requester']",
+                                                    "@items('For_each')?['creator']"
+                                                ]
+                                            }
+                                        ]
+                                    },
                                     "runAfter": {},
+                                    "type": "If"
+                                },
+                                "Send_email_to_requester": {
+                                    "runAfter": {
+                                        "Condition": [
+                                            "Succeeded"
+                                        ]
+                                    },
                                     "type": "ApiConnection",
                                     "inputs": {
                                         "body": {
@@ -395,7 +436,7 @@
                                         "path": "[concat('/v2/datasets/@{encodeURIComponent(encodeURIComponent(''', variables('sqlservername'),'''))},@{encodeURIComponent(encodeURIComponent(''GovernanceDB''))}/tables/@{encodeURIComponent(encodeURIComponent(''[dbo].[MCOMScanRequest]''))}/items/@{encodeURIComponent(encodeURIComponent(items(''For_each'')?[''id'']))}')]"
                                     },
                                     "runAfter": {
-                                        "Send_an_email_(V2)": [
+                                        "Send_email_to_requester": [
                                             "Succeeded"
                                         ]
                                     },
