@@ -8,6 +8,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using MCOM.Extensions;
 using MCOM.Models;
 using MCOM.Models.ScanOnDemand;
 using MCOM.Services;
@@ -68,7 +69,7 @@ namespace MCOM.ScanOnDemand.Functions
                     // Merge Dictionaries                  
                     data.OrderNumber = orderNumber;
                     data.Status = "Requested";
-                    data.RequestedDate = DateTime.Now;
+                    data.RequestedDate = DateTime.UtcNow.TryParseToCetTime();
 
                     // Convert to json string
                     var jsonMetadata = JsonConvert.SerializeObject(data);
