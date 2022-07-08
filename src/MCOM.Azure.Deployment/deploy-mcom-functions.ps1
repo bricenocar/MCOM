@@ -58,10 +58,11 @@ $DeploymentName = "mcom-$Environment-$today"
 $functionAppName = "function-mcom-$Environment"
 if ($Environment -eq "prod") {
     $SharePointUrl = "https://statoilsrm.sharepoint.com/"
+    $orderNumberField = "LRMOrderNumber"
 } else {
     $SharePointUrl = "https://statoilintegrationtest.sharepoint.com/"
+    $orderNumberField = "OrderNumber"
 }
-
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
 
@@ -94,9 +95,9 @@ if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded
 # Deploy the function app
 Write-Host "##[command] Running deployment of function app template..."
 if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-func" --template-uri $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-func" --template-uri $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl OrderNumberField=$orderNumberField | ConvertFrom-Json
 } else {
-    $result = az deployment group create --name "$DeploymentName-func" --template-file $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-func" --template-file $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl OrderNumberField=$orderNumberField | ConvertFrom-Json
 }
 
 # Evaluate result from deployment

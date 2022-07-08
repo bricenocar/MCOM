@@ -66,6 +66,12 @@
         "description": "Url to the SharePoint site where the function will have permissions to access"
       }
     },
+    "OrderNumberField": {
+      "type": "string",
+      "metadata": {
+        "description": "Order number field to be used to find files by scan request order"
+      }
+    },
     "queueName": {
       "type": "string",
       "defaultValue": "feedbackqueue",
@@ -207,6 +213,10 @@
             {
               "name": "SharePointUrl",
               "value": "[parameters('SharePointUrl')]"
+            },
+            {
+              "name": "OrderNumberField",
+              "value": "[parameters('OrderNumberField')]"
             },
             {
               "name": "QueuePoisonName",
