@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using Microsoft.SharePoint.Client;
@@ -15,6 +16,7 @@ namespace MCOM.Services
         ListItemCollection GetListItems(ClientContext clientContext, List list, CamlQuery query);
         ListItem GetListItemByUniqueId(ClientContext clientContext, List list, Guid uniqueId);
         ResultTable SearchItems(ClientContext clientContext, string queryText);
+        ResultTable SearchItems(ClientContext clientContext, string queryText, int maxQuantity);
         List<ListItem> GetListAsGenericList(ListItemCollection listItemCollection);
         TaxonomySession GetTaxonomySession(ClientContext clientContext);
         TermStore GetDefaultSiteCollectionTermStore(TaxonomySession taxonomySession);
@@ -88,6 +90,29 @@ namespace MCOM.Services
             keywordQuery.SelectProperties.Add("ListID");
             keywordQuery.SelectProperties.Add("UniqueID");
             keywordQuery.TrimDuplicates = false;
+
+            var searchExecutor = new SearchExecutor(clientContext);
+            var results = searchExecutor.ExecuteQuery(keywordQuery);
+
+            clientContext.ExecuteQuery();
+
+            var resultTable = results.Value.FirstOrDefault();
+            return resultTable;
+        }
+
+        public virtual ResultTable SearchItems(ClientContext clientContext, string queryText, int maxQuantity)
+        {
+            var keywordQuery = new KeywordQuery(clientContext)
+            {
+                QueryText = queryText
+            };
+
+            keywordQuery.SelectProperties.Add("Title");
+            keywordQuery.SelectProperties.Add("SPSiteURL");
+            keywordQuery.SelectProperties.Add("ListID");
+            keywordQuery.SelectProperties.Add("UniqueID");
+            keywordQuery.TrimDuplicates = false;
+            keywordQuery.RowLimit = maxQuantity;
 
             var searchExecutor = new SearchExecutor(clientContext);
             var results = searchExecutor.ExecuteQuery(keywordQuery);

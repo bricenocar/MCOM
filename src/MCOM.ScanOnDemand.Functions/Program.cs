@@ -13,13 +13,16 @@ namespace MCOM.ScanOnDemand.Functions
         {
             var host = new HostBuilder()
                 .ConfigureFunctionsWorkerDefaults()
-                .ConfigureServices((context, services) =>
+                .ConfigureServices((context, s) =>
                 {
                     // Adding services to DI               
-                    services.AddScoped<IBlobService, BlobService>();
+                    s.AddScoped<IBlobService, BlobService>();
+                    s.AddScoped<IGraphService, GraphService>();
+                    s.AddScoped<ISharePointService, SharePointService>();
+                    s.AddScoped<IAzureService, AzureService>();
 
                     // DB Context
-                    services.AddDbContext<GovernanceDBContext>(options => options.UseSqlServer(context.Configuration["GOVERNANCEDB_CONNECTIONSTRING"]));
+                    s.AddDbContext<GovernanceDBContext>(options => options.UseSqlServer(context.Configuration["GOVERNANCEDB_CONNECTIONSTRING"]));
                 })
                 .ConfigureLogging((context, builder) =>
                 {
