@@ -1,13 +1,14 @@
-using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
 using MCOM.Models;
 using MCOM.Services;
 using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using SelectPdf;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace MCOM.ScanOnDemand.Functions
 {
@@ -31,9 +32,16 @@ namespace MCOM.ScanOnDemand.Functions
         [Function("UpdateDummyDocuments")]
         public async Task RunAsync([TimerTrigger("0 */5 * * * *")] MyInfo myTimer)
         {
+            HtmlToPdf converter;
             try
             {
                 GlobalEnvironment.SetEnvironmentVariables(_logger);
+                GlobalProperties.LicenseKey = Global.SelectPDFLicense;
+                converter = new HtmlToPdf();
+                converter.Options.WebPageWidth = 1024;
+                converter.Options.WebPageHeight = 0;
+                converter.Options.PdfPageSize = PdfPageSize.A4;
+                converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
             }
             catch (Exception ex)
             {
@@ -49,12 +57,16 @@ namespace MCOM.ScanOnDemand.Functions
                 // Init blob service client
                 _blobService.GetBlobServiceClient();
 
-                var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/dummytemp/DummyDocument.pdf");
+                var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/dummytemp/DummyDocument.html");
 
                 // Get file from staging area
                 var blobCLient = _blobService.GetBlobClient(fileUri);
                 var blobContainerClient = _blobService.GetBlobContainerClient(blobCLient.BlobContainerName);
                 var dummyDocStream = await _blobService.OpenReadAsync(blobCLient);
+
+                // Read dummy document content
+                using var sr = new StreamReader(dummyDocStream);
+                string content = sr.ReadToEnd();
 
                 // Try to find dummy files in SharePoint based on field Physical Record                                 
                 var sharePointUrl = new Uri(Global.SharePointUrl);
@@ -62,30 +74,39 @@ namespace MCOM.ScanOnDemand.Functions
                 using var clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
 
                 // Search
-                var resultTable = _sharePointService.SearchItems(clientContext, $"LRMPhysicalRecord:True AND carlos", 1000);
+                var resultTable = _sharePointService.SearchItems(clientContext, $"PhysicalRecord:True AND carlos", 1000);
                 foreach (var resultRow in resultTable.ResultRows)
                 {
+                    // Get values from search result
                     var searchResult = new Models.Search.SearchResult()
                     {
                         Name = resultRow["Title"].ToString(),
                         SiteId = resultRow["SiteId"].ToString(),
                         WebId = resultRow["WebId"].ToString(),
                         ListId = resultRow["ListID"].ToString(),
-                        ListItemId = resultRow["ListItemId"].ToString()
+                        ListItemId = resultRow["ListItemId"].ToString(),
+                        OriginalPath = resultRow["OriginalPath"].ToString()
                     };
 
+                    // Generate PDF from stream
+                    PdfDocument document = converter.ConvertHtmlString(content.Replace("{{placeholder}}", searchResult.OriginalPath));
+                    byte[] dummyPDFByteArray = document.Save();
+                    document.Close();
+
+                    // Generate stream from byte array
+                    Stream dummyPDFStream = new MemoryStream(dummyPDFByteArray);
+
+                    // Replace SharePoint file with new pdf
                     DriveItem currentDriveItem = null;
                     currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
                         searchResult.SiteId,
                         searchResult.WebId,
                         searchResult.ListId,
                         searchResult.ListItemId,
-                        dummyDocStream);
-
+                        dummyPDFStream);
                 }
-
             }
-        }        
+        }
     }
 
     public class MyInfo

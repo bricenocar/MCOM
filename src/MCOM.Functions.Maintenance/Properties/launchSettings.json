@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "MCOM.Functions.Maintenance": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7227",
+      "launchBrowser": false
+    }
+  }
+}

@@ -22,6 +22,7 @@ namespace MCOM.Utilities
             // SharePoint related
             Global.SharePointUrl = Environment.GetEnvironmentVariable("SharePointUrl");
             Global.SharePointDomain = Environment.GetEnvironmentVariable("SharePointDomain");
+            Global.SelectPDFLicense = Environment.GetEnvironmentVariable("SelectPDFLicense");
 
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MandatoryMetadataFields")))
             {

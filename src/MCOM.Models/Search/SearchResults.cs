@@ -7,5 +7,6 @@
         public string WebId { get; set; }
         public string ListId { get; set; }
         public string ListItemId { get; set; }
+        public string OriginalPath { get; set; }
     }
 }
