@@ -1,3 +1,4 @@
+using Azure;
 using MCOM.Models;
 using MCOM.Services;
 using MCOM.Utilities;
@@ -53,58 +54,79 @@ namespace MCOM.ScanOnDemand.Functions
 
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "UpdateDummyDocuments", "ScanOnDemand"))
             {
-                // Get New dummy document from azure storage
-                // Init blob service client
-                _blobService.GetBlobServiceClient();
-
-                var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/dummytemp/DummyDocument.html");
-
-                // Get file from staging area
-                var blobCLient = _blobService.GetBlobClient(fileUri);
-                var blobContainerClient = _blobService.GetBlobContainerClient(blobCLient.BlobContainerName);
-                var dummyDocStream = await _blobService.OpenReadAsync(blobCLient);
-
-                // Read dummy document content
-                using var sr = new StreamReader(dummyDocStream);
-                string content = sr.ReadToEnd();
-
-                // Try to find dummy files in SharePoint based on field Physical Record                                 
-                var sharePointUrl = new Uri(Global.SharePointUrl);
-                var accessToken = await _azureService.GetAzureServiceTokenAsync(sharePointUrl);
-                using var clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
-
-                // Search
-                var resultTable = _sharePointService.SearchItems(clientContext, $"PhysicalRecord:True AND carlos", 1000);
-                foreach (var resultRow in resultTable.ResultRows)
+                try
                 {
-                    // Get values from search result
-                    var searchResult = new Models.Search.SearchResult()
+                    // Get New dummy document from azure storage
+                    // Init blob service client
+                    _blobService.GetBlobServiceClient();
+
+                    var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/dummytemp/DummyDocument.html");
+
+                    // Get file from staging area
+                    var blobCLient = _blobService.GetBlobClient(fileUri);
+                    var blobContainerClient = _blobService.GetBlobContainerClient(blobCLient.BlobContainerName);
+                    var dummyDocStream = await _blobService.OpenReadAsync(blobCLient);
+
+                    // Read dummy document content
+                    using var sr = new StreamReader(dummyDocStream);
+                    string content = sr.ReadToEnd();
+
+                    // Try to find dummy files in SharePoint based on field Physical Record                                 
+                    var sharePointUrl = new Uri(Global.SharePointUrl);
+                    var accessToken = await _azureService.GetAzureServiceTokenAsync(sharePointUrl);
+                    using var clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
+                    var resultTable = _sharePointService.SearchItems(clientContext, $"PhysicalRecord:True AND carlos", 1000);
+                    
+                    foreach (var resultRow in resultTable.ResultRows)
                     {
-                        Name = resultRow["Title"].ToString(),
-                        SiteId = resultRow["SiteId"].ToString(),
-                        WebId = resultRow["WebId"].ToString(),
-                        ListId = resultRow["ListID"].ToString(),
-                        ListItemId = resultRow["ListItemId"].ToString(),
-                        OriginalPath = resultRow["OriginalPath"].ToString()
-                    };
+                        // Get values from search result
+                        var searchResult = new Models.Search.SearchResult()
+                        {
+                            Name = resultRow["Title"].ToString(),
+                            SiteId = resultRow["SiteId"].ToString(),
+                            WebId = resultRow["WebId"].ToString(),
+                            ListId = resultRow["ListID"].ToString(),
+                            ListItemId = resultRow["ListItemId"].ToString(),
+                            OriginalPath = resultRow["OriginalPath"].ToString()
+                        };
 
-                    // Generate PDF from stream
-                    PdfDocument document = converter.ConvertHtmlString(content.Replace("{{placeholder}}", searchResult.OriginalPath));
-                    byte[] dummyPDFByteArray = document.Save();
-                    document.Close();
+                        // Generate PDF from stream
+                        PdfDocument document = converter.ConvertHtmlString(content.Replace("{{placeholder}}", searchResult.OriginalPath));
+                        byte[] dummyPDFByteArray = document.Save();
+                        document.Close();
 
-                    // Generate stream from byte array
-                    Stream dummyPDFStream = new MemoryStream(dummyPDFByteArray);
+                        // Generate stream from byte array
+                        Stream dummyPDFStream = new MemoryStream(dummyPDFByteArray);
 
-                    // Replace SharePoint file with new pdf
-                    DriveItem currentDriveItem = null;
-                    currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
-                        searchResult.SiteId,
-                        searchResult.WebId,
-                        searchResult.ListId,
-                        searchResult.ListItemId,
-                        dummyPDFStream);
+                        // Replace SharePoint file with new pdf
+                        DriveItem currentDriveItem = null;
+                        currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
+                            searchResult.SiteId,
+                            searchResult.WebId,
+                            searchResult.ListId,
+                            searchResult.ListItemId,
+                            dummyPDFStream);
+                    }
                 }
+                catch (RequestFailedException rEx)
+                {
+                    if (rEx.ErrorCode.Equals("BlobAlreadyExists"))
+                    {
+                        Global.Log.LogError(rEx, "File already exists in staging area. Overwrite existing file is set to {OverwriteSetting}.", Global.BlobOverwriteExistingFile);                       
+                    }
+                    else if (rEx.ErrorCode.Equals("ContainerNotFound"))
+                    {
+                        Global.Log.LogError(rEx, "The path to staging area ({SourceSystem}) was not found.", "scanrequest");                       
+                    }
+                    else
+                    {
+                        Global.Log.LogError(rEx, "A request failed exception occured. {ErrorMessage}", rEx.Message);                      
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Global.Log.LogError(ex, "Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", ex.Message, ex.StackTrace);                   
+                }                
             }
         }
     }

@@ -112,6 +112,7 @@ namespace MCOM.Services
             keywordQuery.SelectProperties.Add("SPSiteURL");
             keywordQuery.SelectProperties.Add("ListID");
             keywordQuery.SelectProperties.Add("UniqueID");
+            keywordQuery.SelectProperties.Add("OriginalPath");
             keywordQuery.TrimDuplicates = false;
             keywordQuery.RowLimit = maxQuantity;
 
