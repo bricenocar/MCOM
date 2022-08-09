@@ -27,7 +27,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.ScanOnDemand.UI", "MCO
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Data", "MCOM.Data\MCOM.Data.csproj", "{09A0778C-A3D2-4E08-B0F7-FFDB5DAF4F8C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCOM.Functions.Maintenance", "MCOM.Functions.Maintenance\MCOM.Functions.Maintenance.csproj", "{4C259BF6-824C-45E7-A469-AD0418000E9A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Functions.Maintenance", "MCOM.Functions.Maintenance\MCOM.Functions.Maintenance.csproj", "{4C259BF6-824C-45E7-A469-AD0418000E9A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{01B82080-EE65-4F1E-92BB-A9BEEA4B4630}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

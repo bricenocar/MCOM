@@ -16,7 +16,7 @@ namespace MCOM.Services
         ListItemCollection GetListItems(ClientContext clientContext, List list, CamlQuery query);
         ListItem GetListItemByUniqueId(ClientContext clientContext, List list, Guid uniqueId);
         ResultTable SearchItems(ClientContext clientContext, string queryText);
-        ResultTable SearchItems(ClientContext clientContext, string queryText, int maxQuantity);
+        ResultTable SearchItems(ClientContext clientContext, string queryText, int maxQuantity, Guid resultSourceId);
         List<ListItem> GetListAsGenericList(ListItemCollection listItemCollection);
         TaxonomySession GetTaxonomySession(ClientContext clientContext);
         TermStore GetDefaultSiteCollectionTermStore(TaxonomySession taxonomySession);
@@ -88,6 +88,7 @@ namespace MCOM.Services
             keywordQuery.SelectProperties.Add("Title");
             keywordQuery.SelectProperties.Add("SPSiteURL");
             keywordQuery.SelectProperties.Add("ListID");
+            keywordQuery.SelectProperties.Add("ListItemId");
             keywordQuery.SelectProperties.Add("UniqueID");
             keywordQuery.SelectProperties.Add("OriginalPath");
             keywordQuery.TrimDuplicates = false;
@@ -101,7 +102,7 @@ namespace MCOM.Services
             return resultTable;
         }
 
-        public virtual ResultTable SearchItems(ClientContext clientContext, string queryText, int maxQuantity)
+        public virtual ResultTable SearchItems(ClientContext clientContext, string queryText, int maxQuantity, Guid resultSourceId)
         {
             var keywordQuery = new KeywordQuery(clientContext)
             {
@@ -110,13 +111,18 @@ namespace MCOM.Services
 
             keywordQuery.SelectProperties.Add("Title");
             keywordQuery.SelectProperties.Add("SPSiteURL");
+            keywordQuery.SelectProperties.Add("SiteId");
+            keywordQuery.SelectProperties.Add("WebId");
             keywordQuery.SelectProperties.Add("ListID");
+            keywordQuery.SelectProperties.Add("ListItemId");
             keywordQuery.SelectProperties.Add("UniqueID");
             keywordQuery.SelectProperties.Add("OriginalPath");
             keywordQuery.TrimDuplicates = false;
             keywordQuery.RowLimit = maxQuantity;
+            keywordQuery.SourceId = resultSourceId;
 
             var searchExecutor = new SearchExecutor(clientContext);
+            
             var results = searchExecutor.ExecuteQuery(keywordQuery);
 
             clientContext.ExecuteQuery();

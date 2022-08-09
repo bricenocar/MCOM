@@ -19,5 +19,8 @@ namespace MCOM.Models
         
         public static string AppInsightsAppId { get; set; }
         public static bool AppInsightsStrcuturedLogs { get; set; }
+        public static string GeneratePDFURL { get; set; }
+        public static string DummyDocumentQuery { get; set; }
+        public static int DummyDocumentQueryQuantity { get; set; }
     }
 }
