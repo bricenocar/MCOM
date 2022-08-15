@@ -4,6 +4,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SelectPdf;
+using System.Net;
 
 namespace MCOM.Functions.Maintenance
 {
@@ -17,12 +18,13 @@ namespace MCOM.Functions.Maintenance
         }
 
         [Function("GeneratePDF")]
-        public async Task<IActionResult> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
         {
             _logger.LogInformation("Starting the conversion to pdf...");
-
+            HttpResponseData response = null;
             try
             {
+                
                 //LoaderOptimization license
                 //GlobalProperties.LicenseKey = Environment.GetEnvironmentVariable("PDFLicense");
 
@@ -116,7 +118,13 @@ namespace MCOM.Functions.Maintenance
                 if (string.IsNullOrEmpty(url) && string.IsNullOrEmpty(html))
                 {
                     string responseMessage = "Url or html string not specified.";
-                    return new BadRequestObjectResult(responseMessage);
+                    response = req.CreateResponse(HttpStatusCode.BadRequest);
+                    response.WriteString(JsonConvert.SerializeObject(new
+                    {
+                        Message = responseMessage,
+                        Status = "Error"
+                    }));
+                    return response;
                 }
 
                 // instantiate converter object
@@ -144,20 +152,24 @@ namespace MCOM.Functions.Maintenance
                 // save pdf
                 byte[] pdf = doc.Save();
                 doc.Close();
-
                 _logger.LogInformation("Conversion finished. Returning file...");
-
-                return new FileContentResult(pdf, "application/pdf")
-                {
-                    FileDownloadName = "Document.pdf"
-                };
+                response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("content-type", "application/pdf");
+                response.WriteBytes(pdf);
+                return response;
             }
             catch (Exception ex)
             {
                 _logger.LogError("Conversion finished. Returning file...");
                 string responseMessage = "An error occured: " +
                     ex.Message + "\r\n" + ex.StackTrace;
-                return new BadRequestObjectResult(responseMessage);
+                response = req.CreateResponse(HttpStatusCode.BadRequest);
+                response.WriteString(JsonConvert.SerializeObject(new
+                {
+                    Message = responseMessage,
+                    Status = "Error"
+                }));
+                return response;
             }
         }
 

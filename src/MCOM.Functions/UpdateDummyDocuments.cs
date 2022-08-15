@@ -35,7 +35,7 @@ namespace MCOM.ScanOnDemand.Functions
         }
 
         [Function("UpdateDummyDocuments")]
-        public async Task RunAsync([TimerTrigger("0 */5 * * * *")] MyInfo myTimer)
+        public async Task RunAsync([TimerTrigger("0 0 * * * *")] MyInfo myTimer)
         {
             HtmlToPdf converter;
             try
@@ -99,7 +99,7 @@ namespace MCOM.ScanOnDemand.Functions
 
                         var pdfGenerator = new PDFProperties()
                         {
-                            Html = content
+                            Html = GetUrl(content, searchResult.Name, searchResult.SiteId, searchResult.WebId, searchResult.ListId, searchResult.ListItemId)
                         };
 
                         var stringContent = new StringContent(JsonConvert.SerializeObject(pdfGenerator), Encoding.UTF8, "application/json");
@@ -122,6 +122,7 @@ namespace MCOM.ScanOnDemand.Functions
                 catch (AuthenticationFailedException e)
                 {
                     Global.Log.LogError(e, $"Authentication Failed. {e.Message}");
+                    throw;
                 }
                 catch (RequestFailedException rEx)
                 {
@@ -137,12 +138,19 @@ namespace MCOM.ScanOnDemand.Functions
                     {
                         Global.Log.LogError(rEx, "A request failed exception occured. {ErrorMessage}", rEx.Message);                      
                     }
+                    throw;
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogError(ex, "Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", ex.Message, ex.StackTrace);                   
+                    Global.Log.LogError(ex, "Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", ex.Message, ex.StackTrace);
+                    throw;
                 }                
             }
+        }
+
+        private string GetUrl(string content, string name, string siteId, string webId, string listId, string listItemId)
+        {
+            return content.Replace("{{placeholder}}", string.Format("/SitePages/ScanOnDemand.aspx?iid={0}&name={1}&sid={2}&wid={3}&lid={4}", listItemId, name, siteId, webId, listId));
         }
     }
 
