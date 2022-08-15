@@ -17,7 +17,7 @@ namespace MCOM.Utilities
         public static ChainedTokenCredential GetDefaultCredential()
         {
             // For using Managed Identity when deployed in Azure and Azure CLI for local development purposes
-            return new ChainedTokenCredential(
+            return new ChainedTokenCredential(                    
                     new ManagedIdentityCredential(),
                     new DefaultAzureCredential(),
                     new AzureCliCredential()                    

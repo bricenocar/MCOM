@@ -22,6 +22,11 @@ namespace MCOM.Utilities
             // SharePoint related
             Global.SharePointUrl = Environment.GetEnvironmentVariable("SharePointUrl");
             Global.SharePointDomain = Environment.GetEnvironmentVariable("SharePointDomain");
+            Global.SelectPDFLicense = Environment.GetEnvironmentVariable("SelectPDFLicense");
+            Global.GeneratePDFURL = Environment.GetEnvironmentVariable("GeneratePDFURL");
+            Global.DummyDocumentQuery = Environment.GetEnvironmentVariable("DummyDocumentQuery");
+            Global.DummyDocumentQueryQuantity = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DummyDocumentQueryQuantity")) ? Int32.Parse(Environment.GetEnvironmentVariable("DummyDocumentQueryQuantity")) : 100;
+            
 
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MandatoryMetadataFields")))
             {

@@ -15,7 +15,12 @@ namespace MCOM.Models
         public static List<string> MandatoryMetadataFields { get; set; }
         public static string SharePointUrl { get; set; }
         public static string SharePointDomain { get; set; }
+        public static string SelectPDFLicense { get; set; }
+        
         public static string AppInsightsAppId { get; set; }
         public static bool AppInsightsStrcuturedLogs { get; set; }
+        public static string GeneratePDFURL { get; set; }
+        public static string DummyDocumentQuery { get; set; }
+        public static int DummyDocumentQueryQuantity { get; set; }
     }
 }

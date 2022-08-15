@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" Version="2.20.0" />
     <PackageReference Include="PnP.Framework" Version="1.8.0" />
+    <PackageReference Include="Select.Pdf.NetCore" Version="22.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MCOM.Services\MCOM.Services.csproj" />
@@ -33,5 +34,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 </Project>
