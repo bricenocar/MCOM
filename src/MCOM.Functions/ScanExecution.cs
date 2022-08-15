@@ -60,6 +60,9 @@ namespace MCOM.Functions
                                                           Azure.Storage.Blobs.Models.BlobTraits.Metadata,
                                                           Azure.Storage.Blobs.Models.BlobStates.None,
                                                           "files/").AsPages();
+                    // Get OrderNumber field internal name from environment variables
+                    var orderNumberField = Environment.GetEnvironmentVariable("OrderNumberField");
+
                     // Loop through all pages and find blobs
                     await foreach (var blobPage in blobPages)
                     {
@@ -100,7 +103,7 @@ namespace MCOM.Functions
                                     var originalFileNameWithoutExtension = Path.GetFileNameWithoutExtension(originalFile.WebUrl);
 
                                     // Check whether the file has been processed and got OrderNumber
-                                    var isFileProcessed = originalFile.Fields.AdditionalData.TryGetValue("OrderNumber", out var orderNumber);
+                                    var isFileProcessed = originalFile.Fields.AdditionalData.TryGetValue(orderNumberField, out var orderNumber);
 
                                     if (!isFileProcessed)
                                     {
@@ -110,12 +113,12 @@ namespace MCOM.Functions
                                         using var clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
 
                                         // Search
-                                        var resultTable = _sharePointService.SearchItems(clientContext, $"OrderNumber:{blobFileNameWithoutExtension}");
+                                        var resultTable = _sharePointService.SearchItems(clientContext, $"{orderNumberField}:{blobFileNameWithoutExtension}");
 
                                         // Check if file has been processed
                                         isFileProcessed = resultTable.RowCount > 0;
                                     }
-                                    
+
                                     if (isFileProcessed)
                                     {
                                         await DeleteDataFromAzureContainer(filesBlobClient, blobName);
@@ -228,7 +231,7 @@ namespace MCOM.Functions
                     else
                     {
                         currentDriveItem = await _graphService.UploadSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, blobName, filesBlobStream);
-                    }  
+                    }
 
                     // Get SharePoint list item based on the drive item id
                     var uploadedListItem = await _graphService.GetListItemAsync(drive.Id, currentDriveItem.Id);

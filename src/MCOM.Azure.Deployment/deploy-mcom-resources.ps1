@@ -77,11 +77,13 @@ if ($Environment -eq "prod") {
     $SharePointUrlEDI = "https://statoilsrm.sharepoint.com/sites/LRMArchiveEDIBank"
     $SharePointUrlGAS = "https://statoilsrm.sharepoint.com/sites/LRMArchiveGasOpsEU"
     $SharePointUrlGOM = "https://statoilsrm.sharepoint.com/sites/LRMArchiveGOM"
+    $orderNumberField = "LRMOrderNumber"
 } else {
     $SharePointUrlDCF = "https://statoilintegrationtest.sharepoint.com/sites/EIMDCFArchive"
     $SharePointUrlEDI = "https://statoilintegrationtest.sharepoint.com/sites/EIMedibankArchive"
     $SharePointUrlGAS = "https://statoilintegrationtest.sharepoint.com/sites/EIMgasopsarchive"
     $SharePointUrlGOM = "https://statoilintegrationtest.sharepoint.com/sites/EIMGoMArchive"
+    $orderNumberField = "OrderNumber"
 }
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
