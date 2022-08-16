@@ -96,27 +96,22 @@ namespace MCOM.ScanOnDemand.Functions
                         // Generate PDF from url
                         HttpClient client = new HttpClient();
                         client.DefaultRequestHeaders.Accept.Clear();
-
                         var pdfGenerator = new PDFProperties()
                         {
                             Html = GetUrl(content, searchResult.Name, searchResult.SiteId, searchResult.WebId, searchResult.ListId, searchResult.ListItemId)
                         };
-
                         var stringContent = new StringContent(JsonConvert.SerializeObject(pdfGenerator), Encoding.UTF8, "application/json");
-
                         var response = await client.PostAsync(Global.GeneratePDFURL, stringContent);
 
-                        using (Stream pdf = await response.Content.ReadAsStreamAsync())
-                        {
-                            // Replace SharePoint file with new pdf
-                            DriveItem currentDriveItem = null;
-                            currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
-                                searchResult.SiteId,
-                                searchResult.WebId,
-                                searchResult.ListId,
-                                searchResult.ListItemId,
-                                pdf);
-                        }
+                        using Stream pdf = await response.Content.ReadAsStreamAsync();
+                        // Replace SharePoint file with new pdf
+                        DriveItem currentDriveItem = null;
+                        currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
+                            searchResult.SiteId,
+                            searchResult.WebId,
+                            searchResult.ListId,
+                            searchResult.ListItemId,
+                            pdf);
                     }
                 }
                 catch (AuthenticationFailedException e)
