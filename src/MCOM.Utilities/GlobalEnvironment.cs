@@ -25,8 +25,8 @@ namespace MCOM.Utilities
             Global.SelectPDFLicense = Environment.GetEnvironmentVariable("SelectPDFLicense");
             Global.GeneratePDFURL = Environment.GetEnvironmentVariable("GeneratePDFURL");
             Global.DummyDocumentQuery = Environment.GetEnvironmentVariable("DummyDocumentQuery");
-            Global.DummyDocumentQueryQuantity = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DummyDocumentQueryQuantity")) ? Int32.Parse(Environment.GetEnvironmentVariable("DummyDocumentQueryQuantity")) : 100;
-            
+            Global.DummyDocumentProperties = Environment.GetEnvironmentVariable("DummyDocumentProperties");            
+            Global.DummyDocumentQueryQuantity = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DummyDocumentQueryQuantity")) ? Int32.Parse(Environment.GetEnvironmentVariable("DummyDocumentQueryQuantity")) : 100;            
 
             if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MandatoryMetadataFields")))
             {
