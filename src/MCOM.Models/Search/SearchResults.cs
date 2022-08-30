@@ -8,5 +8,9 @@
         public string ListId { get; set; }
         public string ListItemId { get; set; }
         public string OriginalPath { get; set; }
+        public bool PhysicalRecord { get; set; }
+        public string PhysicalRecordStatus { get; set; }
+        public string FileExtension { get; set; }
+        public string SitePath { get; set; }
     }
 }

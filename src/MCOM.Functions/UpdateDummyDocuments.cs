@@ -9,6 +9,7 @@ using Microsoft.Graph;
 using Newtonsoft.Json;
 using SelectPdf;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -35,7 +36,7 @@ namespace MCOM.ScanOnDemand.Functions
         }
 
         [Function("UpdateDummyDocuments")]
-        public async Task RunAsync([TimerTrigger("0 0 * * * *")] MyInfo myTimer)
+        public async Task RunAsync([TimerTrigger("0 */5 * * * *")] MyInfo myTimer)
         {
             HtmlToPdf converter;
             try
@@ -71,15 +72,24 @@ namespace MCOM.ScanOnDemand.Functions
                     var dummyDocStream = await _blobService.OpenReadAsync(blobCLient);
 
                     // Read dummy document content
+                    var content = string.Empty;
                     using var sr = new StreamReader(dummyDocStream);
-                    string content = sr.ReadToEnd();
+                    if (sr != null)
+                    {
+                        content = sr.ReadToEnd();
+                    }      else
+                    {
+                        throw new Exception("Could not find dummy document template in storage account");
+                    }              
 
-                    // Try to find dummy files in SharePoint based on field Physical Record                                 
+                    // Try to find dummy files in SharePoint based on field Physical Record
+                    // // Query: if Is Physical Record is True and Physical Record Status is Not Scanned and Extension of the file is pdf..we are doing replacement in SPO
+                    string[] props = Global.DummyDocumentProperties.Split(',');
                     var sharePointUrl = new Uri(Global.SharePointUrl);
                     var accessToken = await _azureService.GetAzureServiceTokenAsync(sharePointUrl);
                     using var clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
-                    var resultTable = _sharePointService.SearchItems(clientContext, Global.DummyDocumentQuery, Global.DummyDocumentQueryQuantity, new Guid("0c668855-6c88-4f5c-a0ad-b474a7055bbf"));
-                    
+                    var resultTable = _sharePointService.SearchItems(clientContext, Global.DummyDocumentQuery, props, Global.DummyDocumentQueryQuantity, new Guid("0c668855-6c88-4f5c-a0ad-b474a7055bbf"));
+
                     foreach (var resultRow in resultTable.ResultRows)
                     {
                         // Get values from search result
@@ -90,7 +100,11 @@ namespace MCOM.ScanOnDemand.Functions
                             WebId = resultRow["WebId"].ToString(),
                             ListId = resultRow["ListID"].ToString(),
                             ListItemId = resultRow["ListItemId"].ToString(),
-                            OriginalPath = resultRow["OriginalPath"].ToString()
+                            OriginalPath = resultRow["OriginalPath"].ToString(),
+                            SitePath = resultRow["SitePath"].ToString(),
+                            PhysicalRecord = resultRow["LRMIsPhysicalRecordOWSBOOL"].ToString().Equals("1") ? true : false,
+                            PhysicalRecordStatus = resultRow["LRMPhysicalRecordStatusOWSTEXT"].ToString(),
+                            FileExtension = resultRow["FileExtension"].ToString()
                         };
 
                         // Generate PDF from url
@@ -98,20 +112,31 @@ namespace MCOM.ScanOnDemand.Functions
                         client.DefaultRequestHeaders.Accept.Clear();
                         var pdfGenerator = new PDFProperties()
                         {
-                            Html = GetUrl(content, searchResult.Name, searchResult.SiteId, searchResult.WebId, searchResult.ListId, searchResult.ListItemId)
+                            Html = GetUrl(content, searchResult.SitePath, searchResult.Name, searchResult.SiteId, searchResult.WebId, searchResult.ListId, searchResult.ListItemId)
                         };
                         var stringContent = new StringContent(JsonConvert.SerializeObject(pdfGenerator), Encoding.UTF8, "application/json");
                         var response = await client.PostAsync(Global.GeneratePDFURL, stringContent);
+                        Global.Log.LogInformation($"PDF has been generated.");
 
                         using Stream pdf = await response.Content.ReadAsStreamAsync();
+
                         // Replace SharePoint file with new pdf
-                        DriveItem currentDriveItem = null;
-                        currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
+                        Global.Log.LogInformation($"Replacing file in SharePoint with newly generated PDF");
+                        DriveItem currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
                             searchResult.SiteId,
                             searchResult.WebId,
                             searchResult.ListId,
                             searchResult.ListItemId,
                             pdf);
+
+                        // Update item with status scanned
+                        Global.Log.LogInformation($"Setting metadata to file 'Scanned''");
+                        if (currentDriveItem != null)
+                        {
+                            var fileMetadata = new Dictionary<string, object>();
+                            fileMetadata.Add("LRMPhysicalRecordStatus", "Scanned");
+                            await _graphService.SetMetadataByGraphAsync(fileMetadata, searchResult.SiteId, searchResult.ListId, searchResult.ListItemId);
+                        }
                     }
                 }
                 catch (AuthenticationFailedException e)
@@ -143,9 +168,9 @@ namespace MCOM.ScanOnDemand.Functions
             }
         }
 
-        private string GetUrl(string content, string name, string siteId, string webId, string listId, string listItemId)
+        private string GetUrl(string content, string sitePath, string name, string siteId, string webId, string listId, string listItemId)
         {
-            return content.Replace("{{placeholder}}", string.Format("/SitePages/ScanOnDemand.aspx?iid={0}&name={1}&sid={2}&wid={3}&lid={4}", listItemId, name, siteId, webId, listId));
+            return content.Replace("{{placeholder}}", string.Format("{0}/SitePages/ScanOnDemand.aspx?iid={1}&name={2}&sid={3}&wid={4}&lid={5}", sitePath, listItemId, name, siteId, webId, listId));
         }
     }
 

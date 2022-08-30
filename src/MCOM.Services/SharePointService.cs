@@ -17,6 +17,7 @@ namespace MCOM.Services
         ListItem GetListItemByUniqueId(ClientContext clientContext, List list, Guid uniqueId);
         ResultTable SearchItems(ClientContext clientContext, string queryText);
         ResultTable SearchItems(ClientContext clientContext, string queryText, int maxQuantity, Guid resultSourceId);
+        ResultTable SearchItems(ClientContext clientContext, string queryText, string[] properties, int maxQuantity, Guid resultSourceId);
         List<ListItem> GetListAsGenericList(ListItemCollection listItemCollection);
         TaxonomySession GetTaxonomySession(ClientContext clientContext);
         TermStore GetDefaultSiteCollectionTermStore(TaxonomySession taxonomySession);
@@ -117,12 +118,41 @@ namespace MCOM.Services
             keywordQuery.SelectProperties.Add("ListItemId");
             keywordQuery.SelectProperties.Add("UniqueID");
             keywordQuery.SelectProperties.Add("OriginalPath");
+            keywordQuery.SelectProperties.Add("PhysicalRecord");
+            keywordQuery.SelectProperties.Add("PhysicalRecordStatus");
+            keywordQuery.SelectProperties.Add("FileExtension");
             keywordQuery.TrimDuplicates = false;
             keywordQuery.RowLimit = maxQuantity;
             keywordQuery.SourceId = resultSourceId;
 
             var searchExecutor = new SearchExecutor(clientContext);
             
+            var results = searchExecutor.ExecuteQuery(keywordQuery);
+
+            clientContext.ExecuteQuery();
+
+            var resultTable = results.Value.FirstOrDefault();
+            return resultTable;
+        }
+
+        public virtual ResultTable SearchItems(ClientContext clientContext, string queryText, string[] properties, int maxQuantity, Guid resultSourceId)
+        {
+            var keywordQuery = new KeywordQuery(clientContext)
+            {
+                QueryText = queryText
+            };
+
+            foreach (string prop in properties)
+            {
+                keywordQuery.SelectProperties.Add(prop);
+            }
+
+            keywordQuery.TrimDuplicates = false;
+            keywordQuery.RowLimit = maxQuantity;
+            keywordQuery.SourceId = resultSourceId;
+
+            var searchExecutor = new SearchExecutor(clientContext);
+
             var results = searchExecutor.ExecuteQuery(keywordQuery);
 
             clientContext.ExecuteQuery();
