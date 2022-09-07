@@ -2294,7 +2294,7 @@
                                                         }
                                                     },
                                                     {
-                                                        "name": "OrderNumber",
+                                                        "name": "LRMOrderNumber",
                                                         "value": {
                                                             "value": "@activity('Get Scan request item').output.firstRow.ordernumber",
                                                             "type": "Expression"
