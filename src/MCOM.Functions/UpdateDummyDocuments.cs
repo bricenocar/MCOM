@@ -42,7 +42,7 @@ namespace MCOM.ScanOnDemand.Functions
             try
             {
                 GlobalEnvironment.SetEnvironmentVariables(_logger);
-                GlobalProperties.LicenseKey = Global.SelectPDFLicense;
+                GlobalProperties.LicenseKey = Global.SelectPDFLicense;// pones esta: 9t3H1sTDx9bPxc/WxMTYxtbFx9jHxNjPz8/P
                 converter = new HtmlToPdf();
                 converter.Options.WebPageWidth = 1024;
                 converter.Options.WebPageHeight = 0;
