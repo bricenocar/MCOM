@@ -26,7 +26,7 @@ namespace MCOM.Functions.Maintenance
             {
                 
                 //LoaderOptimization license
-                //GlobalProperties.LicenseKey = Environment.GetEnvironmentVariable("PDFLicense");
+                GlobalProperties.LicenseKey = Environment.GetEnvironmentVariable("PDFLicense");
 
                 // Variable declaration
                 string url = string.Empty, html = string.Empty, base_url = string.Empty, 

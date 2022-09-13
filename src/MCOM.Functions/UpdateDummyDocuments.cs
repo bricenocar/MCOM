@@ -39,6 +39,7 @@ namespace MCOM.ScanOnDemand.Functions
         public async Task RunAsync([TimerTrigger("0 */5 * * * *")] MyInfo myTimer)
         {
             HtmlToPdf converter;
+
             try
             {
                 GlobalEnvironment.SetEnvironmentVariables(_logger);
@@ -62,7 +63,7 @@ namespace MCOM.ScanOnDemand.Functions
                 try
                 {
                     // Get New dummy document from azure storage
-                    // Init blob service client
+                    // Init blob service client                    
                     _blobService.GetBlobServiceClient();
 
                     var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/dummytemp/DummyDocument.html");
@@ -77,18 +78,19 @@ namespace MCOM.ScanOnDemand.Functions
                     if (sr != null)
                     {
                         content = sr.ReadToEnd();
-                    }      else
+                    }
+                    else
                     {
                         throw new Exception("Could not find dummy document template in storage account");
-                    }              
-
+                    }
+                   
                     // Try to find dummy files in SharePoint based on field Physical Record
                     // // Query: if Is Physical Record is True and Physical Record Status is Not Scanned and Extension of the file is pdf..we are doing replacement in SPO
-                    string[] props = Global.DummyDocumentProperties.Split(',');
+                    var props = Global.DummyDocumentProperties.Split(',');
                     var sharePointUrl = new Uri(Global.SharePointUrl);
                     var accessToken = await _azureService.GetAzureServiceTokenAsync(sharePointUrl);
                     using var clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
-                    var resultTable = _sharePointService.SearchItems(clientContext, Global.DummyDocumentQuery, props, Global.DummyDocumentQueryQuantity, new Guid("0c668855-6c88-4f5c-a0ad-b474a7055bbf"));
+                    var resultTable = _sharePointService.SearchItems(clientContext, Global.DummyDocumentQuery, props, Global.DummyDocumentQueryQuantity, new Guid(Global.DummyDocumentSearchResultId));
 
                     foreach (var resultRow in resultTable.ResultRows)
                     {
@@ -107,35 +109,49 @@ namespace MCOM.ScanOnDemand.Functions
                             FileExtension = resultRow["FileExtension"].ToString()
                         };
 
-                        // Generate PDF from url
-                        HttpClient client = new HttpClient();
-                        client.DefaultRequestHeaders.Accept.Clear();
-                        var pdfGenerator = new PDFProperties()
+                        try
                         {
-                            Html = GetUrl(content, searchResult.SitePath, searchResult.Name, searchResult.SiteId, searchResult.WebId, searchResult.ListId, searchResult.ListItemId)
-                        };
-                        var stringContent = new StringContent(JsonConvert.SerializeObject(pdfGenerator), Encoding.UTF8, "application/json");
-                        var response = await client.PostAsync(Global.GeneratePDFURL, stringContent);
-                        Global.Log.LogInformation($"PDF has been generated.");
+                            Global.Log.LogInformation($"Updating document: {searchResult.Name} with Id: {searchResult.ListItemId}");
 
-                        using Stream pdf = await response.Content.ReadAsStreamAsync();
+                            // Generate PDF from url
+                            var client = new HttpClient();
 
-                        // Replace SharePoint file with new pdf
-                        Global.Log.LogInformation($"Replacing file in SharePoint with newly generated PDF");
-                        DriveItem currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
-                            searchResult.SiteId,
-                            searchResult.WebId,
-                            searchResult.ListId,
-                            searchResult.ListItemId,
-                            pdf);
+                            // Clear accept header to avoid validation issues
+                            client.DefaultRequestHeaders.Accept.Clear();
 
-                        // Update item with status scanned
-                        Global.Log.LogInformation($"Setting metadata to file 'Scanned''");
-                        if (currentDriveItem != null)
+                            var pdfGenerator = new PDFProperties()
+                            {
+                                Html = GetUrl(content, searchResult.SitePath, searchResult.Name, searchResult.SiteId, searchResult.WebId, searchResult.ListId, searchResult.ListItemId)
+                            };
+                            var stringContent = new StringContent(JsonConvert.SerializeObject(pdfGenerator), Encoding.UTF8, "application/json");
+
+                            // Send post to build PDF
+                            var response = await client.PostAsync(Global.GeneratePDFURL, stringContent);
+                            using var pdf = await response.Content.ReadAsStreamAsync();
+
+                            // Replace SharePoint file with new pdf
+                            var currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
+                                searchResult.SiteId,
+                                searchResult.WebId,
+                                searchResult.ListId,
+                                searchResult.ListItemId,
+                                pdf);
+
+                            Global.Log.LogInformation($"Setting metadata to file 'Scanned''");
+
+                            // Update item with status scanned
+                            if (currentDriveItem != null)
+                            {
+                                var fileMetadata = new Dictionary<string, object>
+                                {
+                                    { "LRMPhysicalRecordStatus", "Scanned" }
+                                };
+                                await _graphService.SetMetadataByGraphAsync(fileMetadata, searchResult.SiteId, searchResult.ListId, searchResult.ListItemId);
+                            }
+                        }
+                        catch (Exception ex)
                         {
-                            var fileMetadata = new Dictionary<string, object>();
-                            fileMetadata.Add("LRMPhysicalRecordStatus", "Scanned");
-                            await _graphService.SetMetadataByGraphAsync(fileMetadata, searchResult.SiteId, searchResult.ListId, searchResult.ListItemId);
+                            Global.Log.LogError(ex, $"Error when updating document {searchResult.Name} Failed. {ex}");
                         }
                     }
                 }
@@ -148,15 +164,15 @@ namespace MCOM.ScanOnDemand.Functions
                 {
                     if (rEx.ErrorCode.Equals("BlobAlreadyExists"))
                     {
-                        Global.Log.LogError(rEx, "File already exists in staging area. Overwrite existing file is set to {OverwriteSetting}.", Global.BlobOverwriteExistingFile);                       
+                        Global.Log.LogError(rEx, "File already exists in staging area. Overwrite existing file is set to {OverwriteSetting}.", Global.BlobOverwriteExistingFile);
                     }
                     else if (rEx.ErrorCode.Equals("ContainerNotFound"))
                     {
-                        Global.Log.LogError(rEx, "The path to staging area ({SourceSystem}) was not found.", "scanrequest");                       
+                        Global.Log.LogError(rEx, "The path to staging area ({SourceSystem}) was not found.", "scanrequest");
                     }
                     else
                     {
-                        Global.Log.LogError(rEx, "A request failed exception occured. {ErrorMessage}", rEx.Message);                      
+                        Global.Log.LogError(rEx, "A request failed exception occured. {ErrorMessage}", rEx.Message);
                     }
                     throw;
                 }
@@ -164,7 +180,7 @@ namespace MCOM.ScanOnDemand.Functions
                 {
                     Global.Log.LogError(ex, "Error message:{ErrorMessage}. StackTrace: {ErrorStackTrace}", ex.Message, ex.StackTrace);
                     throw;
-                }                
+                }
             }
         }
 
