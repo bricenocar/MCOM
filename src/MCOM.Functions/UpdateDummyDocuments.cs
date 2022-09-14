@@ -144,7 +144,7 @@ namespace MCOM.ScanOnDemand.Functions
                             {
                                 var fileMetadata = new Dictionary<string, object>
                                 {
-                                    { "LRMPhysicalRecordStatus", "Scanned" }
+                                    { "LRMDummyUpdated", true }
                                 };
                                 await _graphService.SetMetadataByGraphAsync(fileMetadata, searchResult.SiteId, searchResult.ListId, searchResult.ListItemId);
                             }
