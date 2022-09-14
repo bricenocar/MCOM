@@ -135,9 +135,7 @@ namespace MCOM.ScanOnDemand.Functions
                                 searchResult.WebId,
                                 searchResult.ListId,
                                 searchResult.ListItemId,
-                                pdf);
-
-                            Global.Log.LogInformation($"Setting metadata to file 'Scanned''");
+                                pdf);                            
 
                             // Update item with status scanned
                             if (currentDriveItem != null)
@@ -147,6 +145,8 @@ namespace MCOM.ScanOnDemand.Functions
                                     { "LRMDummyUpdated", true }
                                 };
                                 await _graphService.SetMetadataByGraphAsync(fileMetadata, searchResult.SiteId, searchResult.ListId, searchResult.ListItemId);
+
+                                Global.Log.LogInformation($"Setting metadata 'LRMDummyUpdated' eq true");
                             }
                         }
                         catch (Exception ex)
