@@ -6,3 +6,5 @@ obj
 **/*.suo
 .ntvs_analysis.dat
 .vs
+debug.log
+.dtbcache.v2
