@@ -478,6 +478,43 @@
                         "For_each_received_item": {
                             "foreach": "@body('Get_Received_Items')?['value']",
                             "actions": {
+                                "Check_creator": {
+                                    "actions": {},
+                                    "else": {
+                                        "actions": {
+                                            "Send_confirmation_to_creator": {
+                                                "inputs": {
+                                                    "body": {
+                                                        "Body": "<p><span style=\"font-size: 18px\">Equinor</span><br>\n<br>\n<span style=\"font-size: 20px\">Your request with ID: </span><span style=\"font-size: 20px\">@{items('For_each_received_item')?['ordernumber']}</span><span style=\"font-size: 20px\"> has been successfully registered</span><br>\n<span style=\"font-size: 18px\">Request date: </span><span style=\"font-size: 18px\">@{formatDateTime(items('For_each_received_item')?['requestdate'], 'dd.MM.yyyy HH:mm:ss')}</span><span style=\"font-size: 18px\"><br>\nRequested by: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['requestername']}</span><span style=\"font-size: 18px\"><br>\nCreated by: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['creatorname']}</span><span style=\"font-size: 18px\"><br>\nDocument name: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['documentname']}</span><span style=\"font-size: 18px\"><br>\nWBS: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['wbs']}</span><span style=\"font-size: 18px\"><br>\nComments: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['comments']}</span><span style=\"font-size: 18px\"></span></p>",
+                                                        "Subject": "Scan on demand: your request for scan of file has been successfully registered",
+                                                        "To": "@items('For_each_received_item')?['creator']"
+                                                    },
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['office365']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "post",
+                                                    "path": "/v2/Mail"
+                                                },
+                                                "runAfter": {},
+                                                "type": "ApiConnection"
+                                            }
+                                        }
+                                    },
+                                    "expression": {
+                                        "and": [
+                                            {
+                                                "equals": [
+                                                    "@toLower(items('For_each_received_item')?['requester'])",
+                                                    "@toLower(items('For_each_received_item')?['creator'])"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "runAfter": {},
+                                    "type": "If"
+                                },
                                 "Parse_JSON": {
                                     "inputs": {
                                         "content": "@items('For_each_received_item')?['filemetadata']",
@@ -640,7 +677,7 @@
                                     "runAfter": {},
                                     "type": "ParseJson"
                                 },
-                                "Send_an_email_(V2)_2": {
+                                "Send_confirmation_to_requester": {
                                     "runAfter": {
                                         "Parse_JSON": [
                                             "Succeeded"
@@ -662,9 +699,9 @@
                                         "path": "/v2/Mail"
                                     }
                                 },
-                                "Update_row_(V2)": {
+                                "Update_request_completed": {
                                     "runAfter": {
-                                        "Send_an_email_(V2)_2": [
+                                        "Send_confirmation_to_requester": [
                                             "Succeeded"
                                         ]
                                     },

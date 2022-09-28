@@ -225,6 +225,26 @@
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",
               "value": "1"
+            },
+            {
+              "name": "DummyDocumentProperties",
+              "value": "Title,SiteId,WebId,ListID,ListItemId,OriginalPath,SitePath,LRMIsPhysicalRecordOWSBOOL,LRMPhysicalRecordStatusOWSTEXT,FileExtension",
+              "slotSetting": false
+            },
+            {
+              "name": "DummyDocumentQuery",
+              "value": "PhysicalRecordStatus='Not Scanned' AND PhysicalRecord=true AND FileExtension=pdf AND LRMDummyUpdated=false",
+              "slotSetting": false
+            },
+            {
+              "name": "DummyDocumentQueryQuantity",
+              "value": "",
+              "slotSetting": false
+            },
+            {
+              "name": "DummyDocumentSearchResultId",
+              "value": "",
+              "slotSetting": false
             }
           ]
         }
