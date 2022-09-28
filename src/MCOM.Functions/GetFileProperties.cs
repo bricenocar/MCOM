@@ -66,7 +66,7 @@ namespace MCOM.Functions
                     {
                         { "FilePath", listItem.WebUrl }
                     };
-                    listItemFields.Where(x => !x.Key.StartsWith("_") && !x.Key.StartsWith("@")).ForEach(x => fileMetaData.Add(x.Key, x.Value.ToString()));
+                    listItemFields.Where(x => (!x.Key.StartsWith("_") || x.Key.Equals("_Comments", StringComparison.OrdinalIgnoreCase)) && !x.Key.StartsWith("@")).ForEach(x => fileMetaData.Add(x.Key, x.Value.ToString()));
 
                     // Convert to json string
                     var jsonMetadata = JsonConvert.SerializeObject(fileMetaData);
