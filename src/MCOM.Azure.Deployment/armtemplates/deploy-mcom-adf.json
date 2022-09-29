@@ -2301,6 +2301,10 @@
                                                         }
                                                     },
                                                     {
+                                                        "name": "LRMPhysicalRecordStatus",
+                                                        "value": "Scanned"
+                                                    },
+                                                    {
                                                         "name": "FileLeafRef",
                                                         "value": {
                                                             "value": "@activity('Get File Metadata').output.itemName\r\n",
