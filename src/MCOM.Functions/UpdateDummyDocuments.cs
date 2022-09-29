@@ -94,6 +94,11 @@ namespace MCOM.ScanOnDemand.Functions
 
                     foreach (var resultRow in resultTable.ResultRows)
                     {
+                        if (!resultRow.TryGetValue("LRMPhysicalRecordOWSBOOL", out var physicalRecord))
+                        {
+                            resultRow.TryGetValue("LRMIsPhysicalRecordOWSBOOL", out physicalRecord);
+                        }
+
                         // Get values from search result
                         var searchResult = new Models.Search.SearchResult()
                         {
@@ -104,7 +109,7 @@ namespace MCOM.ScanOnDemand.Functions
                             ListItemId = resultRow["ListItemId"].ToString(),
                             OriginalPath = resultRow["OriginalPath"].ToString(),
                             SitePath = resultRow["SitePath"].ToString(),
-                            PhysicalRecord = resultRow["LRMIsPhysicalRecordOWSBOOL"].ToString().Equals("1") ? true : false,
+                            PhysicalRecord = physicalRecord.Equals("1"), // resultRow["LRMPhysicalRecordOWSBOOL"].ToString().Equals("1") ? true : false,
                             PhysicalRecordStatus = resultRow["LRMPhysicalRecordStatusOWSTEXT"].ToString(),
                             FileExtension = resultRow["FileExtension"].ToString()
                         };
