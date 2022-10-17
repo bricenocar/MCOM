@@ -61,7 +61,7 @@ if ($Environment -eq "prod") {
     $orderNumberField = "LRMOrderNumber"
 } else {
     $SharePointUrl = "https://statoilintegrationtest.sharepoint.com/"
-    $orderNumberField = "OrderNumber"
+    $orderNumberField = "LRMOrderNumber"
 }
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
