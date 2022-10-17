@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,7 +21,7 @@ namespace MCOM.ScanOnDemand.Functions
 {
     public class UpdateDummyDocuments
     {
-        private readonly ILogger _logger;
+        //private readonly ILogger _logger;
         private IBlobService _blobService;
         private IGraphService _graphService;
         private ISharePointService _sharePointService;
@@ -28,7 +29,7 @@ namespace MCOM.ScanOnDemand.Functions
 
         public UpdateDummyDocuments(ILoggerFactory loggerFactory, IGraphService graphService, IBlobService blobService, ISharePointService sharePointService, IAzureService azureService)
         {
-            _logger = loggerFactory.CreateLogger<UpdateDummyDocuments>();
+            //_logger = loggerFactory.CreateLogger<UpdateDummyDocuments>();
             _graphService = graphService;
             _blobService = blobService;
             _sharePointService = sharePointService;
@@ -36,13 +37,14 @@ namespace MCOM.ScanOnDemand.Functions
         }
 
         [Function("UpdateDummyDocuments")]
-        public async Task RunAsync([TimerTrigger("0 */5 * * * *")] MyInfo myTimer)
+        public async Task RunAsync([TimerTrigger("0 */5 * * * *")] MyInfo myTimer, FunctionContext context)
         {
+            var logger = context.GetLogger("UpdateDummyDocuments");
             HtmlToPdf converter;
 
             try
             {
-                GlobalEnvironment.SetEnvironmentVariables(_logger);
+                GlobalEnvironment.SetEnvironmentVariables(logger);
                 GlobalProperties.LicenseKey = Global.SelectPDFLicense;// pones esta: 9t3H1sTDx9bPxc/WxMTYxtbFx9jHxNjPz8/P
                 converter = new HtmlToPdf();
                 converter.Options.WebPageWidth = 1024;
@@ -91,27 +93,39 @@ namespace MCOM.ScanOnDemand.Functions
                     var accessToken = await _azureService.GetAzureServiceTokenAsync(sharePointUrl);
                     using var clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
                     var resultTable = _sharePointService.SearchItems(clientContext, Global.DummyDocumentQuery, props, Global.DummyDocumentQueryQuantity, new Guid(Global.DummyDocumentSearchResultId));
-
+                    Global.Log.LogInformation($"Found: {resultTable.ResultRows.Count()} in result table. Query executed: {Global.DummyDocumentQuery}");
                     foreach (var resultRow in resultTable.ResultRows)
                     {
-                        // Get values from search result
-                        var searchResult = new Models.Search.SearchResult()
-                        {
-                            Name = resultRow["Title"].ToString(),
-                            SiteId = resultRow["SiteId"].ToString(),
-                            WebId = resultRow["WebId"].ToString(),
-                            ListId = resultRow["ListID"].ToString(),
-                            ListItemId = resultRow["ListItemId"].ToString(),
-                            OriginalPath = resultRow["OriginalPath"].ToString(),
-                            SitePath = resultRow["SitePath"].ToString(),
-                            PhysicalRecord = resultRow["LRMIsPhysicalRecordOWSBOOL"].ToString().Equals("1") ? true : false,
-                            PhysicalRecordStatus = resultRow["LRMPhysicalRecordStatusOWSTEXT"].ToString(),
-                            FileExtension = resultRow["FileExtension"].ToString()
-                        };
-
+                        Models.Search.SearchResult searchResult = null;
                         try
                         {
-                            Global.Log.LogInformation($"Updating document: {searchResult.Name} with Id: {searchResult.ListItemId}");
+                            Global.Log.LogInformation($"Validating field: LRMPhysicalRecordOWSBOOL");
+                            if (!resultRow.TryGetValue("LRMPhysicalRecordOWSBOOL", out var physicalRecord))
+                            {
+                                resultRow.TryGetValue("LRMIsPhysicalRecordOWSBOOL", out physicalRecord);
+                            }
+
+                            if (!resultRow.TryGetValue("LRMPhysicalRecordStatusOWSTEXT", out var physicalRecordStatus))
+                            {
+                                resultRow.TryGetValue("LRMPhysicalRecordStatusOWSTEXT", out physicalRecordStatus);
+                            }
+
+                            // Get values from search result
+                            searchResult = new Models.Search.SearchResult()
+                            {
+                                Name = resultRow["Title"] == null ? "" : resultRow["Title"].ToString(),
+                                SiteId = resultRow["SiteId"] == null ? "" : resultRow["SiteId"].ToString(),
+                                WebId = resultRow["WebId"] == null ? "" : resultRow["WebId"].ToString(),
+                                ListId = resultRow["ListID"] == null ? "" : resultRow["ListID"].ToString(),
+                                ListItemId = resultRow["ListItemId"] == null ? "" : resultRow["ListItemId"].ToString(),
+                                OriginalPath = resultRow["OriginalPath"] == null ? "" : resultRow["OriginalPath"].ToString(),
+                                SPWebUrl = resultRow["SPWebUrl"] == null ? "" : resultRow["SPWebUrl"].ToString(),
+                                PhysicalRecord = physicalRecord == null ? false : physicalRecord.Equals("1"), // resultRow["LRMPhysicalRecordOWSBOOL"].ToString().Equals("1") ? true : false,
+                                PhysicalRecordStatus = physicalRecordStatus == null ? "" : physicalRecordStatus.ToString(),
+                                FileExtension = resultRow["FileExtension"] == null ? "" : resultRow["FileExtension"].ToString(),
+                            };
+
+                            Global.Log.LogInformation($"Processing document: {searchResult.Name} with Id: {searchResult.ListItemId}");
 
                             // Generate PDF from url
                             var client = new HttpClient();
@@ -119,39 +133,53 @@ namespace MCOM.ScanOnDemand.Functions
                             // Clear accept header to avoid validation issues
                             client.DefaultRequestHeaders.Accept.Clear();
 
+                            Global.Log.LogInformation($"Preparing PDF generator");
                             var pdfGenerator = new PDFProperties()
                             {
-                                Html = GetUrl(content, searchResult.SitePath, searchResult.Name, searchResult.SiteId, searchResult.WebId, searchResult.ListId, searchResult.ListItemId)
+                                Html = GetUrl(content, searchResult.SPWebUrl, searchResult.Name, searchResult.SiteId, searchResult.WebId, searchResult.ListId, searchResult.ListItemId)
                             };
                             var stringContent = new StringContent(JsonConvert.SerializeObject(pdfGenerator), Encoding.UTF8, "application/json");
 
-                            // Send post to build PDF
+                            //// Send post to build PDF
+                            Global.Log.LogInformation($"Generating PDF");
                             var response = await client.PostAsync(Global.GeneratePDFURL, stringContent);
                             using var pdf = await response.Content.ReadAsStreamAsync();
+                            Global.Log.LogInformation($"PDF generated");
 
-                            // Replace SharePoint file with new pdf
-                            var currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
-                                searchResult.SiteId,
-                                searchResult.WebId,
-                                searchResult.ListId,
-                                searchResult.ListItemId,
-                                pdf);                            
-
-                            // Update item with status scanned
-                            if (currentDriveItem != null)
+                            // Check if the file has a retention label applied
+                            Global.Log.LogInformation($"Validating retention label");
+                            bool retentionLabelValidated = false;
+                            using (var siteContext = _sharePointService.GetClientContext(searchResult.SPWebUrl, accessToken.Token))
                             {
-                                var fileMetadata = new Dictionary<string, object>
+                                retentionLabelValidated = _sharePointService.ValidateItemRetentionLabel(siteContext, searchResult.ListId, searchResult.ListItemId);
+                            };
+
+                            if(retentionLabelValidated)
+                            {
+                                // Replace SharePoint file with new pdf
+                                var currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain,
+                                    searchResult.SiteId,
+                                    searchResult.WebId,
+                                    searchResult.ListId,
+                                    searchResult.ListItemId,
+                                    pdf);
+
+                                //// Update item with status scanned
+                                if (currentDriveItem != null)
+                                {
+                                    var fileMetadata = new Dictionary<string, object>
                                 {
                                     { "LRMDummyUpdated", true }
                                 };
-                                await _graphService.SetMetadataByGraphAsync(fileMetadata, searchResult.SiteId, searchResult.ListId, searchResult.ListItemId);
+                                    await _graphService.SetMetadataByGraphAsync(fileMetadata, searchResult.SiteId, searchResult.ListId, searchResult.ListItemId);
 
-                                Global.Log.LogInformation($"Setting metadata 'LRMDummyUpdated' eq true");
-                            }
+                                    Global.Log.LogInformation($"Setting metadata 'LRMDummyUpdated' eq true");
+                                }
+                            }                            
                         }
                         catch (Exception ex)
                         {
-                            Global.Log.LogError(ex, $"Error when updating document {searchResult.Name} Failed. {ex}");
+                            Global.Log.LogError(ex, "Error when updating document" + searchResult == null ? "" : searchResult.Name + "Failed. {ex}");
                         }
                     }
                 }

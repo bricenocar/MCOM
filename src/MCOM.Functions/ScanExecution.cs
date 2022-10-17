@@ -11,6 +11,9 @@ using MCOM.Models;
 using MCOM.Services;
 using MCOM.Utilities;
 using MCOM.Extensions;
+using Azure.Core;
+using Microsoft.SharePoint.Client.Search.Query;
+using Microsoft.SharePoint.Client;
 
 namespace MCOM.Functions
 {
@@ -101,22 +104,29 @@ namespace MCOM.Functions
                                     var originalFile = await _graphService.GetListItemAsync(Global.SharePointDomain, siteId, webId, listId, itemId);
                                     var originalFileExtension = Path.GetExtension(originalFile.WebUrl);
                                     var originalFileNameWithoutExtension = Path.GetFileNameWithoutExtension(originalFile.WebUrl);
+                                    Uri webUrl = null;
+
+                                    // Get access token
+                                    var sharePointUrl = new Uri(Global.SharePointUrl);
+                                    AccessToken accessToken = await _azureService.GetAzureServiceTokenAsync(sharePointUrl);
 
                                     // Check whether the file has been processed and got OrderNumber
                                     var isFileProcessed = originalFile.Fields.AdditionalData.TryGetValue(orderNumberField, out var orderNumber);
-
                                     if (!isFileProcessed)
                                     {
-                                        // Try finding the file in SharePoint based on Order Number                                  
-                                        var sharePointUrl = new Uri(Global.SharePointUrl);
-                                        var accessToken = await _azureService.GetAzureServiceTokenAsync(sharePointUrl);
+                                        // Try finding the file in SharePoint based on Order Number                                          
                                         using var clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
 
                                         // Search
-                                        var resultTable = _sharePointService.SearchItems(clientContext, $"{orderNumberField}:{blobFileNameWithoutExtension}");
+                                        ResultTable resultTable = _sharePointService.SearchItems(clientContext, $"{orderNumberField}:{blobFileNameWithoutExtension}");
 
                                         // Check if file has been processed
                                         isFileProcessed = resultTable.RowCount > 0;
+
+                                        // Get webUrl
+                                        Uri fileUri = new Uri(originalFile.WebUrl);
+                                        webUrl = Web.WebUrlFromPageUrlDirect(clientContext, fileUri);
+
                                     }
 
                                     if (isFileProcessed)
@@ -136,8 +146,8 @@ namespace MCOM.Functions
 
                                         // Get updating flag to know whether the file is going to be created or updated in SharePoint
                                         var updatingFile = (blobFileExtension == originalFileExtension);
-
-                                        await CreateOrUpdateSharePointFileAsync(filesBlobClient, drive, fileMetaData, $"{originalFileNameWithoutExtension}{blobFileExtension}", siteId, webId, listId, itemId, updatingFile);
+                                        
+                                        await CreateOrUpdateSharePointFileAsync(filesBlobClient, drive, fileMetaData, $"{originalFileNameWithoutExtension}{blobFileExtension}", webUrl.ToString(), accessToken.Token, siteId, webId, listId, itemId, updatingFile);
                                     }
                                 }
                             }
@@ -158,7 +168,7 @@ namespace MCOM.Functions
             logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
         }
 
-        private async Task CreateOrUpdateSharePointFileAsync(BlobClient filesBlobClient, Drive drive, Dictionary<string, object> fileData, string blobName, string siteId, string webId, string listId, string itemId, bool updatingFile)
+        private async Task CreateOrUpdateSharePointFileAsync(BlobClient filesBlobClient, Drive drive, Dictionary<string, object> fileData, string blobName, string siteUrl, string accessToken, string siteId, string webId, string listId, string itemId, bool updatingFile)
         {
             // Max slice size must be a multiple of 320 KiB
             var maxSliceSize = 320 * 1024;
@@ -176,11 +186,22 @@ namespace MCOM.Functions
                     // Upload or update the file
                     if (updatingFile)
                     {
-                        // Get drive item after updating
-                        uploadResult = await _graphService.ReplaceLargeSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream, maxSliceSize, blobName, "replace");
+                        // Check if the file has a retention label applied
+                        Global.Log.LogInformation($"Validating retention label. Site url: {siteUrl}");
+                        bool retentionLabelValidated = false;
+                        using (var siteContext = _sharePointService.GetClientContext(siteUrl, accessToken))
+                        {
+                            retentionLabelValidated = _sharePointService.ValidateItemRetentionLabel(siteContext, listId, itemId);
+                        };
 
-                        // Remove file name from updating properties because we will reuse the same
-                        fileData.Remove("FileLeafRef");
+                        if(retentionLabelValidated)
+                        {
+                            // Get drive item after updating
+                            uploadResult = await _graphService.ReplaceLargeSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream, maxSliceSize, blobName, "replace");
+
+                            // Remove file name from updating properties because we will reuse the same
+                            fileData.Remove("FileLeafRef");
+                        }                        
                     }
                     else
                     {
@@ -223,21 +244,38 @@ namespace MCOM.Functions
 
                     if (updatingFile)
                     {
-                        currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream);
+                        // Check if the file has a retention label applied
+                        Global.Log.LogInformation($"Validating retention label. Site url: {siteUrl}");
+                        bool retentionLabelValidated = false;
+                        using (var siteContext = _sharePointService.GetClientContext(siteUrl, accessToken))
+                        {
+                            retentionLabelValidated = _sharePointService.ValidateItemRetentionLabel(siteContext, listId, itemId);
+                        };
 
-                        // Remove file name from updating properties because we will reuse the same
-                        fileData.Remove("FileLeafRef");
+                        if (retentionLabelValidated)
+                        {
+                            currentDriveItem = await _graphService.ReplaceSharePointFileContentAsync(Global.SharePointDomain, siteId, webId, listId, itemId, filesBlobStream);
+
+                            // Remove file name from updating properties because we will reuse the same
+                            fileData.Remove("FileLeafRef");
+                        }
                     }
                     else
                     {
                         currentDriveItem = await _graphService.UploadSharePointFileAsync(Global.SharePointDomain, siteId, webId, listId, blobName, filesBlobStream);
                     }
 
-                    // Get SharePoint list item based on the drive item id
-                    var uploadedListItem = await _graphService.GetListItemAsync(drive.Id, currentDriveItem.Id);
+                    if (currentDriveItem != null)
+                    {
+                        // Get SharePoint list item based on the drive item id
+                        var uploadedListItem = await _graphService.GetListItemAsync(drive.Id, currentDriveItem.Id);
 
-                    // Set metdata on the newly created list item
-                    await _graphService.SetMetadataByGraphAsync(fileData, siteId, listId, uploadedListItem.Id);
+                        // Set metdata on the newly created list item
+                        await _graphService.SetMetadataByGraphAsync(fileData, siteId, listId, uploadedListItem.Id);
+                    } else
+                    {
+                        Global.Log.LogError(new FileLoadException(), "Error when Uploading/Replacing blobName: {BlobName} in drive: {DriveId}", blobName, drive.Id);
+                    }
                 }
                 catch (Exception uploadSmallFileEx)
                 {
