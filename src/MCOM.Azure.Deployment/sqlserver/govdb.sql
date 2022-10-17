@@ -104,7 +104,7 @@ BEGIN
 			SET datescanned = @pScannedDate,
 				size = @pSize,
 				filename =	@pFileName
-			WHERE @pRequestId = @pRequestId
+			WHERE requestId = @pRequestId
 
 			IF @@rowcount = 0
 				INSERT INTO dbo.MCOMScanExecution (RequestId, datescanned, size, filename)

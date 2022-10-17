@@ -268,9 +268,9 @@
                                     "type": "ApiConnection",
                                     "inputs": {
                                         "body": {
-                                            "Body": "<p>Hi Iron Mountain Vestby,<br>\n<br>\nEquinor request for scan of archived document.<br>\nOrder number: @{items('For_each')?['ordernumber']}<br>\n<br>\nPlease scan this document and upload to sftp site. (Remember to set the filename with the order number, for example: 782e0bcc-a0a5-40f4-ad74-973355011da8.pdf, the file is needed in PDF format).<br>\n<br>\nStorage information:<br>\nPhysical Location: @{body('Parse_JSON')?['LRMPhysicalLocation']}<br>\nStorage ID: @{body('Parse_JSON')?['LRMStorageID']}<br>\n<br>\nDocument information<br>\nMedia type: @{body('Parse_JSON')?['LRMMediaType']}<br>\nFilename: @{items('For_each')?['documentname']}<br>\nTitle: @{body('Parse_JSON')?['Title']}<br>\nAuthors: @{body('Parse_JSON')?['LRMAlternateAuthor']}<br>\nCreation Date: @{body('Parse_JSON')?['Created']}<br>\nRegistration Date: @{body('Parse_JSON')?['LRMArchivedDate']}<br>\nRecord Notes:@{body('Parse_JSON')?['_Comments']}<br>\nDocument No: @{body('Parse_JSON')?['LRMDocumentNumber']}<br>\n<br>\nOur reference<br>\nWBS: @{items('For_each')?['wbs']}<br>\nCompany code: @{items('For_each')?['companycode']}<br>\nPriority: @{items('For_each')?['priority']}<br>\nRequester: @{items('For_each')?['businessunit']}<br>\nOwner: @{body('Get_Business_Area')?['Label']}<br>\nContainer: @{body('Parse_JSON')?['LRMOilDocfullpath']}<br>\nUnique Identifier: @{items('For_each')?['ordernumber']}<br>\nRecord URL: @{body('Parse_JSON')?['FilePath']}<br>\n<br>\nBest Regards,<br>\nEquinor Corporate Archival Team<br>\n</p>",
+                                            "Body": "<p>Hi Iron Mountain Vestby,<br>\n<br>\nEquinor request for scan of archived document.<br>\nOrder number: @{items('For_each')?['ordernumber']}<br>\n<br>\nPlease scan this document and upload to sftp site. (<strong>Remember to set the filename with the order number, for example: 782e0bcc-a0a5-40f4-ad74-973355011da8.pdf, the file is needed in PDF format</strong>).<br>\n<br>\nStorage information:<br>\nPhysical Location: @{body('Parse_JSON')?['LRMPhysicalLocation']}<br>\nStorage ID: @{body('Parse_JSON')?['LRMStorageID']}<br>\n<br>\nDocument information<br>\nMedia type: @{body('Parse_JSON')?['LRMMediaType']}<br>\nFilename: @{items('For_each')?['documentname']}<br>\nTitle: @{body('Parse_JSON')?['Title']}<br>\nAuthors: @{body('Parse_JSON')?['LRMAlternateAuthor']}<br>\nCreation Date: @{body('Parse_JSON')?['Created']}<br>\nRegistration Date: @{body('Parse_JSON')?['LRMArchivedDate']}<br>\nRecord Notes:@{body('Parse_JSON')?['_Comments']}<br>\nDocument No: @{body('Parse_JSON')?['LRMDocumentNumber']}<br>\n<br>\nOur reference<br>\nWBS: @{items('For_each')?['wbs']}<br>\nCompany code: @{items('For_each')?['companycode']}<br>\nPriority: @{items('For_each')?['priority']}<br>\nRequester: @{items('For_each')?['businessunit']}<br>\nOwner: @{body('Get_Business_Area')?['Label']}<br>\nContainer: @{body('Parse_JSON')?['LRMOilDocfullpath']}<br>\nUnique Identifier: @{items('For_each')?['ordernumber']}<br>\nRecord URL: @{body('Parse_JSON')?['FilePath']}<br>\n<br>\nBest Regards,<br>\nEquinor Corporate Archival Team<br>\n</p>",
                                             "Subject": "Bestillinger til Iron Mountain Vestby",
-                                            "To": "cabri@equinor.com"
+                                            "To": "[parameters('scanprovider_email')]"
                                         },
                                         "host": {
                                             "connection": {
@@ -488,8 +488,8 @@
                                             "Send_confirmation_to_creator": {
                                                 "inputs": {
                                                     "body": {
-                                                        "Body": "<p><span style=\"font-size: 18px\">Equinor</span><br>\n<br>\n<span style=\"font-size: 20px\">Your request with ID: </span><span style=\"font-size: 20px\">@{items('For_each_received_item')?['ordernumber']}</span><span style=\"font-size: 20px\"> has been successfully registered</span><br>\n<span style=\"font-size: 18px\">Request date: </span><span style=\"font-size: 18px\">@{formatDateTime(items('For_each_received_item')?['requestdate'], 'dd.MM.yyyy HH:mm:ss')}</span><span style=\"font-size: 18px\"><br>\nRequested by: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['requestername']}</span><span style=\"font-size: 18px\"><br>\nCreated by: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['creatorname']}</span><span style=\"font-size: 18px\"><br>\nDocument name: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['documentname']}</span><span style=\"font-size: 18px\"><br>\nWBS: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['wbs']}</span><span style=\"font-size: 18px\"><br>\nComments: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['comments']}</span><span style=\"font-size: 18px\"></span></p>",
-                                                        "Subject": "Scan on demand: your request for scan of file has been successfully registered",
+                                                        "Body": "<p><span style=\"font-size: 18px\">Equinor<br>\n<br>\nYour request with ID: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['ordernumber']}</span><span style=\"font-size: 18px\"> has been successfully scanned and updated<br>\nRequest date: </span><span style=\"font-size: 18px\">@{formatDateTime(items('For_each_received_item')?['requestdate'], 'dd.MM.yyyy HH:mm:ss')}</span><span style=\"font-size: 18px\"><br>\nDocument name: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['documentname']}</span><span style=\"font-size: 18px\"><br>\nWBS: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['wbs']}</span><span style=\"font-size: 18px\"><br>\nComments: </span><span style=\"font-size: 18px\">@{items('For_each_received_item')?['comments']}</span><span style=\"font-size: 18px\"><br>\nFile URL:&nbsp;</span><span style=\"font-size: 18px\">@{body('Parse_JSON')?['FilePath']}</span><span style=\"font-size: 18px\"></span></p>",
+                                                        "Subject": "Scan on demand: your request for scan of file has been executed and received",
                                                         "To": "@items('For_each_received_item')?['creator']"
                                                     },
                                                     "host": {
@@ -515,7 +515,11 @@
                                             }
                                         ]
                                     },
-                                    "runAfter": {},
+                                    "runAfter": {
+                                        "Parse_JSON": [
+                                            "Succeeded"
+                                        ]
+                                    },
                                     "type": "If"
                                 },
                                 "Parse_JSON": {
@@ -682,7 +686,7 @@
                                 },
                                 "Send_confirmation_to_requester": {
                                     "runAfter": {
-                                        "Parse_JSON": [
+                                        "Check_creator": [
                                             "Succeeded"
                                         ]
                                     },

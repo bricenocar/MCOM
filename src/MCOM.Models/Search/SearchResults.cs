@@ -11,6 +11,6 @@
         public bool PhysicalRecord { get; set; }
         public string PhysicalRecordStatus { get; set; }
         public string FileExtension { get; set; }
-        public string SitePath { get; set; }
+        public string SPWebUrl { get; set; }
     }
 }
