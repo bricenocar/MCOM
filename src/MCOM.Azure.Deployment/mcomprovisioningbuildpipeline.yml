@@ -4,7 +4,8 @@ trigger:
           - provisioning
   paths:
       include:
-          - src/*
+          - src/MCOM.Provisioning.Functions/*
+          - src/MCOM.Azure.Deployment/*
           
 pool:
   vmImage: 'windows-latest'
