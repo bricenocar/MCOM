@@ -4,7 +4,8 @@ trigger:
           - provisioning
   paths:
       include:
-          - src/*
+          - src/MCOM.Provisioning.Functions/*
+          - src/MCOM.Azure.Deployment/*
           
 pool:
   vmImage: 'windows-latest'
@@ -44,7 +45,7 @@ stages:
               displayName: 'Publish the project - $(buildConfiguration)'
               inputs:
                 command: 'publish'
-                projects: 'src/MCOM.ScanOnDemand.Functions/*.csproj'
+                projects: 'src/MCOM.Provisioning.Functions/*.csproj'
                 publishWebProjects: false
                 arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
                 zipAfterPublish: true
