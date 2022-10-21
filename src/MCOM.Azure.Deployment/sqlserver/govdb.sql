@@ -152,6 +152,7 @@ BEGIN
 END
 GO
 
+
 /****** Users and roles ******/
 CREATE USER [function-mcom-scanondemand-prod] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
 GO
