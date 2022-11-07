@@ -25,7 +25,6 @@ namespace MCOM.Provisioning.Functions
             response.WriteString("Welcome to Azure Functions!");
 
             return response;
-
         }
     }
 }
