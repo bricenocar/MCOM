@@ -32,8 +32,8 @@ steps:
     inputs:
       script: |
         echo Commit all changes
-          git config --global user.email "$(gitUserName)"
-          git config --global user.name "Automatic Build"
+          git config user.email "$(gitUserName)"
+          git config user.name "Automatic Build"
           git checkout provisioningservice
           git add --all
           git commit -m "Latest solution changes"
