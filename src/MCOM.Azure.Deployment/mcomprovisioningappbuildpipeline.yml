@@ -37,7 +37,7 @@ steps:
           git fetch
           git checkout $(gitBranch)
           git pull origin $(gitBranch)
-          git add -all
+          git add --all
           git commit -m "Latest solution changes"
           echo push code to the repo
           git push origin $(gitBranch)
