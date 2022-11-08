@@ -32,10 +32,10 @@ steps:
     inputs:
       script: |
         echo Commit all changes
-          git config user.mail "$(gitUserName)"
+          git config user.email "$(gitUserName)"
           git config user.name "Automatic Build"
           git checkout provisioningservice
-          git add -all
+          git add --all
           git commit -m "Latest solution changes"
           echo push code to the repo
           git push origin provisioningservice
