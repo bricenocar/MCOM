@@ -61,6 +61,13 @@
         "metadata": {
           "description": "Url to the SharePoint site where the function will have permissions to access"
         }
+      },
+      "mcomRG": {
+        "type": "string",
+        "defaultValue": "mcom",
+        "metadata": {
+          "description": "Name for default mcom rg"
+        }
       }
     },
     "variables": {
