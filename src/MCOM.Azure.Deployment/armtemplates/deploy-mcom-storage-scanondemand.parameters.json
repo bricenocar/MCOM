@@ -13,6 +13,9 @@
       },
       "storageAccountType" : {
         "value": "Standard_RAGRS"
+      },
+      "mcomRG": {
+        "value": "rg"
       }
     }
   }
