@@ -2,6 +2,10 @@ trigger:
   branches:
       include:
           - provisioningservice
+  paths:
+      include:
+          - src/MCOM.Provisioning.Functions/*
+          - src/MCOM.Azure.Deployment/*
           
 pool:
   vmImage: 'windows-latest'
