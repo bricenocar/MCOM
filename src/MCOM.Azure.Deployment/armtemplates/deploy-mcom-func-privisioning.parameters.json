@@ -19,6 +19,9 @@
       },
       "SharePointUrl": {
         "value": ""
+      },
+      "mcomRG": {
+        "value": "rg"
       }
     }
   }
