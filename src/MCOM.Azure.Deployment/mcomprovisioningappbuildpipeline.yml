@@ -32,4 +32,12 @@ steps:
     inputs:
       script: |
         echo Commit all changes
-          git status
+          git config user.mail "$(gitUserName)"
+          git config user.name "Automatic Build"
+          git fetch
+          git checkout $(gitBranch)
+          git pull origin $(gitBranch)
+          git add --all
+          git commit -m "Latest solution changes"
+          echo push code to the repo
+          git push origin $(gitBranch)
