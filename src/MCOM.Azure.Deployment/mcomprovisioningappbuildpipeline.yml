@@ -27,17 +27,4 @@ steps:
   - task: PowerPlatformUnpackSolution@2
     inputs:
       SolutionInputFile: '$(Build.ArtifactStagingDirectory)\Provisioning.zip'
-      SolutionTargetFolder: '$(Build.SourceDirectory)\src\MCOM.Provisioning.PowerPlatform\ProvisioningApp'      
-  - task: CmdLine@2
-    inputs:
-      script: |
-        echo Commit all changes
-          git config user.mail "$(gitUserName)"
-          git config user.name "Automatic Build"
-          git fetch
-          git checkout $(gitBranch)
-          git pull origin $(gitBranch)
-          git add --all
-          git commit -m "Latest solution changes"
-          echo push code to the repo
-          git push origin $(gitBranch)
+      SolutionTargetFolder: '$(Build.SourceDirectory)\src\MCOM.Provisioning.PowerPlatform\ProvisioningApp'
