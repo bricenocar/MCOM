@@ -24,7 +24,8 @@ steps:
       SolutionOutputFile: '$(Build.ArtifactStagingDirectory)\Provisioning.zip'
       AsyncOperation: true
       MaxAsyncWaitTime: '60'
-  - task: PowerPlatformUnpackSolution@2
+  - task: PublishBuildArtifacts@1
     inputs:
-      SolutionInputFile: '$(Build.ArtifactStagingDirectory)\Provisioning.zip'
-      SolutionTargetFolder: '$(Build.SourceDirectory)\src\MCOM.Provisioning.PowerPlatform\ProvisioningApp'
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'Provisioning.zip'
+      publishLocation: 'Container'
