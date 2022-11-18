@@ -307,7 +307,7 @@
                     "location": {
                         "type": "AzureBlobStorageLocation",
                         "folderPath": "metadata",
-                        "container": "gom"
+                        "container": "topsrv"
                     }
                 },
                 "schema": {}
@@ -1485,7 +1485,7 @@
                         "type": "ExecuteDataFlow",
                         "dependsOn": [
                             {
-                                "activity": "SetLibraryId",
+                                "activity": "Set DriveIds",
                                 "dependencyConditions": [
                                     "Succeeded"
                                 ]
@@ -1512,8 +1512,8 @@
                                         "value": "'@{'gom/files/'}'",
                                         "type": "Expression"
                                     },
-                                    "LibraryId": {
-                                        "value": "'@{variables('LibraryId')}'",
+                                    "DriveIds": {
+                                        "value": "'@{variables('LibraryIds')}'",
                                         "type": "Expression"
                                     }
                                 }
@@ -1526,7 +1526,7 @@
                         }
                     },
                     {
-                        "name": "GetDestinationLibraryId",
+                        "name": "GetLibraryIds",
                         "type": "AzureFunctionActivity",
                         "dependsOn": [],
                         "policy": {
@@ -1541,7 +1541,7 @@
                             "functionName": "GetDriveId",
                             "method": "POST",
                             "body": {
-                                "value": "@concat('{\"siteUrl\":\"',variables('SharePointSiteUrl'), '\",\"libraryName\":\"', formatDateTime(utcnow(), 'yyyy'), '\"}')",
+                                "value": "@concat('{\"siteUrl\":\"',variables('SharePointSiteUrl'), '\"}')",
                                 "type": "Expression"
                             }
                         },
@@ -1551,11 +1551,11 @@
                         }
                     },
                     {
-                        "name": "SetLibraryId",
+                        "name": "Set DriveIds",
                         "type": "SetVariable",
                         "dependsOn": [
                             {
-                                "activity": "GetDestinationLibraryId",
+                                "activity": "GetLibraryIds",
                                 "dependencyConditions": [
                                     "Succeeded"
                                 ]
@@ -1563,9 +1563,9 @@
                         ],
                         "userProperties": [],
                         "typeProperties": {
-                            "variableName": "LibraryId",
+                            "variableName": "LibraryIds",
                             "value": {
-                                "value": "@activity('GetDestinationLibraryId').output.DriveId",
+                                "value": "@string(activity('GetLibraryIds').output.DriveIds)",
                                 "type": "Expression"
                             }
                         }
@@ -1580,18 +1580,18 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "[parameters('SharePointUrlGOM')]"
+                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMGoMArchive"
                     },
                     "LibraryName": {
                         "type": "String",
                         "defaultValue": "Documents"
                     },
-                    "LibraryId": {
+                    "LibraryIds": {
                         "type": "String"
                     }
                 },
                 "annotations": [],
-                "lastPublishTime": "2021-12-06T14:42:12Z"
+                "lastPublishTime": "2022-11-16T13:09:22Z"
             },
             "dependsOn": [
                 "[variables('factoryId')]",
@@ -2658,9 +2658,15 @@
                         },
                         {
                             "name": "SharePointFieldMapping"
+                        },
+                        {
+                            "name": "ParsedriveIds"
+                        },
+                        {
+                            "name": "GetDriveId"
                         }
                     ],
-                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tLibraryId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\trowUrlColumn: 'TempDataFile',\n\tdocumentForm: 'singleDocument') ~> gomfilesource\nSharePointFieldMapping derive(each(match(instr(name,'date')>0), $$ = toString(toDate(toString($$), 'yyyy-MM-dd'), 'MM/dd/yyyy HH:mm:ss')),\n\t\tdriveid = $LibraryId,\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tDestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tTitle = Filename,\n\t\tusecsom = false(),\n\t\tdocumentIdField = 'LRMHPECMRecordID') ~> DataTransformation\ngomfilesource derive(Filename = toString(byName('Filename')),\n\t\tSource = toString(byName('Source')),\n\t\tgom_document_id = toString(byName('gom_document_id')),\n\t\tgom_document_number = toString(byName('gom_document_number')),\n\t\tgom_document_name = toString(byName('gom_document_name')),\n\t\tgom_origunal_file_name = toString(byName('gom_origunal_file_name')),\n\t\tgom_issue_date = toString(byName('gom_issue_date')),\n\t\tgom_issued_by = toString(byName('gom_issued_by')),\n\t\tgom_commodity_type = toString(byName('gom_commodity_type')),\n\t\tgom_activity_start_date = toString(byName('gom_activity_start_date')),\n\t\tgom_activity_end_date = toString(byName('gom_activity_end_date')),\n\t\tdocumentId = toString(byName('documentId'))) ~> DynamicFetchData\nDynamicFetchData select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMMessageDirection = gom_document_id,\n\t\tLRMLoggerId = gom_document_name,\n\t\tLRMPartner = gom_origunal_file_name,\n\t\tLRMPublished = gom_issue_date,\n\t\tLRMHPECMRecordID = documentId\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SharePointFieldMapping\nDataTransformation sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> gomfiledestination"
+                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tDriveIds as string\n}\nsource(output(\n\t\tFilename as string,\n\t\tSource as string,\n\t\tdocumentId as string,\n\t\tgom_activity_end_date as date,\n\t\tgom_activity_start_date as date,\n\t\tgom_commodity_type as string,\n\t\tgom_document_id as string,\n\t\tgom_document_name as string,\n\t\tgom_document_number as short,\n\t\tgom_issue_date as date,\n\t\tgom_issued_by as string,\n\t\tgom_issued_to as string,\n\t\tgom_original_file_name as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\trowUrlColumn: 'TempDataFile',\n\tdocumentForm: 'singleDocument') ~> gomfilesource\nSharePointFieldMapping derive(each(match(instr(name,'date')>0), $$ = toString(toDate(toString($$), 'yyyy-MM-dd'), 'MM/dd/yyyy HH:mm:ss')),\n\t\tTempFileLocation = concat($TempFileLocation, LRMDocumentId),\n\t\tDestFilename = concat(LRMDocumentId, '.json'),\n\t\tTitle = Filename,\n\t\tusecsom = false(),\n\t\tdocumentIdField = 'LRMDocumentId') ~> DataTransformation\ngomfilesource derive(Filename = toString(byName('Filename')),\n\t\tSource = toString(byName('Source')),\n\t\ttops_rv_document_id = toString(byName('tops_rv_document_id')),\n\t\ttops_rv_document_number = toString(byName('tops_rv_document_number')),\n\t\ttops_rv_document_name = toString(byName('tops_rv_document_name')),\n\t\ttops_rv_original_file_name = toString(byName('tops_rv_original_file_name')),\n\t\ttops_rv_issue_date = toDate(byName('tops_rv_issue_date')),\n\t\ttops_rv_issued_by = toString(byName('tops_rv_issued_by')),\n\t\ttops_rv_commodity_type = toString(byName('tops_rv_commodity_type')),\n\t\ttops_rv_activity_period_start_date = toDate(byName('tops_rv_activity_period_start_date')),\n\t\ttops_rv_activity_period_end_date = toDate(byName('tops_rv_activity_period_end_date')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\ttops_rv_document_type = toString(byName('tops_rv_document_type')),\n\t\ttops_rv_document_status = toString(byName('tops_rv_document_status')),\n\t\ttops_rv_asset_area = toString(byName('tops_rv_asset_area')),\n\t\ttops_rv_issued_to = toString(byName('tops_rv_issued_to')),\n\t\tgom_document_id = toString(byName('gom_document_id')),\n\t\tgom_document_number = toString(byName('gom_document_number')),\n\t\tgom_document_name = toString(byName('gom_document_name')),\n\t\tgom_original_file_name = toString(byName('gom_original_file_name')),\n\t\tgom_issue_date = toString(byName('gom_issue_date')),\n\t\tgom_issued_by = toString(byName('gom_issued_by')),\n\t\tgom_commodity_type = toString(byName('gom_commodity_type')),\n\t\tgom_activity_period_start_date = toDate(byName('gom_activity_period_start_date')),\n\t\tgom_activity_period_end_date = toString(byName('gom_activity_period_end_date'))) ~> DynamicFetchData\nGetDriveId select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMGOMDocumentId = tops_rv_document_id,\n\t\tLRMDocumentNumber = tops_rv_document_number,\n\t\tLRMGOMDocumentName = tops_rv_document_name,\n\t\tLRMGOMOriginalFileName = tops_rv_original_file_name,\n\t\tLRMGOMIssueDate = tops_rv_issue_date,\n\t\tLRMGOMIssuedBy = tops_rv_issued_by,\n\t\tLRMGOMCommodityType = tops_rv_commodity_type,\n\t\tLRMGOMActivityStartDate = tops_rv_activity_period_start_date,\n\t\tLRMGOMActivityEndDate = tops_rv_activity_period_end_date,\n\t\tLRMGOMDocumentType = tops_rv_document_type,\n\t\tLRMGOMDocumentStatus = tops_rv_document_status,\n\t\tLRMGOMAssetArea = tops_rv_asset_area,\n\t\tLRMGOMIssuedTo = tops_rv_issued_to,\n\t\tLRMGOMDocumentId = tops_rv_document_id,\n\t\tLRMDocumentId = documentId,\n\t\tdriveId = driveIdObject.Id\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SharePointFieldMapping\nDynamicFetchData parse(driveIdData = $DriveIds ? (Id as string,\n\t\tUrl as string,\n\t\tName as string)[],\n\tformat: 'json',\n\tdocumentForm: 'arrayOfDocuments') ~> ParsedriveIds\nParsedriveIds derive(driveIdObject = find(driveIdData, #item.Name==toString(year(tops_rv_activity_period_start_date)))) ~> GetDriveId\nDataTransformation sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> gomfiledestination"
                 }
             },
             "dependsOn": [
@@ -3270,7 +3276,7 @@
             ]
         },
         {
-            "name": "[concat(variables('dataFactoryName'), '/GoM Trigger')]",
+            "name": "[concat(variables('dataFactoryName'), '/GoM Window Trigger')]",
             "type": "Microsoft.DataFactory/factories/triggers",
             "apiVersion": "2018-06-01",
             "properties": {
@@ -3282,14 +3288,14 @@
                         "type": "PipelineReference"
                     },
                     "parameters": {
-                        "SourceContainer": "gom"
+                        "SourceContainer": "topsrv"
                     }
                 },
                 "type": "TumblingWindowTrigger",
                 "typeProperties": {
                     "frequency": "Minute",
-                    "interval": 60,
-                    "startTime": "2021-12-07T11:48:00Z",
+                    "interval": 5,
+                    "startTime": "2022-11-18T07:43:00Z",
                     "delay": "00:00:00",
                     "maxConcurrency": 50,
                     "retryPolicy": {
