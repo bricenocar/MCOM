@@ -68,7 +68,7 @@ namespace MCOM.Functions
                 string documentId = query.Keys.Contains("documentId") ? query["documentId"] : data?.documentId;
                 string driveId = query.Keys.Contains("driveId") ? query["driveId"] : data?.driveId;
                 string documentIdField = query.Keys.Contains("documentIdField") ? query["documentIdField"] : data?.documentIdField;
-                documentIdField = string.IsNullOrEmpty(documentIdField) ? "LRMHPECMRecordID" : documentIdField;
+                documentIdField = string.IsNullOrEmpty(documentIdField) ? "HPECMRecordID" : documentIdField;
 
                 // Validate mandatory values in body
                 if (string.IsNullOrEmpty(documentId) || string.IsNullOrEmpty(documentIdField))
@@ -161,7 +161,7 @@ namespace MCOM.Functions
                     using ClientContext clientContext = _sharePointService.GetClientContext(Global.SharePointUrl, accessToken.Token);
 
                     // Get file from search first, if not found, try with graph
-                    response = SearchArchivedFile(req, clientContext, documentId, accessToken.Token);
+                    response = SearchArchivedFile(req, clientContext, documentIdField, documentId, accessToken.Token);
                     if(response.StatusCode != HttpStatusCode.OK)
                     {
                         // Check presence of drive Id in the request
@@ -205,13 +205,13 @@ namespace MCOM.Functions
             }
         }
 
-        private HttpResponseData SearchArchivedFile(HttpRequestData req, ClientContext clientContext, string documentId, string token)
+        private HttpResponseData SearchArchivedFile(HttpRequestData req, ClientContext clientContext, string documentIdField,string documentId, string token)
         {            
             HttpResponseData response;
             try
             {
                 // Get events
-                var table = _sharePointService.SearchItems(clientContext, $"HPECMRecordID:{documentId}");
+                var table = _sharePointService.SearchItems(clientContext, $"{documentIdField}:{documentId}");
                 if (table.RowCount == 0)
                 {
                     response = req.CreateResponse(HttpStatusCode.NotFound);
