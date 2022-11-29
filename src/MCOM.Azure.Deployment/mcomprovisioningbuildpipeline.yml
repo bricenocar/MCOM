@@ -1,7 +1,7 @@
 trigger:
   branches:
       include:
-          - provisioningservice
+          - refs/heads/provisioningservice
   paths:
       include:
           - src/MCOM.Provisioning.Functions/*
