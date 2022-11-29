@@ -6,7 +6,7 @@
 trigger:
   branches:
       include:
-          - refs/heads/master
+          - master
   paths:
       include:
           - src/MCOM.PerformanceTests
