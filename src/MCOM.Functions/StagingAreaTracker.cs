@@ -155,7 +155,7 @@ namespace MCOM.Functions
                         // Get metadataprocessed container and blobCLient                          
                         var metadataprocessedBlobClient = _blobService.GetBlobClient(filesContainerClient, $"metadataprocessed/{fileData.DocumentId}.json");
 
-                        bool found = SearchArchivedFile(clientContext, fileData.DocumentId);
+                        bool found = SearchArchivedFile(clientContext, fileData.DocumentIdField, fileData.DocumentId);
 
                         if (!found)
                         {
@@ -429,13 +429,14 @@ namespace MCOM.Functions
             }
         }
 
-        private bool SearchArchivedFile(ClientContext clientContext, string documentId)
+        private bool SearchArchivedFile(ClientContext clientContext, string documentIdField, string documentId)
         {
             bool response = false;
+            var validatedDocField = string.IsNullOrEmpty(documentIdField) ? "HPECMRecordID" : documentIdField.Equals("LRMHPECMRecordID") ? "HPECMRecordID" : documentIdField;
             try
             {
                 // Get events
-                var table = _sharePointService.SearchItems(clientContext, $"HPECMRecordID:{documentId}");
+                var table = _sharePointService.SearchItems(clientContext, $"{validatedDocField}:{documentId}");
                 if (table.RowCount == 0)
                 {
                     var msg = "Could not find file in SharePoint indexed. Trying again in next round";

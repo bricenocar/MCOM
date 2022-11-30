@@ -168,9 +168,9 @@ namespace MCOM.ScanOnDemand.Functions
                                 if (currentDriveItem != null)
                                 {
                                     var fileMetadata = new Dictionary<string, object>
-                                {
-                                    { "LRMDummyUpdated", true }
-                                };
+                                    {
+                                        { "LRMDummyUpdated", true }
+                                    };
                                     await _graphService.SetMetadataByGraphAsync(fileMetadata, searchResult.SiteId, searchResult.ListId, searchResult.ListItemId);
 
                                     Global.Log.LogInformation($"Setting metadata 'LRMDummyUpdated' eq true");

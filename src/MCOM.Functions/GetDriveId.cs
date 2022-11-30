@@ -57,7 +57,7 @@ namespace MCOM.Functions
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetDriveId", "Archiving"))
             {
                 HttpResponseData response = null;
-                if (string.IsNullOrEmpty(siteUrl) || string.IsNullOrEmpty(libraryName))
+                if (string.IsNullOrEmpty(siteUrl))
                 {
                     Global.Log.LogError(new NullReferenceException(), "Request is missing mandatory parameter for siteUrl or libraryName");
                     response = req.CreateResponse(HttpStatusCode.BadRequest);
@@ -71,14 +71,24 @@ namespace MCOM.Functions
                 try
                 {
                     var drives = await _graphService.GetDriveCollectionPageAsync(uri);
-                    var drive = drives.FirstOrDefault(d => d.Name.Equals(libraryName, StringComparison.InvariantCultureIgnoreCase));
-                    if (drive != null)
+                    if (string.IsNullOrEmpty(libraryName))
                     {
-                        Global.Log.LogInformation("Drive id [{DriveID}] found for {LibraryUrl}", drive.Id, drive.WebUrl);
+                        var returnValue = drives.Select(item => new { Id = item.Id, Url = item.WebUrl, Name = item.Name }).ToList();
+                        Global.Log.LogInformation("{LibraryCount} Drive ids found for {LibraryUrl}", drives.Count, siteUrl);
                         response = req.CreateResponse(HttpStatusCode.OK);
-                        response.WriteString(JsonConvert.SerializeObject(new { DriveId = drive.Id }));
-                        return response;
-                    }
+                        response.WriteString(JsonConvert.SerializeObject(new { DriveIds = returnValue }));
+                        return response;                        
+                    } else
+                    {
+                        var drive = drives.FirstOrDefault(d => d.Name.Equals(libraryName, StringComparison.InvariantCultureIgnoreCase));
+                        if (drive != null)
+                        {
+                            Global.Log.LogInformation("Drive id [{DriveID}] found for {LibraryUrl}", drive.Id, drive.WebUrl);
+                            response = req.CreateResponse(HttpStatusCode.OK);
+                            response.WriteString(JsonConvert.SerializeObject(new { DriveId = drive.Id }));
+                            return response;
+                        }
+                    }         
                 }
                 catch (Exception e)
                 {

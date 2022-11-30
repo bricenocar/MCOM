@@ -57,7 +57,7 @@
     },
     "gomcontainer": {
       "type": "string",
-      "defaultValue": "gom",
+      "defaultValue": "topsrv",
       "metadata": {
         "description": "Name for storage account"
       }

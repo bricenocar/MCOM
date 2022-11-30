@@ -1,0 +1,31 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+  - task: PowerPlatformToolInstaller@2
+    inputs:
+      DefaultVersion: true
+  - task: PowerPlatformSetSolutionVersion@2
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: 'Equinor - MCOM Deployment Apps - Dev'
+      SolutionName: 'mcom_Provisioning'
+      SolutionVersionNumber: '1.0.0.$(Build.BuildID)'
+  - task: PowerPlatformExportSolution@2
+    inputs:
+      authenticationType: 'PowerPlatformSPN'
+      PowerPlatformSPN: 'Equinor - MCOM Deployment Apps - Dev'
+      SolutionName: 'mcom_Provisioning'
+      SolutionOutputFile: '$(Build.ArtifactStagingDirectory)\Provisioning.zip'
+      AsyncOperation: true
+      MaxAsyncWaitTime: '60'
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'Provisioning'
+      publishLocation: 'Container' 
