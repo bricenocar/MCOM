@@ -54,7 +54,11 @@ Write-Host "##[debug]Location of function app parameters file: $funcParametersFi
 # Initialize variables to use
 $today = Get-Date -Format "ddMMyy-HHmm"
 $DeploymentName = "mcom-$Environment-$today"
-$SharePointUrl = "https://statoilsrm.sharepoint.com/"
+if ($Environment -eq "prod") {
+    $SharePointUrl = "https://statoilsrm.sharepoint.com/"
+} else {
+    $SharePointUrl = "https://statoilintegrationtest.sharepoint.com/"
+}
 
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
