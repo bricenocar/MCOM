@@ -28,4 +28,4 @@ steps:
     inputs:
       PathtoPublish: '$(Build.ArtifactStagingDirectory)'
       ArtifactName: 'Provisioning'
-      publishLocation: 'Container'
+      publishLocation: 'Container' 
