@@ -1,7 +1,7 @@
 trigger:
   branches:
       include:
-          - refs/heads/scanondemand
+          - scanondemand
   paths:
       include:
           - src/*
