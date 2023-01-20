@@ -8,7 +8,6 @@ Param(
 )
 
 Write-Host "##[group]Initializing variables and configurations"
-
 # Initialize resource group name based on environment
 $RGName = "$ResourceGroupName-provisioning-$Environment"
 $mcomRGName = "$ResourceGroupName-$Environment"
