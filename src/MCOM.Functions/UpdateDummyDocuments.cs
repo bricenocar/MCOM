@@ -5,7 +5,6 @@ using MCOM.Services;
 using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using Microsoft.Graph;
 using Newtonsoft.Json;
 using SelectPdf;
 using System;
