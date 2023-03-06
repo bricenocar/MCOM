@@ -8,7 +8,7 @@ namespace MCOM.Utilities
     public class StringUtilities
     {
         public static string RemoveSpecialChars(string str)
-        {
+        {           
             // Create  a string array and add the special characters you want to remove
             var chars = new string[] { "~", "#", "%", "&", "*", ":", "<", ">", "?", "/", "\\", "{", "|", "}", "\"" };
 
