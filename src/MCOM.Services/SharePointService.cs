@@ -18,6 +18,8 @@ namespace MCOM.Services
         ListItemCollection GetListItems(ClientContext clientContext, List list, CamlQuery query);
         ListItem GetListItemByUniqueId(ClientContext clientContext, List list, Guid uniqueId);
         ListItem GetListItemById(ClientContext clientContext, List list, int id);
+        void SetListItemMetadata(ListItem listItem, Dictionary<string, object> fieldValues);
+        void UpdateListItem(ListItem listItem, bool systemUpdate = false);
         string GetListItemRetentionLabel(ClientContext clientContext, Guid list, int id);
         bool SetListItemRetentionLabel(ClientContext clientContext, Guid listId, int id, string label);
         bool ValidateItemRetentionLabel(ClientContext siteContext, string listId, string listItemId);
@@ -39,6 +41,7 @@ namespace MCOM.Services
     public class SharePointService : ISharePointService
     {
         #region Context, Load and Execution
+
         public virtual ClientContext GetClientContext(string webUrl, string token)
         {
             var clientContext = new ClientContext(webUrl);
@@ -58,6 +61,7 @@ namespace MCOM.Services
         {
             clientContext.ExecuteQuery();
         }
+
         #endregion
 
         #region Site, List and Items        
@@ -80,6 +84,26 @@ namespace MCOM.Services
         public virtual ListItem GetListItemById(ClientContext clientContext, List list, int id)
         {
             return list.GetItemById(id);
+        }
+
+        public virtual void SetListItemMetadata(ListItem listItem, Dictionary<string, object> fieldValues)
+        {
+            foreach (var fieldValue in fieldValues)
+            {
+                listItem[fieldValue.Key] = fieldValue.Value;
+            }
+        }
+
+        public virtual void UpdateListItem(ListItem listItem, bool systemUpdate = false)
+        {
+            if (systemUpdate)
+            {
+                listItem.SystemUpdate();
+            }
+            else
+            {
+                listItem.Update();
+            }
         }
 
         public virtual string GetListItemRetentionLabel(ClientContext clientContext, Guid listId, int id)
@@ -150,6 +174,7 @@ namespace MCOM.Services
         {
             return listItemCollection.ToList();
         }
+
         #endregion
 
         #region Search
@@ -239,6 +264,7 @@ namespace MCOM.Services
         #endregion
 
         #region Taxonomy
+
         public virtual TaxonomySession GetTaxonomySession(ClientContext clientContext)
         {
             return TaxonomySession.GetTaxonomySession(clientContext);
@@ -277,6 +303,7 @@ namespace MCOM.Services
                 TrimUnavailable = false,
             };
         }
+
         #endregion       
     }
 }
