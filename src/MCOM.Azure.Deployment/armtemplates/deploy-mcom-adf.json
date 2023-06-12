@@ -445,7 +445,7 @@
                 "typeProperties": {
                     "location": {
                         "type": "SftpLocation",
-                        "folderPath": "/download"
+                        "folderPath": "upload/download"
                     }
                 }
             }
@@ -473,7 +473,7 @@
                             "value": "@dataset().FileName",
                             "type": "Expression"
                         },
-                        "folderPath": "/download"
+                        "folderPath": "upload/download"
                     }
                 }
             }
@@ -2180,7 +2180,7 @@
                                     },
                                     "userProperties": [],
                                     "typeProperties": {
-                                        "storedProcedureName": "[[dbo].[upsert_scanexecution]",
+                                        "storedProcedureName": "[dbo].[upsert_scanexecution]",
                                         "storedProcedureParameters": {
                                             "pFileName": {
                                                 "value": {
@@ -2290,8 +2290,8 @@
                                                         }
                                                     },
                                                     {
-                                                        "name": "LRMPhysicalRecordStatus",
-                                                        "value": "Scanned"
+                                                        "name": "LRMPhysicalRecordStatus0",
+                                                        "value": "42|Scanned but not shredded|5f14167c-91e8-4f4b-93a3-042efe60c16b"
                                                     },
                                                     {
                                                         "name": "FileLeafRef",
@@ -2385,7 +2385,7 @@
                     }
                 ],
                 "annotations": [],
-                "lastPublishTime": "2022-05-18T13:39:03Z"
+                "lastPublishTime": "2023-05-24T08:25:30Z"
             },
             "dependsOn": [
                 "[variables('factoryId')]",
