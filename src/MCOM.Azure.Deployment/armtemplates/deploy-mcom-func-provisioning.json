@@ -71,7 +71,7 @@
       }
     },
     "variables": {
-      "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provisioningfunc', parameters('environment'))]",
+      "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provisfunc', parameters('environment'))]",
       "stagingareaStorageAccountName": "[concat(parameters('storageAccountName'), 'stgarea', parameters('environment'))]",
       "functionAppName": "[concat(parameters('appName'), '-provisioning-', parameters('environment'))]",
       "hostingPlanName": "[concat(parameters('appServicePlanName'), '-provisioning-', parameters('environment'))]",
