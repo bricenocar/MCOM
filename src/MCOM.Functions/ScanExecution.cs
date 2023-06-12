@@ -14,6 +14,7 @@ using MCOM.Extensions;
 using Azure.Core;
 using Microsoft.SharePoint.Client.Search.Query;
 using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.Client.Taxonomy;
 
 namespace MCOM.Functions
 {
@@ -190,7 +191,7 @@ namespace MCOM.Functions
                         bool retentionLabelValidated = false;
 
                         // Open client context and validate retention label
-                        var clientContext = _sharePointService.GetClientContext(siteUrl, accessToken);                        
+                        var clientContext = _sharePointService.GetClientContext(siteUrl, accessToken);
                         retentionLabelValidated = _sharePointService.ValidateItemRetentionLabel(clientContext, listId, itemId);
 
                         if (retentionLabelValidated)
@@ -219,16 +220,19 @@ namespace MCOM.Functions
                         // Set metdata on the newly created list item
                         // await _graphService.SetMetadataByGraphAsync(fileData, siteId, listId, uploadedListItem.Id);
                         using var clientContext = _sharePointService.GetClientContext(siteUrl, accessToken);
-                        
+
                         // Get list and item
                         var list = _sharePointService.GetListById(clientContext, new Guid(listId));
                         var listItem = _sharePointService.GetListItemById(clientContext, list, Convert.ToInt32(uploadedListItem.Id));
+                        var fields = _sharePointService.GetListFields(list);
 
                         // Load item in context
                         _sharePointService.Load(clientContext, listItem);
+                        _sharePointService.Load(clientContext, fields);
+                        _sharePointService.ExecuteQuery(clientContext);
 
                         // Update item
-                        _sharePointService.SetListItemMetadata(listItem, fileData);
+                        _sharePointService.SetListItemMetadata(clientContext, listItem, fields, fileData);
                         _sharePointService.UpdateListItem(listItem, true);
 
                         // Excecute query
@@ -261,7 +265,7 @@ namespace MCOM.Functions
                         // Check if the file has a retention label applied
                         Global.Log.LogInformation($"Validating retention label. Site url: {siteUrl}");
                         bool retentionLabelValidated = false;
-                        var clientContext = _sharePointService.GetClientContext(siteUrl, accessToken);                        
+                        var clientContext = _sharePointService.GetClientContext(siteUrl, accessToken);
                         retentionLabelValidated = _sharePointService.ValidateItemRetentionLabel(clientContext, listId, itemId);
 
                         if (retentionLabelValidated)
