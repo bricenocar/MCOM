@@ -193,7 +193,7 @@ namespace MCOM.Services
                 clientContext.ExecuteQuery();
 
                 item.SetComplianceTag(label, false, false, false, false, false);
-                item.Update();
+                item.SystemUpdate();
                 clientContext.ExecuteQuery();
 
                 result = true;
