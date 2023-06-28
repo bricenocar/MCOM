@@ -367,6 +367,31 @@
             ]
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/gasopsdc_metadata_dataset')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Staging area",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "folderPath": "metadata",
+                        "container": "gasopsdc"
+                    }
+                },
+                "schema": {}
+            },            
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/linkedServices/Staging area')]"
+            ]        
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/gasops_output_metadata_dataset')]",
             "type": "Microsoft.DataFactory/factories/datasets",
             "apiVersion": "2018-06-01",
@@ -1462,6 +1487,138 @@
                 "[concat(variables('factoryId'), '/dataflows/ProcessGasOpsData')]",
                 "[concat(variables('factoryId'), '/integrationRuntimes/GasOpsIR')]"
             ]
+        },
+        {
+            "name": "[concat(variables('dataFactoryName'), '/GasOps Pipeline B2B DC')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Process GasOps data",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [
+                            {
+                                "activity": "SetLibraryId",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "1.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "ProcessGasOpsDCData",
+                                "type": "DataFlowReference",
+                                "parameters": {
+                                    "SharePointSiteUrl": {
+                                        "value": "'@{variables('SharePointSiteUrl')}'",
+                                        "type": "Expression"
+                                    },
+                                    "TempFileLocation": {
+                                        "value": "'@{'gasopsdc/files/'}'",
+                                        "type": "Expression"
+                                    },
+                                    "LibraryId": {
+                                        "value": "'@{variables('LibraryId')}'",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "integrationRuntime": {
+                                "referenceName": "GasOpsIR",
+                                "type": "IntegrationRuntimeReference"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    },
+                    {
+                        "name": "GetDestinationLibraryId",
+                        "type": "AzureFunctionActivity",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "functionName": "GetDriveId",
+                            "method": "POST",
+                            "body": {
+                                "value": "@concat('{\"siteUrl\":\"',variables('SharePointSiteUrl'), '\",\"libraryName\":\"', formatDateTime(utcnow(), 'yyyy'), ' Gas', '\"}')",
+                                "type": "Expression"
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "MCOMFunctions",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "SetLibraryId",
+                        "type": "SetVariable",
+                        "dependsOn": [
+                            {
+                                "activity": "GetDestinationLibraryId",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "variableName": "LibraryId",
+                            "value": {
+                                "value": "@activity('GetDestinationLibraryId').output.DriveId",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ],
+                "parameters": {
+                    "SourceContainer": {
+                        "type": "string",
+                        "defaultValue": "gasops"
+                    }
+                },
+                "variables": {
+                    "SharePointSiteUrl": {
+                        "type": "String",
+                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/B2BGasOps"
+                    },
+                    "LibraryName": {
+                        "type": "String",
+                        "defaultValue": "Documents"
+                    },
+                    "LibraryId": {
+                        "type": "String"
+                    }
+                },
+                "annotations": [],
+                "lastPublishTime": "2023-04-19T07:53:49Z"
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/dataflows/ProcessGasOpsDCData')]",
+                "[concat(variables('factoryId'), '/integrationRuntimes/GasOpsIR')]"
+            ]
+           
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/GoM Pipeline')]",
@@ -2613,6 +2770,52 @@
             ]
         },
         {
+            "name": "[concat(variables('dataFactoryName'), '/ProcessGasOpsDCData')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "gasopsdc_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "name": "gasopsfilesource"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "gasops_output_metadata_dataset",
+                                "type": "DatasetReference"
+                            },
+                            "name": "gasopsfiledestination"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "DataTransformation"
+                        },
+                        {
+                            "name": "DynamicFetchData",
+                            "description": "Creates an explicit mapping for each drifted column"
+                        },
+                        {
+                            "name": "SharePointFieldMapping"
+                        }
+                    ],
+                    "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tLibraryId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\trowUrlColumn: 'TempDataFile',\n\tdocumentForm: 'singleDocument') ~> gasopsfilesource\nSharePointFieldMapping derive(each(match(instr(name,'date')>0), $$ = toString(toDate(toString($$), 'yyyy-MM-dd'), 'MM/dd/yyyy HH:mm:ss')),\n\t\tdriveid = $LibraryId,\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tDestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tFilename = concat(LRMHPECMRecordID,'_',Filename),\n\t\tTitle = Filename,\n\t\tusecsom = false(),\n\t\tdocumentIdField = 'LRMHPECMRecordID',\n\t\tdocumentId = LRMHPECMRecordID) ~> DataTransformation\ngasopsfilesource derive(Filename = toString(byName('Filename')),\n\t\tSource = toString(byName('Source')),\n\t\tdirection = toString(byName('direction')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\tloggerId = toString(byName('loggerId')),\n\t\tpartner = toString(byName('partner')),\n\t\tpublisheddate = toString(byName('publisheddate'))) ~> DynamicFetchData\nDynamicFetchData select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMMessageDirection = direction,\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMLoggerId = loggerId,\n\t\tLRMPartner = partner,\n\t\tLRMPublished = publisheddate\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SharePointFieldMapping\nDataTransformation sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> gasopsfiledestination"
+                },
+                "dependsOn": [
+                    "[variables('factoryId')]",
+                    "[concat(variables('factoryId'), '/datasets/gasopsdc_metadata_dataset')]",
+                    "[concat(variables('factoryId'), '/datasets/gasops_output_metadata_dataset')]"
+                ]
+            }
+        },
+        {
             "name": "[concat(variables('dataFactoryName'), '/ProcessGoMData')]",
             "type": "Microsoft.DataFactory/factories/dataflows",
             "apiVersion": "2018-06-01",
@@ -3133,40 +3336,6 @@
             "dependsOn": [
                 "[variables('factoryId')]",
                 "[concat(variables('factoryId'), '/pipelines/ScanRequest Pipeline')]"
-            ]
-        },
-        {
-            "name": "[concat(variables('dataFactoryName'), '/DCF Blob trigger')]",
-            "type": "Microsoft.DataFactory/factories/triggers",
-            "apiVersion": "2018-06-01",
-            "properties": {
-                "annotations": [],
-                "runtimeState": "Started",
-                "pipelines": [
-                    {
-                        "pipelineReference": {
-                            "referenceName": "DCF Pipeline",
-                            "type": "PipelineReference"
-                        },
-                        "parameters": {
-                            "SourceContainer": "[parameters('triggerParam_SourceContainer')]",
-                            "SourceFileName": "[parameters('triggerParam_SourceFilename')]"
-                        }
-                    }
-                ],
-                "type": "BlobEventsTrigger",
-                "typeProperties": {
-                    "blobPathBeginsWith": "/dcf/blobs/files/",
-                    "ignoreEmptyBlobs": true,
-                    "scope": "[parameters('triggerScope')]",
-                    "events": [
-                        "Microsoft.Storage.BlobCreated"
-                    ]
-                }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]",
-                "[concat(variables('factoryId'), '/pipelines/DCF Pipeline')]"
             ]
         },
         {
