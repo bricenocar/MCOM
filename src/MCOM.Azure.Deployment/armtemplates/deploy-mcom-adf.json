@@ -2337,7 +2337,7 @@
                                     },
                                     "userProperties": [],
                                     "typeProperties": {
-                                        "storedProcedureName": "[dbo].[upsert_scanexecution]",
+                                        "storedProcedureName": "[[dbo].[upsert_scanexecution]",
                                         "storedProcedureParameters": {
                                             "pFileName": {
                                                 "value": {
@@ -3366,41 +3366,6 @@
                     }
                 }
             }
-        },
-        {
-            "name": "[concat(variables('dataFactoryName'), '/EDIBank Window Schedule')]",
-            "type": "Microsoft.DataFactory/factories/triggers",
-            "apiVersion": "2018-06-01",
-            "properties": {
-                "annotations": [],
-                "runtimeState": "Started",
-                "pipeline": {
-                    "pipelineReference": {
-                        "referenceName": "EdiBank Pipeline",
-                        "type": "PipelineReference"
-                    },
-                    "parameters": {
-                        "SourceContainer": "edibank"
-                    }
-                },
-                "type": "TumblingWindowTrigger",
-                "typeProperties": {
-                    "frequency": "Minute",
-                    "interval": 30,
-                    "startTime": "2021-11-16T14:08:00Z",
-                    "delay": "00:00:00",
-                    "maxConcurrency": 50,
-                    "retryPolicy": {
-                        "count": 3,
-                        "intervalInSeconds": 30
-                    },
-                    "dependsOn": []
-                }
-            },
-            "dependsOn": [
-                "[variables('factoryId')]",
-                "[concat(variables('factoryId'), '/pipelines/EdiBank Pipeline')]"
-            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/GasOps Window Schedule')]",
