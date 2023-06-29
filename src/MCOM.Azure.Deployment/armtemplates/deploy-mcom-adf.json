@@ -2807,13 +2807,13 @@
                         }
                     ],
                     "script": "parameters{\n\tSharePointSiteUrl as string,\n\tTempFileLocation as string,\n\tLibraryId as string\n}\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: true,\n\tmoveFiles: ['/metadata','metadataprocessed'],\n\trowUrlColumn: 'TempDataFile',\n\tdocumentForm: 'singleDocument') ~> gasopsfilesource\nSharePointFieldMapping derive(each(match(instr(name,'date')>0), $$ = toString(toDate(toString($$), 'yyyy-MM-dd'), 'MM/dd/yyyy HH:mm:ss')),\n\t\tdriveid = $LibraryId,\n\t\tTempFileLocation = concat($TempFileLocation, LRMHPECMRecordID),\n\t\tDestFilename = concat(LRMHPECMRecordID, '.json'),\n\t\tFilename = concat(LRMHPECMRecordID,'_',Filename),\n\t\tTitle = Filename,\n\t\tusecsom = false(),\n\t\tdocumentIdField = 'LRMHPECMRecordID',\n\t\tdocumentId = LRMHPECMRecordID) ~> DataTransformation\ngasopsfilesource derive(Filename = toString(byName('Filename')),\n\t\tSource = toString(byName('Source')),\n\t\tdirection = toString(byName('direction')),\n\t\tdocumentId = toString(byName('documentId')),\n\t\tloggerId = toString(byName('loggerId')),\n\t\tpartner = toString(byName('partner')),\n\t\tpublisheddate = toString(byName('publisheddate'))) ~> DynamicFetchData\nDynamicFetchData select(mapColumn(\n\t\tFilename,\n\t\tSource,\n\t\tLRMMessageDirection = direction,\n\t\tLRMHPECMRecordID = documentId,\n\t\tLRMLoggerId = loggerId,\n\t\tLRMPartner = partner,\n\t\tLRMPublished = publisheddate\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SharePointFieldMapping\nDataTransformation sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\trowUrlColumn:'DestFilename',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> gasopsfiledestination"
-                },
-                "dependsOn": [
-                    "[variables('factoryId')]",
-                    "[concat(variables('factoryId'), '/datasets/gasopsdc_metadata_dataset')]",
-                    "[concat(variables('factoryId'), '/datasets/gasops_output_metadata_dataset')]"
-                ]
-            }
+                }
+            },
+            "dependsOn": [
+                "[variables('factoryId')]",
+                "[concat(variables('factoryId'), '/datasets/gasopsdc_metadata_dataset')]",
+                "[concat(variables('factoryId'), '/datasets/gasops_output_metadata_dataset')]"
+            ]
         },
         {
             "name": "[concat(variables('dataFactoryName'), '/ProcessGoMData')]",
