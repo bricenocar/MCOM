@@ -36,6 +36,13 @@
                 "description": "SharePoint site"
             }
         },
+        "SharePointUrlGASDC": {
+            "type": "string",
+            "defaultValue": "https://statoilsrm.sharepoint.com/sites/LRMArchiveGasOpsDC",
+            "metadata": {
+                "description": "SharePoint site"
+            }
+        },
         "SharePointUrlGOM": {
             "type": "string",
             "defaultValue": "https://statoilsrm.sharepoint.com/sites/EIMGoMArchive",
@@ -1026,7 +1033,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMDCFArchive"
+                        "defaultValue": "[parameters('SharePointUrlDCF')]"
                     },
                     "OpenLibraryName": {
                         "type": "String",
@@ -1600,7 +1607,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/B2BGasOps"
+                        "defaultValue": "[parameters('SharePointUrlGASDC')]"
                     },
                     "LibraryName": {
                         "type": "String",
@@ -1726,7 +1733,7 @@
                 "variables": {
                     "SharePointSiteUrl": {
                         "type": "String",
-                        "defaultValue": "https://statoilintegrationtest.sharepoint.com/sites/EIMGoMArchive"
+                        "defaultValue": "[parameters('SharePointUrlGOM')]"
                     },
                     "LibraryName": {
                         "type": "String",
