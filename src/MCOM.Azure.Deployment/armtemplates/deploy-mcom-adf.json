@@ -445,7 +445,7 @@
                 "typeProperties": {
                     "location": {
                         "type": "SftpLocation",
-                        "folderPath": "upload/download"
+                        "folderPath": "download"
                     }
                 }
             }
@@ -473,7 +473,7 @@
                             "value": "@dataset().FileName",
                             "type": "Expression"
                         },
-                        "folderPath": "upload/download"
+                        "folderPath": "download"
                     }
                 }
             }
