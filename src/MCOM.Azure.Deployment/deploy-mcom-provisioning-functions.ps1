@@ -5,6 +5,7 @@ Param(
     [string] [Parameter(Mandatory = $true)] $Environment,
     [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false    
+    [string] [Parameter(Mandatory = $false)] $password
 )
 
 Write-Host "##[group]Initializing variables and configurations"
@@ -15,7 +16,7 @@ Write-Host "##[debug]Resource group: $RGName"
 
 # Login to Azure
 if($runLocally) {
-    az login
+    az login --service-principal --username 7cb26d9e-0571-4f70-bf25-ca49bf5aa5cb --password $password --tenant e78a86b8-aa34-41fe-a537-9392c8870bf0
 }
 Write-Host "##[debug]Run locally: $runLocally"
 
