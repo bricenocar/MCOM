@@ -13,6 +13,9 @@
       },
       "storageAccountType" : {
         "value": "Standard_RAGRS"
+      },
+      "templatesContainerName": {
+        "value": "templates"
       }
     }
   }

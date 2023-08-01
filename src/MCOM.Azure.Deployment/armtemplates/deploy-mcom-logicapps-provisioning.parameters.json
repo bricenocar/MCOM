@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment": {
+            "value": ""
+        },
+        "workflows_logic_mcom_scan_output_name": {
+            "value": "logic-mcom-scan-output"
+        },
+        "workflows_logic_mcom_scan_input_name": {
+            "value": "logic-mcom-scan-input"
+        },
+        "connections_office365": {
+            "value": "con-mcomoffice365"
+        },
+        "connections_sql": {
+            "value": "con-mcomsql"
+        },
+        "scanprovider_email": {
+            "value": ""
+        }
+    }
+}

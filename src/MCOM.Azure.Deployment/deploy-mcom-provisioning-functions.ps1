@@ -4,7 +4,7 @@ Param(
     [string] [Parameter(Mandatory = $true)] $ResourceGroupLocation,
     [string] [Parameter(Mandatory = $true)] $Environment,
     [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
-    [Bool] [parameter(Mandatory = $false)] $runLocally=$false    
+    [Bool] [parameter(Mandatory = $false)] $runLocally=$false,    
     [string] [Parameter(Mandatory = $false)] $password
 )
 
@@ -78,9 +78,10 @@ Write-Host "##[endgroup]"
 Write-Host "##[group]Deployment of arm templates"
 # Deploy storage accounts and containers
 Write-Host "##[command] Running deployment of storage template..."
-if($runLocally -eq $false) {
+if($runLocally -eq $false) {    
     $result = az deployment group create --name "$DeploymentName-storage" --template-uri $storageTemplateFile --parameters $storageParametersFile environment=$Environment | ConvertFrom-Json
 } else {
+    write-host "az deployment group create --name "$DeploymentName-storage" --template-file $storageTemplateFile --parameters $storageParametersFile environment=$Environment"
     $result = az deployment group create --name "$DeploymentName-storage" --template-file $storageTemplateFile --parameters $storageParametersFile environment=$Environment | ConvertFrom-Json
 }
 
