@@ -80,8 +80,7 @@ Write-Host "##[group]Deployment of arm templates"
 Write-Host "##[command] Running deployment of storage template..."
 if($runLocally -eq $false) {    
     $result = az deployment group create --name "$DeploymentName-storage" --template-uri $storageTemplateFile --parameters $storageParametersFile environment=$Environment | ConvertFrom-Json
-} else {
-    write-host "az deployment group create --name "$DeploymentName-storage" --template-file $storageTemplateFile --parameters $storageParametersFile environment=$Environment"
+} else {    
     $result = az deployment group create --name "$DeploymentName-storage" --template-file $storageTemplateFile --parameters $storageParametersFile environment=$Environment | ConvertFrom-Json
 }
 
