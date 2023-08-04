@@ -1,0 +1,16 @@
+{
+  "serviceProviderConnections": {
+    "serviceBus": {
+      "parameterValues": {
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        },
+        "fullyQualifiedNamespace": "@appsetting('ServiceBus-FullyQualifiedNamespace')"
+      },
+      "serviceProvider": {
+        "id": "/serviceProviders/serviceBus"
+      },
+      "displayName": "mcomservicebus"
+    }
+  }
+}

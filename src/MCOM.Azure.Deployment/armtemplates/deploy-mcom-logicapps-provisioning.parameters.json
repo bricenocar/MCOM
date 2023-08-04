@@ -5,20 +5,35 @@
         "environment": {
             "value": ""
         },
-        "workflows_logic_mcom_scan_output_name": {
-            "value": "logic-mcom-scan-output"
+        "location": {
+            "value": "norwayeast"
         },
-        "workflows_logic_mcom_scan_input_name": {
-            "value": "logic-mcom-scan-input"
+        "logicappname": {
+            "value": "logic-mcom"
         },
-        "connections_office365": {
-            "value": "con-mcomoffice365"
+        "servername": {
+            "value": "plan-mcom-provlogic"
         },
-        "connections_sql": {
-            "value": "con-mcomsql"
+        "logworkspacename": {
+            "value": "log-mcom"
         },
-        "scanprovider_email": {
-            "value": ""
+        "appInsightsName": {
+            "value": "appi-mcom"
+        },
+        "storageAccountName": {
+            "value": "stmcom"
+        },
+        "azuretablename": {
+            "value": "LogArchive"
+        },
+        "logworkspaceconnectionname": {
+            "value": "con-logwsmcom"
+        },
+        "azuretableconnectionname": {
+            "value": "con-logtablemcom"
+        },
+        "connections_servicebus_name": {
+            "value": "mcomservicebus"
         }
     }
 }
