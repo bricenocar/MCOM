@@ -48,6 +48,8 @@
                             "Microsoft.Web/sites/config/list/action",
                             "Microsoft.Web/sites/config/read",
                             "Microsoft.Web/sites/config/write",
+                            "Microsoft.Web/sites/hostNameBindings/write",
+                            "Microsoft.Web/sites/basicPublishingCredentialsPolicies/write",
                             "Microsoft.Insights/components/read",
                             "Microsoft.Insights/components/write",
                             "microsoft.insights/components/Annotations/write",
