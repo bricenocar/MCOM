@@ -2,26 +2,32 @@
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "actions": {
-            "Call_a_local_function_in_this_logic_app": {
-                "type": "InvokeFunction",
-                "inputs": {
-                    "functionName": "mcom_workflow_functions",
-                    "parameters": ""
-                },
-                "runAfter": {}
-            },
             "Response": {
                 "type": "Response",
                 "kind": "http",
                 "inputs": {
                     "statusCode": 200,
-                    "body": "@body('Call_a_local_function_in_this_logic_app')"
+                    "body": "@body('Execute_stored_procedure')"
                 },
                 "runAfter": {
-                    "Call_a_local_function_in_this_logic_app": [
-                        "Succeeded"
+                    "Execute_stored_procedure": [
+                        "SUCCEEDED"
                     ]
                 }
+            },
+            "Execute_stored_procedure": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "storedProcedureName": "UpdateRequestStatus"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "sql",
+                        "operationId": "executeStoredProcedure",
+                        "serviceProviderId": "/serviceProviders/sql"
+                    }
+                },
+                "runAfter": {}
             }
         },
         "triggers": {

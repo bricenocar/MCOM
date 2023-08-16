@@ -71,8 +71,8 @@
       }
     },
     "variables": {
-      "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provisfunc', parameters('environment'))]",
-      "configStorageAccountName": "[concat(parameters('storageAccountName'), 'provisconfig', parameters('environment'))]",
+      "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provfunc', parameters('environment'))]",
+      "configStorageAccountName": "[concat(parameters('storageAccountName'), 'provconfig', parameters('environment'))]",
       "functionAppName": "[concat(parameters('appName'), '-provisioning-', parameters('environment'))]",
       "hostingPlanName": "[concat(parameters('appServicePlanName'), '-provisioning-', parameters('environment'))]",
       "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]"
@@ -142,10 +142,6 @@
               {
                 "name": "FUNCTIONS_WORKER_RUNTIME",
                 "value": "[parameters('runtime')]"
-              },
-              {
-                "name": "BlobStorageAccountName",
-                "value": "[variables('stagingareaStorageAccountName')]"
               },
               {
                 "name": "BlobStorageConnectionString",

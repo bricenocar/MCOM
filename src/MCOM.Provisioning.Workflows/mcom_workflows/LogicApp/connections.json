@@ -10,7 +10,23 @@
       "serviceProvider": {
         "id": "/serviceProviders/serviceBus"
       },
-      "displayName": "mcomservicebus"
+      "displayName": "con-mcom-servicebus"
+    },
+    "sql": {
+      "parameterValues": {
+        "managedIdentityType": "SystemAssigned",
+        "serverName": "@appsetting('SQL-FullyQualifiedNamespace')",
+        "databaseName": "@appsetting('SQL-DatabaseName')",
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        }
+      },
+      "parameterSetName": "ManagedServiceIdentity",
+      "serviceProvider": {
+        "id": "/serviceProviders/sql"
+      },
+      "displayName": "con-mcom-sql"
     }
-  }
+  },
+  "managedApiConnections": {}
 }

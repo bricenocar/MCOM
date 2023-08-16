@@ -61,4 +61,24 @@ stages:
                 Contents: '**'
                 TargetFolder: '$(Build.ArtifactStagingDirectory)'
             - publish: '$(Build.ArtifactStagingDirectory)'
-              artifact: dropdeploymentscripts   
+              artifact: dropdeploymentscripts
+          - deployment: deploy_logicapp_resources
+            displayName: Deploy MCOM Logic App
+            pool:
+              vmImage: ubuntu-latest
+            environment: 'DEV'
+            variables:
+              deploymentMode: 'Incremental'
+            strategy:
+              runOnce:
+                deploy:
+                  steps:
+                  - task: AzureFunctionApp@1
+                    displayName: 'Deploy logic app workflows'
+                    inputs:
+                      # TODO: Fill in with the name of your Azure service connection
+                      azureSubscription: 'IntegrationTest - MCOM Deployment'
+                      appType: 'functionApp'
+                      appName: 'logic-mcom-provisioning-inttest'
+                      package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+                      deploymentMethod: 'zipDeploy'  

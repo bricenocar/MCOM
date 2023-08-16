@@ -29,20 +29,6 @@
                 "description": "Name of log workspace to query against."
             }
         },
-        "logworkspacename": {
-            "type": "string",
-            "defaultValue": "log-mcom",
-            "metadata": {
-                "description": "Name of log workspace to query against."
-            }
-        },
-        "appInsightsName": {
-            "type": "string",
-            "defaultValue": "appi-mcom",
-            "metadata": {
-                "description": "Location for Application Insights"
-            }
-        },
         "storageAccountName": {
             "type": "string",
             "defaultValue": "stmcom",
@@ -50,70 +36,43 @@
                 "description": "Name for storage account"
             }
         },
-        "azuretablename": {
+        "serviceBusPrefix": {
             "type": "string",
-            "defaultValue": "LogArchive",
+            "defaultValue": "sb-mcom",
             "metadata": {
-                "description": "Name of log workspace to query against."
+                "description": "Name for storage account"
             }
         },
-        "logworkspaceconnectionname": {
+        "sqlserverPrefix": {
             "type": "string",
-            "defaultValue": "con-logwsmcom",
+            "defaultValue": "sql-mcom-gov",
             "metadata": {
-                "description": "Name of log workspace to query against."
-            }
-        },
-        "azuretableconnectionname": {
-            "type": "string",
-            "defaultValue": "con-logtablemcom",
-            "metadata": {
-                "description": "Name of log workspace to query against."
+                "description": "Name for storage account"
             }
         }
     },
     "variables": {
-        "loggingStorageAccountName": "[concat(parameters('storageAccountName'), 'logs', parameters('environment'))]",
+        "logicAppStorageAccountName": "[concat(parameters('storageAccountName'), 'provlogic', parameters('environment'))]",
         "logicappname": "[concat(parameters('logicappname'), '-provisioning-', parameters('environment'))]",
-        "servername": "[concat(parameters('servername'), '-', parameters('environment'))]",
-        "azuretablename": "[concat(parameters('azuretablename'), '-', parameters('environment'))]",
-        "logworkspacename": "[concat(parameters('logworkspacename'), '-', parameters('environment'))]",
-        "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]",
-        "logworkspaceconnectionname": "[concat(parameters('logworkspaceconnectionname'), '-', parameters('environment'))]",
-        "azuretableconnectionname": "[concat(parameters('azuretableconnectionname'), '-', parameters('environment'))]"
+        "servername": "[concat(parameters('servername'), '-', parameters('environment'))]"
     },
     "resources": [
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2022-09-01",
             "name": "[variables('servername')]",
-            "location": "Norway East",
+            "location": "[parameters('location')]",
             "sku": {
-                "name": "Y1",
-                "tier": "Dynamic",
-                "size": "Y1",
-                "family": "Y",
-                "capacity": 0
+                "name": "WS1",
+                "tier": "WorkflowStandard"
             },
-            "kind": "functionapp",
-            "properties": {
-                "perSiteScaling": false,
-                "elasticScaleEnabled": false,
-                "maximumElasticWorkerCount": 1,
-                "isSpot": false,
-                "reserved": false,
-                "isXenon": false,
-                "hyperV": false,
-                "targetWorkerCount": 0,
-                "targetWorkerSizeId": 0,
-                "zoneRedundant": false
-            }
+            "kind": "windows"
         },
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2022-09-01",
             "name": "[variables('logicappname')]",
-            "location": "Norway East",
+            "location": "[parameters('location')]",
             "kind": "functionapp,workflowapp",
             "identity": {
                 "type": "SystemAssigned"
@@ -123,168 +82,72 @@
             ],
             "properties": {
                 "enabled": true,
-                "hostNameSslStates": [
-                    {
-                        "name": "[concat(variables('logicappname'), '.azurewebsites.net')]",
-                        "sslState": "Disabled",
-                        "hostType": "Standard"
-                    },
-                    {
-                        "name": "[concat(variables('logicappname'), '.scm.azurewebsites.net')]",
-                        "sslState": "Disabled",
-                        "hostType": "Repository"
-                    }
-                ],
-                "serverFarmId": "/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('servername')",
-                "reserved": false,
-                "isXenon": false,
-                "hyperV": false,
-                "vnetRouteAllEnabled": false,
-                "vnetImagePullEnabled": false,
-                "vnetContentShareEnabled": false,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servername'))]",
                 "siteConfig": {
-                    "numberOfWorkers": 1,
-                    "acrUseManagedIdentityCreds": false,
-                    "alwaysOn": false,
-                    "http20Enabled": false,
-                    "functionAppScaleLimit": 0,
-                    "minimumElasticInstanceCount": 1
+                    "appSettings": [
+                        {
+                            "name": "APP_KIND",
+                            "value": "workflowApp"
+                        },
+                        {
+                            "name": "AzureFunctionsJobHost__extensionBundle__id",
+                            "value": "Microsoft.Azure.Functions.ExtensionBundle.Workflows"
+                        },
+                        {
+                            "name": "AzureFunctionsJobHost__extensionBundle__version",
+                            "value": "[1.*, 2.0.0)"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('logicAppStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('logicAppStorageAccountName')), '2019-06-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~4"
+                        },
+                        {
+                            "name": "FUNCTIONS_V2_COMPATIBILITY_MODE",
+                            "value": "true"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[parameters('logicAppName')]"
+                          },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('logicAppStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('logicAppStorageAccountName')), '2019-06-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "ServiceBus-FullyQualifiedNamespace",
+                            "value": "[concat(parameters('serviceBusPrefix'), '-provisioning-', parameters('environment'), '.servicebus.windows.net')]"
+                        },
+                        {
+                            "name": "SQL-FullyQualifiedNamespace",
+                            "value": "[concat(parameters('sqlserverPrefix'), '-', parameters('environment'), '.database.windows.net')]"
+                        },
+                        {
+                            "name": "SQL-DatabaseName",
+                            "value": "GovernanceDB"
+                        }
+                    ]
                 },
-                "scmSiteAlsoStopped": false,
                 "clientAffinityEnabled": false,
-                "clientCertEnabled": false,
-                "clientCertMode": "Required",
-                "hostNamesDisabled": false,
-                "customDomainVerificationId": "9B490E6C74F5F5CF276442FC31572979FD5F4C299A8447BA3ECB7F75774A9B4F",
-                "containerSize": 1536,
-                "dailyMemoryTimeQuota": 0,
-                "httpsOnly": true,
-                "redundancyMode": "None",
-                "publicNetworkAccess": "Enabled",
-                "storageAccountRequired": false,
-                "keyVaultReferenceIdentity": "SystemAssigned"
-            }
-        },        
-        {
-            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
-            "apiVersion": "2022-09-01",
-            "name": "[concat(variables('logicappname'), '/ftp')]",
-            "location": "Norway East",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('logicappname'))]"
-            ],
-            "properties": {
-                "allow": true
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
-            "apiVersion": "2022-09-01",
-            "name": "[concat(variables('logicappname'), '/scm')]",
-            "location": "Norway East",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('logicappname'))]"
-            ],
-            "properties": {
-                "allow": true
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites/config",
-            "apiVersion": "2022-09-01",
-            "name": "[concat(variables('logicappname'), '/web')]",
-            "location": "Norway East",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('logicappname'))]"
-            ],
-            "properties": {
-                "numberOfWorkers": 1,
-                "defaultDocuments": [
-                    "Default.htm",
-                    "Default.html",
-                    "Default.asp",
-                    "index.htm",
-                    "index.html",
-                    "iisstart.htm",
-                    "default.aspx",
-                    "index.php"
-                ],
-                "netFrameworkVersion": "v6.0",
-                "requestTracingEnabled": false,
-                "remoteDebuggingEnabled": false,
-                "httpLoggingEnabled": false,
-                "acrUseManagedIdentityCreds": false,
-                "logsDirectorySizeLimit": 35,
-                "detailedErrorLoggingEnabled": false,
-                "publishingUsername": "$logic-mcom-prov-requested-inttest",
-                "scmType": "None",
-                "use32BitWorkerProcess": true,
-                "webSocketsEnabled": false,
-                "alwaysOn": false,
-                "managedPipelineMode": "Integrated",
-                "virtualApplications": [
-                    {
-                        "virtualPath": "/",
-                        "physicalPath": "site\\wwwroot",
-                        "preloadEnabled": false
-                    }
-                ],
-                "loadBalancing": "LeastRequests",
-                "experiments": {
-                    "rampUpRules": []
-                },
-                "autoHealEnabled": false,
-                "vnetRouteAllEnabled": false,
-                "vnetPrivatePortsCount": 0,
-                "publicNetworkAccess": "Enabled",
-                "cors": {
-                    "supportCredentials": false
-                },
-                "localMySqlEnabled": false,
-                "managedServiceIdentityId": 15160,
-                "ipSecurityRestrictions": [
-                    {
-                        "ipAddress": "Any",
-                        "action": "Allow",
-                        "priority": 2147483647,
-                        "name": "Allow all",
-                        "description": "Allow all access"
-                    }
-                ],
-                "scmIpSecurityRestrictions": [
-                    {
-                        "ipAddress": "Any",
-                        "action": "Allow",
-                        "priority": 2147483647,
-                        "name": "Allow all",
-                        "description": "Allow all access"
-                    }
-                ],
-                "scmIpSecurityRestrictionsUseMain": false,
-                "http20Enabled": false,
-                "minTlsVersion": "1.2",
-                "scmMinTlsVersion": "1.2",
-                "ftpsState": "FtpsOnly",
-                "preWarmedInstanceCount": 1,
-                "functionAppScaleLimit": 0,
-                "functionsRuntimeScaleMonitoringEnabled": true,
-                "minimumElasticInstanceCount": 1,
-                "azureStorageAccounts": {}
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites/hostNameBindings",
-            "apiVersion": "2022-09-01",
-            "name": "[concat(variables('logicappname'), '/', variables('logicappname'), '.azurewebsites.net')]",
-            "location": "Norway East",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('logicappname'))]"
-            ],
-            "properties": {
-                "siteName": "logic-mcom-prov-requested-inttest",
-                "hostNameType": "Verified"
+                "netFrameworkVersion": "v6.0"
             }
         }
     ],
-    "outputs": {}
+    "outputs": {
+        "logicAppSystemAssignedIdentityTenantId": {
+            "type": "string",
+            "value": "[subscription().tenantid]"
+        },
+        "logicAppSystemAssignedIdentityObjectId": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.Web/sites', variables('logicAppName')),'2019-08-01', 'full').identity.principalId]"
+        },
+        "LAname": {
+            "type": "string",
+            "value": "[variables('logicAppName')]"
+        }
+    }
 }

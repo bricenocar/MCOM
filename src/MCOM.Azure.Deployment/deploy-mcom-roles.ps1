@@ -14,7 +14,7 @@ $RGName = "$ResourceGroupName-$Environment"
 Write-Host "##[debug]Resource group: $RGName"
 # Login to Azure
 if($runLocally) {
-    az login 
+    az login
 }
 Write-Host "##[debug]Run locally: $runLocally"
 
@@ -47,9 +47,17 @@ Write-Host "##[endgroup]"
 ########CHANGE TO az deployment sub IN PRODUCTION##################
 Write-Host "##[command] Running deployment of roles template..."
 if($runLocally -eq $false) {
-    az deployment sub create --name "$DeploymentName-roles" --template-uri $rolesTemplateFile --parameters $rolesParametersFile environment=$Environment
+    if ($Environment -eq "prod") {
+        az deployment sub --name "$DeploymentName-roles" --template-uri $rolesTemplateFile --parameters $rolesParametersFile environment=$Environment
+    } else {
+        az deployment sub create --name "$DeploymentName-roles" --template-uri $rolesTemplateFile --parameters $rolesParametersFile environment=$Environment
+    }    
 } else {
-    az deployment sub create --name "$DeploymentName-roles" --template-file $rolesTemplateFile --parameters $rolesParametersFile environment=$Environment
+    if ($Environment -eq "prod") {
+        az deployment sub --name "$DeploymentName-roles" --template-file $rolesTemplateFile --parameters $rolesParametersFile environment=$Environment
+    } else {
+        az deployment sub create --name "$DeploymentName-roles" --template-file $rolesTemplateFile --parameters $rolesParametersFile environment=$Environment
+    }    
 }
 
 Write-Host "##[group]Deployment of arm templates"

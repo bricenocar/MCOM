@@ -39,12 +39,16 @@
       "metadata": {
         "description": "The name of the container to be created."
       }
+    },
+    "connections_azureblob_name": {
+      "defaultValue": "azureblob",
+      "type": "string"
     }
   },
   "variables": {
-    "configStorageAccountName": "[concat(parameters('storageAccountName'), 'provisconfig', parameters('environment'))]",
-    "logicAppStorageAccountName": "[concat(parameters('storageAccountName'), 'provislogic', parameters('environment'))]",
-    "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provisfunc', parameters('environment'))]"
+    "configStorageAccountName": "[concat(parameters('storageAccountName'), 'provconfig', parameters('environment'))]",
+    "logicAppStorageAccountName": "[concat(parameters('storageAccountName'), 'provlogic', parameters('environment'))]",
+    "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provfunc', parameters('environment'))]"
   },
   "resources": [
     {
@@ -75,56 +79,6 @@
             },
             "deleteRetentionPolicy": {
               "enabled": false
-            }
-          }
-        },
-        {
-          "type": "Microsoft.Storage/storageAccounts/fileServices",
-          "apiVersion": "2022-09-01",
-          "name": "[concat(variables('functionStorageAccountName'), '/default')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]"
-          ],
-          "sku": {
-            "name": "Standard_RAGRS",
-            "tier": "Standard"
-          },
-          "properties": {
-            "protocolSettings": {
-              "smb": {}
-            },
-            "cors": {
-              "corsRules": []
-            },
-            "shareDeleteRetentionPolicy": {
-              "enabled": true,
-              "days": 7
-            }
-          }
-        },
-        {
-          "type": "Microsoft.Storage/storageAccounts/tableServices",
-          "apiVersion": "2021-04-01",
-          "name": "[concat(variables('functionStorageAccountName'), '/default/')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]"
-          ],
-          "properties": {
-            "cors": {
-              "corsRules": []
-            }
-          }
-        },
-        {
-          "type": "Microsoft.Storage/storageAccounts/queueServices",
-          "apiVersion": "2021-04-01",
-          "name": "[concat(variables('functionStorageAccountName'), '/default')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]"
-          ],
-          "properties": {
-            "cors": {
-              "corsRules": []
             }
           }
         }
@@ -197,6 +151,28 @@
         "tier": "Standard"
       },
       "kind": "StorageV2",
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": true,
+        "encryption": {
+          "services": {
+            "file": {
+              "keyType": "Account",
+              "enabled": true
+            },
+            "blob": {
+              "keyType": "Account",
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      },
       "resources": [
         {
           "type": "Microsoft.Storage/storageAccounts/blobServices",
@@ -209,6 +185,7 @@
             "name": "Standard_LRS",
             "tier": "Standard"
           },
+          "kind": "Storage",
           "properties": {
             "cors": {
               "corsRules": []
@@ -219,57 +196,20 @@
           }
         },
         {
-          "type": "Microsoft.Storage/storageAccounts/tableServices",
-          "apiVersion": "2021-04-01",
-          "name": "[concat(variables('logicAppStorageAccountName'), '/default/')]",
+          "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+          "apiVersion": "2018-02-01",
+          "name": "[concat(variables('logicAppStorageAccountName'), '/default/blobs')]",
           "dependsOn": [
             "[resourceId('Microsoft.Storage/storageAccounts', variables('logicAppStorageAccountName'))]"
           ],
           "properties": {
-            "cors": {
-              "corsRules": []
-            }
-          }
-        },
-        {
-          "type": "Microsoft.Storage/storageAccounts/queueServices",
-          "apiVersion": "2021-04-01",
-          "name": "[concat(variables('logicAppStorageAccountName'), '/default')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('logicAppStorageAccountName'))]"
-          ],
-          "properties": {
-            "cors": {
-              "corsRules": []
-            }
-          }
-        },
-        {
-          "type": "Microsoft.Storage/storageAccounts/fileServices",
-          "apiVersion": "2022-09-01",
-          "name": "[concat(variables('logicAppStorageAccountName'), '/default')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('logicAppStorageAccountName'))]"
-          ],
-          "sku": {
-            "name": "Standard_LRS",
-            "tier": "Standard"
-          },
-          "properties": {
-            "protocolSettings": {
-              "smb": {}
-            },
-            "cors": {
-              "corsRules": []
-            },
-            "shareDeleteRetentionPolicy": {
-              "enabled": true,
-              "days": 7
-            }
+            "defaultEncryptionScope": "$account-encryption-key",
+            "denyEncryptionScopeOverride": false,
+            "publicAccess": "Container"
           }
         }
       ]
-    }
+    }    
   ],
   "outputs": {}
 }

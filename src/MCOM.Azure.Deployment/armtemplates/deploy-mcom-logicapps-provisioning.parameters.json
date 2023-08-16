@@ -14,26 +14,14 @@
         "servername": {
             "value": "plan-mcom-provlogic"
         },
-        "logworkspacename": {
-            "value": "log-mcom"
-        },
-        "appInsightsName": {
-            "value": "appi-mcom"
-        },
         "storageAccountName": {
             "value": "stmcom"
         },
-        "azuretablename": {
-            "value": "LogArchive"
+        "serviceBusPrefix": {
+            "value": "sb-mcom"
         },
-        "logworkspaceconnectionname": {
-            "value": "con-logwsmcom"
-        },
-        "azuretableconnectionname": {
-            "value": "con-logtablemcom"
-        },
-        "connections_servicebus_name": {
-            "value": "mcomservicebus"
+        "sqlserverPrefix": {
+            "value": "sql-mcom-gov"
         }
     }
 }
