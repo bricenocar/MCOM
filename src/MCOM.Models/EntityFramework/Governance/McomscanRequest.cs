@@ -11,26 +11,26 @@ namespace MCOM.Models.EntityFramework.Governance
         }
 
         public Guid Id { get; set; }
-        public string? Requester { get; set; }
-        public string? Webid { get; set; }
-        public string? Listid { get; set; }
-        public string? Siteid { get; set; }
+        public string Requester { get; set; }
+        public string Webid { get; set; }
+        public string Listid { get; set; }
+        public string Siteid { get; set; }
         public DateTime? Requestdate { get; set; }
-        public string? Wbs { get; set; }
-        public string? Businessunit { get; set; }
+        public string Wbs { get; set; }
+        public string Businessunit { get; set; }
         public int? Itemid { get; set; }
-        public string? Documentname { get; set; }
-        public string? Vendor { get; set; }
-        public string? Comments { get; set; }
-        public string? Ordernumber { get; set; }
-        public string? Status { get; set; }
+        public string Documentname { get; set; }
+        public string Vendor { get; set; }
+        public string Comments { get; set; }
+        public string Ordernumber { get; set; }
+        public string Status { get; set; }
         public bool? Isphysical { get; set; }
-        public string? Filemetadata { get; set; }
-        public string? Priority { get; set; }
-        public string? Companycode { get; set; }
-        public string? Creator { get; set; }
-        public string? Requestername { get; set; }
-        public string? Creatorname { get; set; }
+        public string Filemetadata { get; set; }
+        public string Priority { get; set; }
+        public string Companycode { get; set; }
+        public string Creator { get; set; }
+        public string Requestername { get; set; }
+        public string Creatorname { get; set; }
 
         public virtual ICollection<McomscanRequestMessage> McomscanRequestMessages { get; set; }
     }
