@@ -1,3 +1,6 @@
+variables:
+  pathToLogicAppProjectDirectory: '$(System.DefaultWorkingDirectory)/src/${{ variables.logicAppProjectDirectoryName }}'
+
 trigger:
   branches:
       include:
@@ -11,11 +14,26 @@ pool:
   vmImage: 'windows-latest'
 
 stages:
+    - stage: CopyScripts
+      displayName: Copy deployment scripts to artifact staging directory
+      jobs:
+          - job: CopyDS
+            displayName: Copy deployment scripts to artifact staging directory
+            steps:            
+            - task: CopyFiles@2
+              displayName: Copy deployment files
+              inputs:
+                SourceFolder: 'src/MCOM.Azure.Deployment'
+                Contents: '**'
+                TargetFolder: '$(Build.ArtifactStagingDirectory)'
+            - publish: '$(Build.ArtifactStagingDirectory)'
+              artifact: dropdeploymentscripts
     - stage: BuildArtifacts
       displayName: Build Artifacts
+      condition: succeeded()
       jobs:
           - job: BuildAF
-            displayName: Build azure function
+            displayName: Build azure functions
             steps:
             - task: UseDotNet@2
               displayName: Use Dot Net Core 6.0
@@ -27,13 +45,34 @@ stages:
               inputs:
                 command: 'restore'
                 projects: 'src/**/*.csproj'
-
             - task: DotNetCoreCLI@2
-              displayName: 'Build the project - $(buildConfiguration)'
+              displayName: 'Publish the function project - $(BuildConfiguration)'
               inputs:
-                command: 'build'
-                arguments: '--no-restore --configuration $(buildConfiguration)'
-                projects: 'src/**/*.csproj'
+                command: 'publish'
+                projects: 'src/MCOM.Provisioning.Functions/*.csproj'
+                publishWebProjects: false
+                arguments: '--no-build --configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(BuildConfiguration)'
+                zipAfterPublish: true
+            - publish: '$(Build.ArtifactStagingDirectory)'
+              artifact: dropazfunc
+            - task: ArchiveFiles@2
+              displayName: 'Create project zip for provisioning logic app'
+              inputs:
+                rootFolderOrFile: '$(pathToLogicAppProjectDirectory)'
+                includeRootFolder: false
+                archiveType: 'zip'
+                archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+                replaceExistingArchive: true
+            - publish: '$(Build.ArtifactStagingDirectory)'
+              displayName: 'Publish logicapp artifact'
+              artifact: droplogicapp
+    - stage: RunTests
+      displayName: Run Tests
+      condition: succeeded()
+      jobs:
+          - job: RunTests
+            displayName: Run Tests
+            steps:
             - task: DotNetCoreCLI@2
               displayName: 'Run Unit tests'
               inputs:
@@ -41,44 +80,32 @@ stages:
                 projects: 'src/MCOM.Tests/*.csproj'
                 publishTestResults: true
                 testRunTitle: 'MCOM Tests'
-            - task: DotNetCoreCLI@2
-              displayName: 'Publish the project - $(buildConfiguration)'
-              inputs:
-                command: 'publish'
-                projects: 'src/MCOM.Provisioning.Functions/*.csproj'
-                publishWebProjects: false
-                arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
-                zipAfterPublish: true
-            - publish: '$(Build.ArtifactStagingDirectory)'
-              artifact: dropazfunc  
-          - job: BuildDS
-            displayName: Build deployment script
-            steps:            
-            - task: CopyFiles@2
-              displayName: Copy deployment files
-              inputs:
-                SourceFolder: 'src/MCOM.Azure.Deployment'
-                Contents: '**'
-                TargetFolder: '$(Build.ArtifactStagingDirectory)'
-            - publish: '$(Build.ArtifactStagingDirectory)'
-              artifact: dropdeploymentscripts
-          - deployment: deploy_logicapp_resources
-            displayName: Deploy MCOM Logic App
-            pool:
-              vmImage: ubuntu-latest
-            environment: 'DEV'
+    - stage: DeployDev
+      displayName: Deploy logic apps infrastructure and code to dev
+      condition: succeeded()
+      jobs:
+          - deployment: DeployLogicApps
+            displayName: Deploy MCOM Logic App            
+            environment: 'dev'
             variables:
               deploymentMode: 'Incremental'
             strategy:
               runOnce:
                 deploy:
                   steps:
+                  - task: AzureCliTask@2
+                    displayName: 'Deploy logic app infrastructure'
+                    inputs:
+                      azureSubscription: '$(variables.AzureServiceConnectionName)'
+                      scriptType: 'ps'
+                      scriptLocation: 'scriptPath'
+                      scriptPath: '${pipeline.workspace}/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'                      
                   - task: AzureFunctionApp@1
                     displayName: 'Deploy logic app workflows'
                     inputs:
-                      # TODO: Fill in with the name of your Azure service connection
-                      azureSubscription: 'IntegrationTest - MCOM Deployment'
+                      azureSubscription: '$(variables.AzureServiceConnectionName)'
                       appType: 'functionApp'
                       appName: 'logic-mcom-provisioning-inttest'
-                      package: '$(System.DefaultWorkingDirectory)/**/*.zip'
-                      deploymentMethod: 'zipDeploy'  
+                      package: '${Pipeline.Workspace}/droplogicapp/$(Build.BuildId).zip'
+                      deploymentMethod: 'zipDeploy'
+          
