@@ -11,7 +11,6 @@ Param(
 Write-Host "##[group]Initializing variables and configurations"
 # Initialize resource group name based on environment
 $RGName = "$ResourceGroupName-provisioning-$Environment"
-$mcomRGName = "$ResourceGroupName-$Environment"
 Write-Host "##[debug]Resource group: $RGName"
 
 # Login to Azure
@@ -35,21 +34,16 @@ if($runLocally -eq $true) {
 Write-Host "##[debug]Location of arm templates: $blobStorageUrl"
 
 # Prepare Deploy templates
-$storageTemplateFile = "$($blobStorageUrl)deploy-mcom-storage-provisioning.json"
-$functionTemplateFile = "$($blobStorageUrl)deploy-mcom-func-provisioning.json"
-Write-Host "##[debug]Location of storage arm template: $storageTemplateFile"
-Write-Host "##[debug]Location of app function arm template: $functionTemplateFile"
+$logicappsTemplateFile = "$($blobStorageUrl)deploy-mcom-logicapps-provisioning.json"
+Write-Host "##[debug]Location of logicapps arm template: $logicappsTemplateFile"
 
 # Prepare parameters
 if($runLocally -eq $false) {
-    $funcParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-func-provisioning.parameters.json"
-    $storageParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-storage-provisioning.parameters.json"
+    $logicappsParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-logicapps-provisioning.parameters.json"
 } else {
-    $funcParametersFile = "$($blobStorageUrl)deploy-mcom-func-provisioning.parameters.json"
-    $storageParametersFile = "$($blobStorageUrl)deploy-mcom-storage-provisioning.parameters.json"
+    $logicappsParametersFile = "$($blobStorageUrl)deploy-mcom-logicapps-provisioning.parameters.json"
 }
-Write-Host "##[debug]Location of storage arm parameters file: $storageParametersFile"
-Write-Host "##[debug]Location of function app parameters file: $funcParametersFile"
+Write-Host "##[debug]Location of logicapps arm parameters file: $logicappsParametersFile"
 
 # Initialize variables to use
 $today = Get-Date -Format "ddMMyy-HHmm"
@@ -77,28 +71,19 @@ Write-Host "##[endgroup]"
 
 Write-Host "##[group]Deployment of arm templates"
 # Deploy storage accounts and containers
-Write-Host "##[command] Running deployment of storage template..."
+Write-Host "##[command] Running deployment of logic apps template..."
 if($runLocally -eq $false) {    
-    $result = az deployment group create --name "$DeploymentName-storage" --template-uri $storageTemplateFile --parameters $storageParametersFile environment=$Environment | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-logicapps" --template-uri $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment | ConvertFrom-Json
 } else {    
-    $result = az deployment group create --name "$DeploymentName-storage" --template-file $storageTemplateFile --parameters $storageParametersFile environment=$Environment | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-logicapps" --template-file $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment | ConvertFrom-Json
 }
 
 # Evaluate result from deployment
 if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
     Write-Host "##[section] Deployment successful"
-}
-
-# Deploy the function app
-Write-Host "##[command] Running deployment of function app template..."
-if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-func" --template-uri $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl mcomRG=$mcomRGName | ConvertFrom-Json
 } else {
-    $result = az deployment group create --name "$DeploymentName-func" --template-file $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl mcomRG=$mcomRGName | ConvertFrom-Json
-}
-
-# Evaluate result from deployment
-if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
-    Write-Host "##[section] Deployment successful"
+    Write-Host "##[error] Deployment failed"
+    Write-Host "##[error] $result"
+    exit 1
 }
 Write-Host "##[endgroup]"

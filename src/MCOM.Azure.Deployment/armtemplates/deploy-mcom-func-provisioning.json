@@ -71,8 +71,8 @@
       }
     },
     "variables": {
-      "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provisfunc', parameters('environment'))]",
-      "stagingareaStorageAccountName": "[concat(parameters('storageAccountName'), 'stgarea', parameters('environment'))]",
+      "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provfunc', parameters('environment'))]",
+      "configStorageAccountName": "[concat(parameters('storageAccountName'), 'provconfig', parameters('environment'))]",
       "functionAppName": "[concat(parameters('appName'), '-provisioning-', parameters('environment'))]",
       "hostingPlanName": "[concat(parameters('appServicePlanName'), '-provisioning-', parameters('environment'))]",
       "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]"
@@ -144,12 +144,8 @@
                 "value": "[parameters('runtime')]"
               },
               {
-                "name": "BlobStorageAccountName",
-                "value": "[variables('stagingareaStorageAccountName')]"
-              },
-              {
                 "name": "BlobStorageConnectionString",
-                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('stagingareaStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId(parameters('mcomRG'),'Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName')), '2019-06-01').keys[0].value)]"
+                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('configStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('configStorageAccountName')), '2019-06-01').keys[0].value)]"
               },
               {
                 "name": "QueueConnectionString",

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Azure.Core;
 using MCOM.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
@@ -15,9 +14,17 @@ namespace MCOM.Services
     {
         ClientContext GetClientContext(string webUrl, string token);
         List GetListById(ClientContext clientContext, Guid listId);
+        FieldCollection GetListFields(List list);
         ListItemCollection GetListItems(ClientContext clientContext, List list, CamlQuery query);
         ListItem GetListItemByUniqueId(ClientContext clientContext, List list, Guid uniqueId);
         ListItem GetListItemById(ClientContext clientContext, List list, int id);
+        Dictionary<string, object> GetListItemFieldValues(ClientContext clientContext, ListItem listItem);
+        void SetListItemMetadata(ClientContext clientContext, ListItem listItem, FieldCollection fields, Dictionary<string, object> fieldValues);
+        void SetListItemManagedMetadata(TaxonomyField taxonomyField, ListItem listItem, TaxonomyFieldValue termValue);
+        void UpdateListItem(ListItem listItem, bool systemUpdate = false);
+        void UpdateTaxonomyField(TaxonomyField taxonomyField);
+        Field GetFieldByInternalNameOrTitle(List list, string fieldName);
+        TaxonomyField GetTaxonomyField(ClientContext clientContext, Field field);
         string GetListItemRetentionLabel(ClientContext clientContext, Guid list, int id);
         bool SetListItemRetentionLabel(ClientContext clientContext, Guid listId, int id, string label);
         bool ValidateItemRetentionLabel(ClientContext siteContext, string listId, string listItemId);
@@ -39,6 +46,7 @@ namespace MCOM.Services
     public class SharePointService : ISharePointService
     {
         #region Context, Load and Execution
+
         public virtual ClientContext GetClientContext(string webUrl, string token)
         {
             var clientContext = new ClientContext(webUrl);
@@ -58,6 +66,7 @@ namespace MCOM.Services
         {
             clientContext.ExecuteQuery();
         }
+
         #endregion
 
         #region Site, List and Items        
@@ -65,6 +74,11 @@ namespace MCOM.Services
         public virtual List GetListById(ClientContext clientContext, Guid listId)
         {
             return clientContext.Web.Lists.GetById(listId);
+        }
+
+        public virtual FieldCollection GetListFields(List list)
+        {
+            return list.Fields;
         }
 
         public virtual ListItemCollection GetListItems(ClientContext clientContext, List list, CamlQuery query)
@@ -80,6 +94,76 @@ namespace MCOM.Services
         public virtual ListItem GetListItemById(ClientContext clientContext, List list, int id)
         {
             return list.GetItemById(id);
+        }
+
+        public virtual Dictionary<string, object> GetListItemFieldValues(ClientContext clientContext, ListItem listItem)
+        {
+            return listItem.FieldValues;
+        }
+
+        public virtual void SetListItemMetadata(ClientContext clientContext, ListItem listItem, FieldCollection fields, Dictionary<string, object> fieldValues)
+        {
+            foreach (var fieldValue in fieldValues)
+            {
+                var field = fields.First(f => f.InternalName == fieldValue.Key);
+                switch (field.TypeAsString)
+                {
+                    case "TaxonomyFieldType":
+                        var taxKeywordField = clientContext.CastTo<TaxonomyField>(field);
+                        var termValues = fieldValue.Value.ToString().Split("|");
+                        var termValue = new TaxonomyFieldValue()
+                        {
+                            Label = termValues[1],
+                            TermGuid = termValues[2],
+                            WssId = Convert.ToInt32(termValues[0])
+                        };
+
+                        // Update taxonomy field
+                        SetListItemManagedMetadata(taxKeywordField, listItem, termValue);
+                        UpdateTaxonomyField(taxKeywordField);
+                        break;
+
+                    default:
+                        listItem[fieldValue.Key] = fieldValue.Value;
+                        break;
+                }
+            }
+        }
+
+        public virtual void SetListItemManagedMetadata(TaxonomyField taxonomyField, ListItem listItem, TaxonomyFieldValue termValue)
+        {
+            // Set managed metadata value
+            taxonomyField.SetFieldValueByValue(listItem, termValue);
+        }
+
+        public virtual void UpdateTaxonomyField(TaxonomyField taxonomyField)
+        {
+            // Update managed metadata field          
+            taxonomyField.Update();
+        }
+
+        public virtual Field GetFieldByInternalNameOrTitle(List list, string fieldName)
+        {
+            // Get managed metadata field
+            return list.Fields.GetByInternalNameOrTitle(fieldName);
+        }
+
+        public virtual TaxonomyField GetTaxonomyField(ClientContext clientContext, Field field)
+        {
+            // Get managed metadata field            
+            return clientContext.CastTo<TaxonomyField>(field);
+        }
+
+        public virtual void UpdateListItem(ListItem listItem, bool systemUpdate = false)
+        {
+            if (systemUpdate)
+            {
+                listItem.SystemUpdate();
+            }
+            else
+            {
+                listItem.Update();
+            }
         }
 
         public virtual string GetListItemRetentionLabel(ClientContext clientContext, Guid listId, int id)
@@ -109,7 +193,7 @@ namespace MCOM.Services
                 clientContext.ExecuteQuery();
 
                 item.SetComplianceTag(label, false, false, false, false, false);
-                item.Update();
+                item.SystemUpdate();
                 clientContext.ExecuteQuery();
 
                 result = true;
@@ -150,6 +234,7 @@ namespace MCOM.Services
         {
             return listItemCollection.ToList();
         }
+
         #endregion
 
         #region Search
@@ -239,6 +324,7 @@ namespace MCOM.Services
         #endregion
 
         #region Taxonomy
+
         public virtual TaxonomySession GetTaxonomySession(ClientContext clientContext)
         {
             return TaxonomySession.GetTaxonomySession(clientContext);
@@ -277,6 +363,7 @@ namespace MCOM.Services
                 TrimUnavailable = false,
             };
         }
+
         #endregion       
     }
 }

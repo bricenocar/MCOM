@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "environment": {
+            "value": ""
+        },
+        "location": {
+            "value": "norwayeast"
+        },
+        "logicappname": {
+            "value": "logic-mcom"
+        },
+        "servername": {
+            "value": "plan-mcom-provlogic"
+        },
+        "storageAccountName": {
+            "value": "stmcom"
+        },
+        "serviceBusPrefix": {
+            "value": "sb-mcom"
+        },
+        "sqlserverPrefix": {
+            "value": "sql-mcom-gov"
+        }
+    }
+}
