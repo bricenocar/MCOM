@@ -94,13 +94,13 @@ stages:
                 deploy:
                   steps:
                   - task: AzureCLI@2
-                    displayName: 
+                    displayName: Deploy infrastructure for logic app
                     inputs:
                       azureSubscription: '$(variables.AzureServiceConnectionName)'
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
                       scriptPath: '${pipeline.workspace}/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'
-                      arguments: '-SubscriptionId $(variables.subscriptionId) -ResourceGroupName $(variables.resourceGroupName) -ResourceGroupLocation $(variables.resourceGroupLocation) -Environment $(variables.environment) -blobStorageUrl "https://stmcomarm$(variables.environment).blob.core.windows.net/armartifacts/armtemplates/"''           
+                      arguments: '-SubscriptionId $(variables.subscriptionId) -ResourceGroupName $(variables.resourceGroupName) -ResourceGroupLocation $(variables.resourceGroupLocation) -Environment $(variables.environment) -blobStorageUrl "https://stmcomarm$(variables.environment).blob.core.windows.net/armartifacts/armtemplates/"'           
                   - task: AzureFunctionApp@1
                     displayName: 'Deploy logic app workflows'
                     inputs:
