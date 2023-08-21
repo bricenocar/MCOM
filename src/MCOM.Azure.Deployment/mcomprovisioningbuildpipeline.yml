@@ -58,7 +58,7 @@ stages:
             - task: ArchiveFiles@2
               displayName: 'Create project zip for provisioning logic app'
               inputs:
-                rootFolderOrFile: '$(pathToLogicAppProjectDirectory)'
+                rootFolderOrFile: '$(variables.pathToLogicAppProjectDirectory)'
                 includeRootFolder: false
                 archiveType: 'zip'
                 archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
@@ -96,15 +96,15 @@ stages:
                   - task: AzureCLI@2
                     displayName: Deploy infrastructure for logic app
                     inputs:
-                      azureSubscription: '$(variables.AzureServiceConnectionName)'
+                      azureSubscription: '$(AzureServiceConnectionName)'
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
                       scriptPath: '${pipeline.workspace}/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'
-                      arguments: '-SubscriptionId $(variables.subscriptionId) -ResourceGroupName $(variables.resourceGroupName) -ResourceGroupLocation $(variables.resourceGroupLocation) -Environment $(variables.environment) -blobStorageUrl "https://stmcomarm$(variables.environment).blob.core.windows.net/armartifacts/armtemplates/"'           
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -blobStorageUrl "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/"'           
                   - task: AzureFunctionApp@1
                     displayName: 'Deploy logic app workflows'
                     inputs:
-                      azureSubscription: '$(variables.AzureServiceConnectionName)'
+                      azureSubscription: '$(AzureServiceConnectionName)'
                       appType: 'functionApp'
                       appName: 'logic-mcom-provisioning-inttest'
                       package: '${Pipeline.Workspace}/droplogicapp/$(Build.BuildId).zip'
