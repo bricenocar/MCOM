@@ -40,9 +40,16 @@ stages:
               inputs:
                 packageType: 'sdk'
                 version: '6.0.x'
-            - script: |
-                dotnet restore
-                dotnet build --configuration $(BuildConfiguration)
+            - task: DotNetCoreCLI@2
+              displayName: 'Restore project dependencies'
+              inputs:
+                command: 'restore'
+                projects: 'src/**/*.csproj'
+            - task: DotNetCoreCLI@2
+              displayName: 'Build solution'
+              inputs:
+                command: 'build'
+                projects: 'src/MCOM.Provisioning.Functions/*.csproj'             
             - task: DotNetCoreCLI@2
               displayName: 'Publish the function project - $(BuildConfiguration)'
               inputs:

@@ -10,6 +10,6 @@ namespace MCOM.Models.EntityFramework.Governance
         public string Description { get; set; }
         public Guid? Requestid { get; set; }
 
-        public virtual McomscanRequest? Request { get; set; }
+        public virtual McomscanRequest Request { get; set; }
     }
 }
