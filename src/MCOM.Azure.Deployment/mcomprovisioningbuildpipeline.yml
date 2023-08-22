@@ -104,7 +104,7 @@ stages:
                       azureSubscription: '$(AzureServiceConnectionName)'
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
-                      scriptPath: 'dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'
+                      scriptPath: '$(Build.ArtifactStagingDirectory)/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'
                       arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -blobStorageUrl "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/"'           
                   - task: AzureFunctionApp@1
                     displayName: 'Deploy logic app workflows'
@@ -112,6 +112,6 @@ stages:
                       azureSubscription: '$(AzureServiceConnectionName)'
                       appType: 'functionApp'
                       appName: 'logic-mcom-provisioning-inttest'
-                      package: 'droplogicapp/$(Build.BuildId).zip'
+                      package: '$(Build.ArtifactStagingDirectory)/droplogicapp/$(Build.BuildId).zip'
                       deploymentMethod: 'zipDeploy'
           
