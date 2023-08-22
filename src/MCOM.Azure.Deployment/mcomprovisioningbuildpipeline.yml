@@ -15,7 +15,7 @@ pool:
 
 stages:
     - stage: CopyScripts
-      displayName: Copy deployment scripts to artifact staging directory
+      displayName: Copy scripts (deployment)
       jobs:
           - job: CopyDS
             displayName: Copy deployment scripts to artifact staging directory
@@ -44,7 +44,7 @@ stages:
               displayName: 'Restore project dependencies'
               inputs:
                 command: 'restore'
-                projects: 'src/**/*.csproj'
+                projects: 'src/MCOM.Provisioning.Functions/*.csproj'
             - task: DotNetCoreCLI@2
               displayName: 'Publish the function project - $(BuildConfiguration)'
               inputs:
@@ -81,7 +81,7 @@ stages:
                 publishTestResults: true
                 testRunTitle: 'MCOM Tests'
     - stage: DeployDev
-      displayName: Deploy logic apps infrastructure and code to dev
+      displayName: Deploy logicapps
       condition: succeeded()
       jobs:
           - deployment: DeployLogicApps
