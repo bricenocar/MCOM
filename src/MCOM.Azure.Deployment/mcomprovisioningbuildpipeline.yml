@@ -81,7 +81,7 @@ stages:
                 publishTestResults: true
                 testRunTitle: 'MCOM Tests'
     - stage: DeployDev
-      displayName: Deploy logicapps
+      displayName: Deploy logic apps infrastructure and code to dev
       condition: succeeded()
       jobs:
           - deployment: DeployLogicApps
@@ -93,17 +93,18 @@ stages:
               runOnce:
                 deploy:
                   steps:
-                  - task: AzureCliTask@2
-                    displayName: 'Deploy logic app infrastructure'
+                  - task: AzureCLI@2
+                    displayName: Deploy infrastructure for logic app
                     inputs:
-                      azureSubscription: '$(variables.AzureServiceConnectionName)'
+                      azureSubscription: '$(AzureServiceConnectionName)'
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
-                      scriptPath: '${pipeline.workspace}/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'                      
+                      scriptPath: '${pipeline.workspace}/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -blobStorageUrl "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/"'           
                   - task: AzureFunctionApp@1
                     displayName: 'Deploy logic app workflows'
                     inputs:
-                      azureSubscription: '$(variables.AzureServiceConnectionName)'
+                      azureSubscription: '$(AzureServiceConnectionName)'
                       appType: 'functionApp'
                       appName: 'logic-mcom-provisioning-inttest'
                       package: '${Pipeline.Workspace}/droplogicapp/$(Build.BuildId).zip'
