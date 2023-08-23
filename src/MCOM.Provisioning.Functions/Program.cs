@@ -12,7 +12,7 @@ var host = new HostBuilder()
                })
                .ConfigureLogging((context, builder) =>
                {
-                   builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
+                   //builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
                }).Build();
 
 host.Run();

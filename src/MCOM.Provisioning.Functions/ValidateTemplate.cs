@@ -5,10 +5,11 @@ using Microsoft.Extensions.Logging;
 using MCOM.Services;
 using MCOM.Models;
 using MCOM.Utilities;
-using MCOM.Models.ScanOnDemand;
+using MCOM.Models.Provisioning;
 using Newtonsoft.Json;
 using System.Xml.Schema;
 using System.Xml;
+using Azure.Storage.Blobs;
 
 namespace MCOM.Provisioning.Functions
 {
@@ -22,7 +23,7 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("ValidateTemplate")]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req, FunctionContext context)
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, FunctionContext context)
         {
             var logger = context.GetLogger("ValidateTemplate");
             HttpResponseData response = null;
@@ -43,20 +44,69 @@ namespace MCOM.Provisioning.Functions
             // Init blob service client
             _blobService.GetBlobServiceClient();
 
+            // Get request data
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            // var fileData = JsonConvert.DeserializeObject<ScanRequestPayload>(requestBody);
+            var fileData = JsonConvert.DeserializeObject<ProvisioningRequestPayload>(requestBody);
 
-            var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{fileData.BlobFilePath}");
+            if(string.IsNullOrEmpty(fileData?.BlobFilePath) || string.IsNullOrEmpty(fileData?.FileName))
+            {
+                // Throw error message missing values
+            }
+
+            // Get template uri
+            var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{fileData?.BlobFilePath}");
 
             // Replace special characters
-            var fileName = StringUtilities.RemoveSpecialChars(fileData.FileName);
+            var fileName = StringUtilities.RemoveSpecialChars(fileData?.FileName);
 
             // Get file from staging area
-            var blobCLient = _blobService.GetBlobClient(fileUri);
-            var blobContainerClient = _blobService.GetBlobContainerClient(blobCLient.BlobContainerName);
-            var stream = await _blobService.OpenReadAsync(blobCLient);
+            var blobClient = _blobService.GetBlobClient(fileUri);
+            var blobContainerClient = _blobService.GetBlobContainerClient(blobClient.BlobContainerName);
+            var blobContainerProperties = await _blobService.GetBlobContainerPropertiesAsync(blobContainerClient);
 
+            var fileContent = await _blobService.GetBlobDataAsync(blobClient);
+            var fileStream = await _blobService.GetBlobStreamAsync(blobClient);
 
+            // Check file extension
+            var fileExtention = Path.GetExtension(fileName);
+
+            switch (fileExtention.ToLower())
+            {
+                case "json":
+
+                    try
+                    {
+                        using var fileStreamReader = new StreamReader(fileStream);
+                        using var jsonFileTextReader = new JsonTextReader(fileStreamReader);
+                        while (jsonFileTextReader.Read()) { }
+                        // Log information OK...
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log Exception to Logs and keep going...
+                    }
+
+                    break;
+
+                case "xml":
+
+                    var booksSettings = new XmlReaderSettings();
+                    // booksSettings.Schemas.Add("http://schemas.dev.office.com/PnP/2022/09/ProvisioningSchema", "ProvisioningSchema-2022-09.xsd"); In case XSD Implementation
+                    // booksSettings.ValidationType = ValidationType.Schema;
+                    // booksSettings.ValidationEventHandler += settingsValidationEventHandler; // In case XSD Implementation
+
+                    var books = XmlReader.Create(fileStream, booksSettings);
+
+                    while (books.Read()) { }
+
+                    Console.Write("Done!");
+
+                    break;
+
+                default:
+                    // Throw exception???
+                    break;
+            }
 
             response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
@@ -65,56 +115,20 @@ namespace MCOM.Provisioning.Functions
 
             return response;
         }
-    }
-}
 
-
-
-
-
-// Code
-// Get file content (template)
-
-
-// Get file extension
-
-
-// Switch based on file format
-
-
-try
-{
-    using var streamReader = new StreamReader("JsonFile.json");
-    using var jsonTextReader = new JsonTextReader(streamReader);
-    while (jsonTextReader.Read()) { }
-    Console.WriteLine("Done");
-}
-catch (Exception ex)
-{
-    Console.WriteLine(ex.Message);
-}
-
-var booksSettings = new XmlReaderSettings();
-//booksSettings.Schemas.Add("http://schemas.dev.office.com/PnP/2022/09/ProvisioningSchema", "ProvisioningSchema-2022-09.xsd"); In case XSD Implementation
-booksSettings.ValidationType = ValidationType.Schema;
-booksSettings.ValidationEventHandler += settingsValidationEventHandler; // In case XSD Implementation
-
-var books = XmlReader.Create("ProvisioningSchema-2022-09-FullSample-01.xml", booksSettings);
-
-while (books.Read()) { }
-
-Console.Write("Done!");
-
-static void settingsValidationEventHandler(object? sender, ValidationEventArgs e)
-{
-    if (e.Severity == XmlSeverityType.Warning)
-    {
-        Console.Write("WARNING: ");
-        Console.WriteLine(e.Message);
-    }
-    else if (e.Severity == XmlSeverityType.Error)
-    {
-        Console.Write("ERROR: ");
-        Console.WriteLine(e.Message);
+        // In case og XSD validation
+        /*static void settingsValidationEventHandler(object? sender, ValidationEventArgs e)
+        {
+            if (e.Severity == XmlSeverityType.Warning)
+            {
+                Console.Write("WARNING: ");
+                Console.WriteLine(e.Message);
+            }
+            else if (e.Severity == XmlSeverityType.Error)
+            {
+                Console.Write("ERROR: ");
+                Console.WriteLine(e.Message);
+            }
+        }*/
     }
 }
