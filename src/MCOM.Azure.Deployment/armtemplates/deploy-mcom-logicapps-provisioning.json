@@ -40,14 +40,14 @@
             "type": "string",
             "defaultValue": "sb-mcom",
             "metadata": {
-                "description": "Name for storage account"
+                "description": "Name of service bus"
             }
         },
         "sqlserverPrefix": {
             "type": "string",
             "defaultValue": "sql-mcom-gov",
             "metadata": {
-                "description": "Name for storage account"
+                "description": "Name of sql server refix"
             }
         }
     },

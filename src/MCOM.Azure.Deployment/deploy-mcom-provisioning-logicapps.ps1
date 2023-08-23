@@ -3,7 +3,7 @@ Param(
     [string] [Parameter(Mandatory = $true)] $ResourceGroupName,
     [string] [Parameter(Mandatory = $true)] $ResourceGroupLocation,
     [string] [Parameter(Mandatory = $true)] $Environment,
-    [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
+    [string] [Parameter(Mandatory = $false)] $armLocation,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false,    
     [string] [Parameter(Mandatory = $false)] $password
 )
@@ -26,23 +26,14 @@ Write-Host "##[debug]Subscription Id: $SubscriptionId"
 # Configure defaults for the rest of the script
 az configure --defaults location=$ResourceGroupLocation group=$RGName
 Write-Host "##[debug]Resource Group location: $ResourceGroupLocation"
-
-# Set location of parameter blobStorageUrl is null
-if($runLocally -eq $true) {
-    $blobStorageUrl = "./armtemplates/"    
-}
-Write-Host "##[debug]Location of arm templates: $blobStorageUrl"
+Write-Host "##[debug]Location of arm templates: $armLocation"
 
 # Prepare Deploy templates
-$logicappsTemplateFile = "$($blobStorageUrl)deploy-mcom-logicapps-provisioning.json"
+$logicappsTemplateFile = "$($armLocation)/deploy-mcom-logicapps-provisioning.json"
 Write-Host "##[debug]Location of logicapps arm template: $logicappsTemplateFile"
 
 # Prepare parameters
-if($runLocally -eq $false) {
-    $logicappsParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-logicapps-provisioning.parameters.json"
-} else {
-    $logicappsParametersFile = "$($blobStorageUrl)deploy-mcom-logicapps-provisioning.parameters.json"
-}
+$logicappsParametersFile = "$($armLocation)/deploy-mcom-logicapps-provisioning.parameters.json"
 Write-Host "##[debug]Location of logicapps arm parameters file: $logicappsParametersFile"
 
 # Initialize variables to use

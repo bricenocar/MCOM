@@ -105,7 +105,7 @@ stages:
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
                       scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'
-                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -blobStorageUrl "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/"'           
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/"'           
                   - task: AzureFunctionApp@1
                     displayName: 'Deploy logic app workflows'
                     inputs:
