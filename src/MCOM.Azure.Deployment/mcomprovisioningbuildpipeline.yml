@@ -131,7 +131,7 @@ stages:
                       scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-servicebus.ps1'
                       arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/provisioning"'           
                   - task: AzureFunctionApp@2
-                    displayName: 'Deploy functions'
+                    displayName: 'Deploy functions in app'
                     inputs:
                       azureSubscription: '$(AzureServiceConnectionName)'
                       appType: functionApp
