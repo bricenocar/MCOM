@@ -26,7 +26,6 @@ Write-Host "##[debug]Subscription Id: $SubscriptionId"
 # Configure defaults for the rest of the script
 az configure --defaults location=$ResourceGroupLocation group=$RGName
 Write-Host "##[debug]Resource Group location: $ResourceGroupLocation"
-Write-Host "##[debug]Location of arm templates: $armLocation"
 
 # Prepare Deploy templates
 $logicappsTemplateFile = "$($armLocation)/deploy-mcom-logicapps-provisioning.json"
@@ -64,8 +63,8 @@ if($runLocally -eq $false) {
 }
 
 # Evaluate result from deployment
-Write-Host "##[section] result of provisioning state: " + $result.properties.provisioningState
-if($result.Length -gt 0 -and ($result.properties.provisioningState -eq "Succeeded" -or $result.properties.provisioningState -eq "Accepted")) {
+Write-Host "##[section] result of provisioning state: $($result.properties.provisioningState)."
+if($null -ne $result.properties -and ($result.properties.provisioningState -eq "Succeeded" -or $result.properties.provisioningState -eq "Accepted")) {
     Write-Host "##[section] Deployment successful"
 } else {
     Write-Host "##[error] Deployment failed"

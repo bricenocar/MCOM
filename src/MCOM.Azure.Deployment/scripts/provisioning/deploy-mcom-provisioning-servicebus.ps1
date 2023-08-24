@@ -3,7 +3,7 @@ Param(
     [string] [Parameter(Mandatory = $true)] $ResourceGroupName,
     [string] [Parameter(Mandatory = $true)] $ResourceGroupLocation,
     [string] [Parameter(Mandatory = $true)] $Environment,
-    [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
+    [string] [Parameter(Mandatory = $false)] $armLocation,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false,    
     [string] [Parameter(Mandatory = $false)] $password
 )
@@ -11,7 +11,6 @@ Param(
 Write-Host "##[group]Initializing variables and configurations"
 # Initialize resource group name based on environment
 $RGName = "$ResourceGroupName-provisioning-$Environment"
-$mcomRGName = "$ResourceGroupName-$Environment"
 Write-Host "##[debug]Resource group: $RGName"
 
 # Login to Azure
@@ -28,33 +27,17 @@ Write-Host "##[debug]Subscription Id: $SubscriptionId"
 az configure --defaults location=$ResourceGroupLocation group=$RGName
 Write-Host "##[debug]Resource Group location: $ResourceGroupLocation"
 
-# Set location of parameter blobStorageUrl is null
-if($runLocally -eq $true) {
-    $blobStorageUrl = "./armtemplates/"    
-}
-Write-Host "##[debug]Location of arm templates: $blobStorageUrl"
-
 # Prepare Deploy templates
-$servicebusTemplateFile = "$($blobStorageUrl)deploy-mcom-servicebus-provisioning.json"
+$servicebusTemplateFile = "$($armLocation)deploy-mcom-servicebus-provisioning.json"
 Write-Host "##[debug]Location of servicebus arm template: $servicebusTemplateFile"
 
 # Prepare parameters
-if($runLocally -eq $false) {
-    $servicebusParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-servicebus-provisioning.parameters.json"
-} else {
-    $servicebusParametersFile = "$($blobStorageUrl)deploy-mcom-servicebus-provisioning.parameters.json"
-}
+$servicebusParametersFile = "$($armLocation)deploy-mcom-servicebus-provisioning.parameters.json"
 Write-Host "##[debug]Location of servicebus arm parameters file: $servicebusParametersFile"
 
 # Initialize variables to use
 $today = Get-Date -Format "ddMMyy-HHmm"
 $DeploymentName = "mcom-$Environment-$today"
-if ($Environment -eq "prod") {
-    $SharePointUrl = "https://statoilsrm.sharepoint.com/"
-} else {
-    $SharePointUrl = "https://statoilintegrationtest.sharepoint.com/"
-}
-
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
 
@@ -80,7 +63,8 @@ if($runLocally -eq $false) {
 }
 
 # Evaluate result from deployment
-if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
+Write-Host "##[section] result of provisioning state: $($result.properties.provisioningState)."
+if($null -ne $result.properties -and ($result.properties.provisioningState -eq "Succeeded" -or $result.properties.provisioningState -eq "Accepted")) {
     Write-Host "##[section] Deployment successful"
 } else {
     Write-Host "##[error] Deployment failed"

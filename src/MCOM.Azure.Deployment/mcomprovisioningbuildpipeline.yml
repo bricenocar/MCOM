@@ -89,8 +89,8 @@ stages:
       displayName: Deploy logic apps infrastructure and code to dev
       condition: succeeded()
       jobs:
-          - deployment: DeployLogicApps
-            displayName: Deploy MCOM Logic App            
+          - deployment: DeployLogic
+            displayName: Deploy MCOM Logic            
             environment: 'dev'
             variables:
               deploymentMode: 'Incremental'
@@ -104,7 +104,15 @@ stages:
                       azureSubscription: '$(AzureServiceConnectionName)'
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
-                      scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'
+                      scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-logicapps.ps1'
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates"'           
+                  - task: AzureCLI@2
+                    displayName: Deploy infrastructure for azure function
+                    inputs:
+                      azureSubscription: '$(AzureServiceConnectionName)'
+                      scriptType: 'ps'
+                      scriptLocation: 'scriptPath'
+                      scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-functions.ps1'
                       arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates"'           
                   - task: AzureFunctionApp@1
                     displayName: 'Deploy logic app workflows'
