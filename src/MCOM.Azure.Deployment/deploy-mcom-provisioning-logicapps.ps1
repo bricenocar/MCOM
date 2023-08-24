@@ -39,12 +39,6 @@ Write-Host "##[debug]Location of logicapps arm parameters file: $logicappsParame
 # Initialize variables to use
 $today = Get-Date -Format "ddMMyy-HHmm"
 $DeploymentName = "mcom-$Environment-$today"
-if ($Environment -eq "prod") {
-    $SharePointUrl = "https://statoilsrm.sharepoint.com/"
-} else {
-    $SharePointUrl = "https://statoilintegrationtest.sharepoint.com/"
-}
-
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
 
@@ -70,6 +64,7 @@ if($runLocally -eq $false) {
 }
 
 # Evaluate result from deployment
+Write-Host "##[section] result of provisioning state: " + $result.properties.provisioningState
 if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
     Write-Host "##[section] Deployment successful"
 } else {
