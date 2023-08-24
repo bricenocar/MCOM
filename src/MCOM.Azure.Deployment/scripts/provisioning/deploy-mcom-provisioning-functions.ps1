@@ -3,7 +3,7 @@ Param(
     [string] [Parameter(Mandatory = $true)] $ResourceGroupName,
     [string] [Parameter(Mandatory = $true)] $ResourceGroupLocation,
     [string] [Parameter(Mandatory = $true)] $Environment,
-    [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
+    [string] [Parameter(Mandatory = $false)] $armLocation,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false,    
     [string] [Parameter(Mandatory = $false)] $password
 )
@@ -28,26 +28,21 @@ Write-Host "##[debug]Subscription Id: $SubscriptionId"
 az configure --defaults location=$ResourceGroupLocation group=$RGName
 Write-Host "##[debug]Resource Group location: $ResourceGroupLocation"
 
-# Set location of parameter blobStorageUrl is null
+# Set location of parameter armLocation is null
 if($runLocally -eq $true) {
-    $blobStorageUrl = "./armtemplates/"    
+    $armLocation = "./armtemplates/"    
 }
-Write-Host "##[debug]Location of arm templates: $blobStorageUrl"
+Write-Host "##[debug]Location of arm templates: $armLocation"
 
 # Prepare Deploy templates
-$storageTemplateFile = "$($blobStorageUrl)deploy-mcom-storage-provisioning.json"
-$functionTemplateFile = "$($blobStorageUrl)deploy-mcom-func-provisioning.json"
+$storageTemplateFile = "$($armLocation)/deploy-mcom-storage-provisioning.json"
+$functionTemplateFile = "$($armLocation)/deploy-mcom-func-provisioning.json"
 Write-Host "##[debug]Location of storage arm template: $storageTemplateFile"
 Write-Host "##[debug]Location of app function arm template: $functionTemplateFile"
 
 # Prepare parameters
-if($runLocally -eq $false) {
-    $funcParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-func-provisioning.parameters.json"
-    $storageParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-storage-provisioning.parameters.json"
-} else {
-    $funcParametersFile = "$($blobStorageUrl)deploy-mcom-func-provisioning.parameters.json"
-    $storageParametersFile = "$($blobStorageUrl)deploy-mcom-storage-provisioning.parameters.json"
-}
+$funcParametersFile = "$($armLocation)/deploy-mcom-func-provisioning.parameters.json"
+$storageParametersFile = "$($armLocation)/deploy-mcom-storage-provisioning.parameters.json"
 Write-Host "##[debug]Location of storage arm parameters file: $storageParametersFile"
 Write-Host "##[debug]Location of function app parameters file: $funcParametersFile"
 
@@ -98,7 +93,7 @@ if($runLocally -eq $false) {
 }
 
 # Evaluate result from deployment
-if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
+if($null -ne $result.properties -and ($result.properties.provisioningState -eq "Succeeded" -or $result.properties.provisioningState -eq "Accepted")) {
     Write-Host "##[section] Deployment successful"
 }
 Write-Host "##[endgroup]"
