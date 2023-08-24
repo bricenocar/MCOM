@@ -28,11 +28,11 @@ az configure --defaults location=$ResourceGroupLocation group=$RGName
 Write-Host "##[debug]Resource Group location: $ResourceGroupLocation"
 
 # Prepare Deploy templates
-$servicebusTemplateFile = "$($armLocation)deploy-mcom-servicebus-provisioning.json"
+$servicebusTemplateFile = "$($armLocation)/deploy-mcom-servicebus-provisioning.json"
 Write-Host "##[debug]Location of servicebus arm template: $servicebusTemplateFile"
 
 # Prepare parameters
-$servicebusParametersFile = "$($armLocation)deploy-mcom-servicebus-provisioning.parameters.json"
+$servicebusParametersFile = "$($armLocation)/deploy-mcom-servicebus-provisioning.parameters.json"
 Write-Host "##[debug]Location of servicebus arm parameters file: $servicebusParametersFile"
 
 # Initialize variables to use

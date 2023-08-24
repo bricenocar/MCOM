@@ -35,14 +35,14 @@ if($runLocally -eq $true) {
 Write-Host "##[debug]Location of arm templates: $armLocation"
 
 # Prepare Deploy templates
-$storageTemplateFile = "$($armLocation)deploy-mcom-storage-provisioning.json"
-$functionTemplateFile = "$($armLocation)deploy-mcom-func-provisioning.json"
+$storageTemplateFile = "$($armLocation)/deploy-mcom-storage-provisioning.json"
+$functionTemplateFile = "$($armLocation)/deploy-mcom-func-provisioning.json"
 Write-Host "##[debug]Location of storage arm template: $storageTemplateFile"
 Write-Host "##[debug]Location of app function arm template: $functionTemplateFile"
 
 # Prepare parameters
-$funcParametersFile = "$($armLocation)deploy-mcom-func-provisioning.parameters.json"
-$storageParametersFile = "$($armLocation)deploy-mcom-storage-provisioning.parameters.json"
+$funcParametersFile = "$($armLocation)/deploy-mcom-func-provisioning.parameters.json"
+$storageParametersFile = "$($armLocation)/deploy-mcom-storage-provisioning.parameters.json"
 Write-Host "##[debug]Location of storage arm parameters file: $storageParametersFile"
 Write-Host "##[debug]Location of function app parameters file: $funcParametersFile"
 
