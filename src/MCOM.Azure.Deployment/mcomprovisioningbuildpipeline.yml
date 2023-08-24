@@ -71,7 +71,7 @@ stages:
             - task: ArchiveFiles@2
               displayName: 'Create project zip for provisioning logic app'
               inputs:
-                rootFolderOrFile: '$(pathToLogicAppProjectDirectory)'
+                rootFolderOrFile: '$(variables.pathToLogicAppProjectDirectory)'
                 includeRootFolder: false
                 archiveType: 'zip'
                 archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
@@ -146,4 +146,5 @@ stages:
                       appName: 'logic-mcom-provisioning-inttest'
                       package: '$(Agent.BuildDirectory)/droplogicapp/$(Build.BuildId).zip'
                       deploymentMethod: 'zipDeploy'
+
           
