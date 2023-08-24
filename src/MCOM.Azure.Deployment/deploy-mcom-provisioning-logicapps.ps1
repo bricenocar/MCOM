@@ -65,7 +65,7 @@ if($runLocally -eq $false) {
 
 # Evaluate result from deployment
 Write-Host "##[section] result of provisioning state: " + $result.properties.provisioningState
-if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
+if($result.Length -gt 0 -and ($result.properties.provisioningState -eq "Succeeded" -or $result.properties.provisioningState -eq "Accepted")) {
     Write-Host "##[section] Deployment successful"
 } else {
     Write-Host "##[error] Deployment failed"
