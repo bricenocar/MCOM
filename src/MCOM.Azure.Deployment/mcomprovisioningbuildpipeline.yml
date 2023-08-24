@@ -131,9 +131,10 @@ stages:
                       scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-servicebus.ps1'
                       arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/provisioning"'           
                   - task: AzureFunctionApp@2
+                    displayName: 'Deploy functions'
                     inputs:
                       azureSubscription: '$(AzureServiceConnectionName)'
-                      appType: functionApp # default is functionApp
+                      appType: functionApp
                       appName: 'function-mcom-provisioning-inttest'
                       package: $(Agent.BuildDirectory)/dropazfunc/$(Build.BuildId).zip
                       deploymentMethod: 'auto'
