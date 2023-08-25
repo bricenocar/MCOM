@@ -24,7 +24,7 @@ stages:
             - task: CopyFiles@2
               displayName: Copy deployment files
               inputs:
-                SourceFolder: 'src/MCOM.Azure.Deployment'
+                SourceFolder: '$(Build.SourceDirectory)/src/MCOM.Azure.Deployment'
                 Contents: '**'
                 TargetFolder: '$(Build.ArtifactStagingDirectory)'
             - publish: '$(Build.ArtifactStagingDirectory)'
