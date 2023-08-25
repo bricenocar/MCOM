@@ -71,7 +71,7 @@ stages:
             - task: ArchiveFiles@2
               displayName: 'Create project zip for provisioning logic app'
               inputs:
-                rootFolderOrFile: '$(variables.pathToLogicAppProjectDirectory)'
+                rootFolderOrFile: '$(pathToLogicAppProjectDirectory)'
                 includeRootFolder: false
                 archiveType: 'zip'
                 archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
