@@ -1,5 +1,6 @@
 variables:
   pathToLogicAppProjectDirectory: '$(System.DefaultWorkingDirectory)/src/${{ variables.logicAppProjectDirectoryName }}'
+  pathToFunctionAppProjectDirectory: '$(System.DefaultWorkingDirectory)/src/${{ variables.functionAppProjectDirectoryName }}'
 
 trigger:
   branches:
@@ -15,7 +16,7 @@ pool:
 
 stages:
     - stage: CopyScripts
-      displayName: Copy deployment scripts to artifact staging directory
+      displayName: Copy scripts (deployment)
       jobs:
           - job: CopyDS
             displayName: Copy deployment scripts to artifact staging directory
@@ -44,16 +45,28 @@ stages:
               displayName: 'Restore project dependencies'
               inputs:
                 command: 'restore'
-                projects: 'src/**/*.csproj'
+                projects: 'src/MCOM.Provisioning.Functions/*.csproj'
+            - task: DotNetCoreCLI@2
+              displayName: 'Build solution'
+              inputs:
+                command: 'build'
+                projects: 'src/MCOM.Provisioning.Functions/*.csproj'             
             - task: DotNetCoreCLI@2
               displayName: 'Publish the function project - $(BuildConfiguration)'
               inputs:
                 command: 'publish'
                 projects: 'src/MCOM.Provisioning.Functions/*.csproj'
                 publishWebProjects: false
-                arguments: '--no-build --configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(BuildConfiguration)'
+                arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(BuildConfiguration)'
                 zipAfterPublish: true
+            - task: ArchiveFiles@2
+              displayName: "Archive function files"
+              inputs:
+                rootFolderOrFile: '$(pathToFunctionAppProjectDirectory)'
+                includeRootFolder: false
+                archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
             - publish: '$(Build.ArtifactStagingDirectory)'
+              displayName: 'Publish function app artifact'
               artifact: dropazfunc
             - task: ArchiveFiles@2
               displayName: 'Create project zip for provisioning logic app'
@@ -84,8 +97,8 @@ stages:
       displayName: Deploy logic apps infrastructure and code to dev
       condition: succeeded()
       jobs:
-          - deployment: DeployLogicApps
-            displayName: Deploy MCOM Logic App            
+          - deployment: DeployLogic
+            displayName: Deploy MCOM Logic            
             environment: 'dev'
             variables:
               deploymentMode: 'Incremental'
@@ -93,19 +106,45 @@ stages:
               runOnce:
                 deploy:
                   steps:
-                  - task: AzureCliTask@2
-                    displayName: 'Deploy logic app infrastructure'
+                  - task: AzureCLI@2
+                    displayName: Deploy infrastructure for logic app
                     inputs:
-                      azureSubscription: '$(variables.AzureServiceConnectionName)'
+                      azureSubscription: '$(AzureServiceConnectionName)'
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
-                      scriptPath: '${pipeline.workspace}/dropdeploymentscripts/deploy-mcom-provisioning-logicapps.ps1'                      
+                      scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-logicapps.ps1'
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/provisioning"'           
+                  - task: AzureCLI@2
+                    displayName: Deploy infrastructure for azure function
+                    inputs:
+                      azureSubscription: '$(AzureServiceConnectionName)'
+                      scriptType: 'ps'
+                      scriptLocation: 'scriptPath'
+                      scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-functions.ps1'
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/provisioning"'           
+                  - task: AzureCLI@2
+                    displayName: Deploy infrastructure for service bus
+                    inputs:
+                      azureSubscription: '$(AzureServiceConnectionName)'
+                      scriptType: 'ps'
+                      scriptLocation: 'scriptPath'
+                      scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-servicebus.ps1'
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "https://stmcomarm$(environment).blob.core.windows.net/armartifacts/armtemplates/provisioning"'           
+                  - task: AzureFunctionApp@2
+                    displayName: 'Deploy functions in app'
+                    inputs:
+                      azureSubscription: '$(AzureServiceConnectionName)'
+                      appType: functionApp
+                      appName: 'function-mcom-provisioning-inttest'
+                      package: $(Agent.BuildDirectory)/dropazfunc/$(Build.BuildId).zip
+                      deploymentMethod: 'auto'
                   - task: AzureFunctionApp@1
                     displayName: 'Deploy logic app workflows'
                     inputs:
-                      azureSubscription: '$(variables.AzureServiceConnectionName)'
+                      azureSubscription: '$(AzureServiceConnectionName)'
                       appType: 'functionApp'
                       appName: 'logic-mcom-provisioning-inttest'
-                      package: '${Pipeline.Workspace}/droplogicapp/$(Build.BuildId).zip'
+                      package: '$(Agent.BuildDirectory)/droplogicapp/$(Build.BuildId).zip'
                       deploymentMethod: 'zipDeploy'
+
           

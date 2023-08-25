@@ -3,7 +3,7 @@ Param(
     [string] [Parameter(Mandatory = $true)] $ResourceGroupName,
     [string] [Parameter(Mandatory = $true)] $ResourceGroupLocation,
     [string] [Parameter(Mandatory = $true)] $Environment,
-    [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
+    [string] [Parameter(Mandatory = $false)] $armLocation,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false,    
     [string] [Parameter(Mandatory = $false)] $password
 )
@@ -28,23 +28,23 @@ Write-Host "##[debug]Subscription Id: $SubscriptionId"
 az configure --defaults location=$ResourceGroupLocation group=$RGName
 Write-Host "##[debug]Resource Group location: $ResourceGroupLocation"
 
-# Set location of parameter blobStorageUrl is null
+# Set location of parameter armLocation is null
 if($runLocally -eq $true) {
-    $blobStorageUrl = "./armtemplates/"    
+    $armLocation = "./armtemplates/"    
 }
-Write-Host "##[debug]Location of arm templates: $blobStorageUrl"
+Write-Host "##[debug]Location of arm templates: $armLocation"
 
 # Prepare Deploy templates
-$servicebusTemplateFile = "$($blobStorageUrl)deploy-mcom-servicebus-provisioning.json"
-Write-Host "##[debug]Location of servicebus arm template: $servicebusTemplateFile"
+$storageTemplateFile = "$($armLocation)/deploy-mcom-storage-provisioning.json"
+$functionTemplateFile = "$($armLocation)/deploy-mcom-func-provisioning.json"
+Write-Host "##[debug]Location of storage arm template: $storageTemplateFile"
+Write-Host "##[debug]Location of app function arm template: $functionTemplateFile"
 
 # Prepare parameters
-if($runLocally -eq $false) {
-    $servicebusParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-servicebus-provisioning.parameters.json"
-} else {
-    $servicebusParametersFile = "$($blobStorageUrl)deploy-mcom-servicebus-provisioning.parameters.json"
-}
-Write-Host "##[debug]Location of servicebus arm parameters file: $servicebusParametersFile"
+$funcParametersFile = "$($armLocation)/deploy-mcom-func-provisioning.parameters.json"
+$storageParametersFile = "$($armLocation)/deploy-mcom-storage-provisioning.parameters.json"
+Write-Host "##[debug]Location of storage arm parameters file: $storageParametersFile"
+Write-Host "##[debug]Location of function app parameters file: $funcParametersFile"
 
 # Initialize variables to use
 $today = Get-Date -Format "ddMMyy-HHmm"
@@ -54,6 +54,9 @@ if ($Environment -eq "prod") {
 } else {
     $SharePointUrl = "https://statoilintegrationtest.sharepoint.com/"
 }
+
+# Generate a guid for the role blob
+$roleBlobGuid = "e53e75cb-ed35-44f9-b1f4-c999b8cab71f";
 
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
@@ -72,19 +75,28 @@ Write-Host "##[endgroup]"
 
 Write-Host "##[group]Deployment of arm templates"
 # Deploy storage accounts and containers
-Write-Host "##[command] Running deployment of service bus template..."
+Write-Host "##[command] Running deployment of storage template..."
 if($runLocally -eq $false) {    
-    $result = az deployment group create --name "$DeploymentName-servicebus" --template-uri $servicebusTemplateFile --parameters $servicebusParametersFile environment=$Environment | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-storage" --template-uri $storageTemplateFile --parameters $storageParametersFile environment=$Environment | ConvertFrom-Json
 } else {    
-    $result = az deployment group create --name "$DeploymentName-servicebus" --template-file $servicebusTemplateFile --parameters $servicebusParametersFile environment=$Environment | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-storage" --template-file $storageTemplateFile --parameters $storageParametersFile environment=$Environment | ConvertFrom-Json
 }
 
 # Evaluate result from deployment
 if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
     Write-Host "##[section] Deployment successful"
+}
+
+# Deploy the function app
+Write-Host "##[command] Running deployment of function app template..."
+if($runLocally -eq $false) {
+    $result = az deployment group create --name "$DeploymentName-func" --template-uri $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl mcomRG=$mcomRGName roleBlobGuid=$roleBlobGuid | ConvertFrom-Json
 } else {
-    Write-Host "##[error] Deployment failed"
-    Write-Host "##[error] $result"
-    exit 1
+    $result = az deployment group create --name "$DeploymentName-func" --template-file $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl mcomRG=$mcomRGName roleBlobGuid=$roleBlobGuid | ConvertFrom-Json
+}
+
+# Evaluate result from deployment
+if($null -ne $result.properties -and ($result.properties.provisioningState -eq "Succeeded" -or $result.properties.provisioningState -eq "Accepted")) {
+    Write-Host "##[section] Deployment successful"
 }
 Write-Host "##[endgroup]"

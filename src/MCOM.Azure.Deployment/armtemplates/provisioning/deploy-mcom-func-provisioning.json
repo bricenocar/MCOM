@@ -1,0 +1,194 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "metadata": {
+        "description": "MCOM environment."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "defaultValue": "plan-mcom",
+      "metadata": {
+        "description": "The name of the function app that you wish to create."
+      }
+    },
+    "appName": {
+      "type": "string",
+      "defaultValue": "function-mcom",
+      "metadata": {
+        "description": "The name of the function app that you wish to create."
+      }
+    },
+    "runtime": {
+      "type": "string",
+      "defaultValue": "dotnet-isolated",
+      "allowedValues": [
+        "dotnet-isolated",
+        "node",
+        "dotnet",
+        "java"
+      ],
+      "metadata": {
+        "description": "The language worker runtime to load in the function app."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "stmcom",
+      "metadata": {
+        "description": "Name for storage account"
+      }
+    },
+    "appInsightsName": {
+      "type": "string",
+      "defaultValue": "appi-mcom",
+      "metadata": {
+        "description": "Location for Application Insights"
+      }
+    },
+    "SharePointUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Url to the SharePoint site where the function will have permissions to access"
+      }
+    },
+    "mcomRG": {
+      "type": "string",
+      "defaultValue": "mcom",
+      "metadata": {
+        "description": "Name for default mcom rg"
+      }
+    },
+    "roleBlobGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]",
+      "metadata": {
+        "description": "A new GUID used to identify the role assignment"
+      }
+    }
+  },
+  "variables": {
+    "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'provfunc', parameters('environment'))]",
+    "configStorageAccountName": "[concat(parameters('storageAccountName'), 'provconfig', parameters('environment'))]",
+    "functionAppName": "[concat(parameters('appName'), '-provisioning-', parameters('environment'))]",
+    "hostingPlanName": "[concat(parameters('appServicePlanName'), '-provisioning-', parameters('environment'))]",
+    "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]",
+    "blobReaderRoleId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('hostingPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic",
+        "size": "Y1",
+        "family": "Y",
+        "capacity": 0
+      },
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "computeMode": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('functionStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('functionStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower(variables('functionAppName'))]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~10"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId(parameters('mcomRG'),'microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').InstrumentationKey]"
+            },
+            {
+              "name": "APPINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId(parameters('mcomRG'),'microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').ConnectionString]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "[parameters('runtime')]"
+            },
+            {
+              "name": "BlobStorageConnectionString",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('configStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('configStorageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "QueueConnectionString",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('functionStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "AppInsightsAppId",
+              "value": "[reference(resourceId(parameters('mcomRG'), 'microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').AppId]"
+            },
+            {
+              "name": "SharePointUrl",
+              "value": "[parameters('SharePointUrl')]"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[parameters('roleBlobGuid')]",
+      "scope": "[concat('Microsoft.Storage/storageAccounts', '/', variables('configStorageAccountName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('blobReaderRoleId')]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2022-04-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    }
+  ],
+  "outputs": {}
+}

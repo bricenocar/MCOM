@@ -3,7 +3,7 @@ Param(
     [string] [Parameter(Mandatory = $true)] $ResourceGroupName,
     [string] [Parameter(Mandatory = $true)] $ResourceGroupLocation,
     [string] [Parameter(Mandatory = $true)] $Environment,
-    [string] [Parameter(Mandatory = $false)] $blobStorageUrl,
+    [string] [Parameter(Mandatory = $false)] $armLocation,
     [Bool] [parameter(Mandatory = $false)] $runLocally=$false,    
     [string] [Parameter(Mandatory = $false)] $password
 )
@@ -27,33 +27,17 @@ Write-Host "##[debug]Subscription Id: $SubscriptionId"
 az configure --defaults location=$ResourceGroupLocation group=$RGName
 Write-Host "##[debug]Resource Group location: $ResourceGroupLocation"
 
-# Set location of parameter blobStorageUrl is null
-if($runLocally -eq $true) {
-    $blobStorageUrl = "./armtemplates/"    
-}
-Write-Host "##[debug]Location of arm templates: $blobStorageUrl"
-
 # Prepare Deploy templates
-$logicappsTemplateFile = "$($blobStorageUrl)deploy-mcom-logicapps-provisioning.json"
-Write-Host "##[debug]Location of logicapps arm template: $logicappsTemplateFile"
+$servicebusTemplateFile = "$($armLocation)/deploy-mcom-servicebus-provisioning.json"
+Write-Host "##[debug]Location of servicebus arm template: $servicebusTemplateFile"
 
 # Prepare parameters
-if($runLocally -eq $false) {
-    $logicappsParametersFile = "MCOMProvisioningService/dropdeploymentscripts/armtemplates/deploy-mcom-logicapps-provisioning.parameters.json"
-} else {
-    $logicappsParametersFile = "$($blobStorageUrl)deploy-mcom-logicapps-provisioning.parameters.json"
-}
-Write-Host "##[debug]Location of logicapps arm parameters file: $logicappsParametersFile"
+$servicebusParametersFile = "$($armLocation)/deploy-mcom-servicebus-provisioning.parameters.json"
+Write-Host "##[debug]Location of servicebus arm parameters file: $servicebusParametersFile"
 
 # Initialize variables to use
 $today = Get-Date -Format "ddMMyy-HHmm"
 $DeploymentName = "mcom-$Environment-$today"
-if ($Environment -eq "prod") {
-    $SharePointUrl = "https://statoilsrm.sharepoint.com/"
-} else {
-    $SharePointUrl = "https://statoilintegrationtest.sharepoint.com/"
-}
-
 Write-Host "##[debug]Deployment name: $DeploymentName"
 Write-Host "##[endgroup]"
 
@@ -71,15 +55,16 @@ Write-Host "##[endgroup]"
 
 Write-Host "##[group]Deployment of arm templates"
 # Deploy storage accounts and containers
-Write-Host "##[command] Running deployment of logic apps template..."
+Write-Host "##[command] Running deployment of service bus template..."
 if($runLocally -eq $false) {    
-    $result = az deployment group create --name "$DeploymentName-logicapps" --template-uri $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-servicebus" --template-uri $servicebusTemplateFile --parameters $servicebusParametersFile environment=$Environment | ConvertFrom-Json
 } else {    
-    $result = az deployment group create --name "$DeploymentName-logicapps" --template-file $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-servicebus" --template-file $servicebusTemplateFile --parameters $servicebusParametersFile environment=$Environment | ConvertFrom-Json
 }
 
 # Evaluate result from deployment
-if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded") {
+Write-Host "##[section] result of provisioning state: $($result.properties.provisioningState)."
+if($null -ne $result.properties -and ($result.properties.provisioningState -eq "Succeeded" -or $result.properties.provisioningState -eq "Accepted")) {
     Write-Host "##[section] Deployment successful"
 } else {
     Write-Host "##[error] Deployment failed"
