@@ -22,6 +22,9 @@
       },
       "mcomRG": {
         "value": "rg"
+      },
+      "roleBlobGuid": {
+        "value": ""
       }
     }
   }
