@@ -12,19 +12,18 @@ using MCOM.Models.Provisioning;
 namespace MCOM.Provisioning.Functions
 {
     public class ValidateTemplate
-    {   
+    {
         private readonly IBlobService _blobService;
 
         public ValidateTemplate(IBlobService blobService)
-        {  
+        {
             _blobService = blobService;
         }
 
         [Function("ValidateTemplate")]
         public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, FunctionContext context)
-        {
-            HttpResponseData response;
-            var logger = context.GetLogger("ValidateTemplate");            
+        {            
+            var logger = context.GetLogger("ValidateTemplate");
 
             try
             {
@@ -34,10 +33,7 @@ namespace MCOM.Provisioning.Functions
             {
                 var msg = "Config values missing or bad formatted in app config.";
                 Global.Log.LogError(e, msg + "Error: {ErrorMessage}", e.Message);
-                response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                response.Headers.Add("Content-Type", "application/json");
-                response.WriteString("false");
-                return response;
+                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
             }
 
             try
@@ -50,10 +46,7 @@ namespace MCOM.Provisioning.Functions
                 {
                     var msg = "Missing request body params (BlobFilePath, FileName).";
                     Global.Log.LogError(msg + "Error: {ErrorMessage}", msg);
-                    response = req.CreateResponse(HttpStatusCode.BadRequest);
-                    response.Headers.Add("Content-Type", "application/json");
-                    response.WriteString("false");
-                    return response;
+                    return HttpUtilities.HttpResponse(req, HttpStatusCode.BadRequest, "false");
                 }
 
                 // Get template uri
@@ -80,17 +73,14 @@ namespace MCOM.Provisioning.Functions
                         {
                             using var fileStreamReader = new StreamReader(fileStream);
                             using var jsonFileTextReader = new JsonTextReader(fileStreamReader);
-                            while (jsonFileTextReader.Read()) { }                            
+                            while (jsonFileTextReader.Read()) { }
                         }
                         catch (Exception ex)
                         {
                             Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
-                            response = req.CreateResponse(HttpStatusCode.NotAcceptable);
-                            response.Headers.Add("Content-Type", "application/json");
-                            response.WriteString("false");
-                            return response;
+                            return HttpUtilities.HttpResponse(req, HttpStatusCode.UnprocessableEntity, "false");
                         }
-                        
+
                         break;
 
                     case ".xml":
@@ -108,13 +98,10 @@ namespace MCOM.Provisioning.Functions
                         {
                             while (xmlReader.Read()) { }
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
-                            response = req.CreateResponse(HttpStatusCode.NotAcceptable);
-                            response.Headers.Add("Content-Type", "application/json");
-                            response.WriteString("false");
-                            return response;
+                            return HttpUtilities.HttpResponse(req, HttpStatusCode.UnprocessableEntity, "false");
                         }
 
                         break;
@@ -122,26 +109,16 @@ namespace MCOM.Provisioning.Functions
                     default:
                         var msg = "Wrong file format. It has to be either xml or json files.";
                         Global.Log.LogError(msg + "Error: {ErrorMessage}", msg);
-                        response = req.CreateResponse(HttpStatusCode.BadRequest);
-                        response.Headers.Add("Content-Type", "application/json");
-                        response.WriteString("false");
-                        return response;
+                        return HttpUtilities.HttpResponse(req, HttpStatusCode.BadRequest, "false");
                 }
 
-                response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "application/json");
-                response.WriteString("true");
-
-                return response;
+                return HttpUtilities.HttpResponse(req, HttpStatusCode.OK, "true");
             }
             catch (Exception ex)
-            {                 
-                Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
-                response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                response.Headers.Add("Content-Type", "application/json");
-                response.WriteString("false");
-                return response;
-            }            
+            {
+                Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);                
+                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+            }
         }
 
         #region In case of xsd validation is going to be implemented
