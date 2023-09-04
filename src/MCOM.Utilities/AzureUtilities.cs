@@ -14,14 +14,25 @@ namespace MCOM.Utilities
             );
         }
 
-        public static ChainedTokenCredential GetDefaultCredential()
+        public static DefaultAzureCredential GetDefaultCredential()
         {
             // For using Managed Identity when deployed in Azure and Azure CLI for local development purposes
-            return new ChainedTokenCredential(                    
+            /*return new ChainedTokenCredential(                    
                     new ManagedIdentityCredential(),
                     new DefaultAzureCredential(),
-                    new AzureCliCredential()                    
-                );
+                    new AzureCliCredential()*/
+            return new DefaultAzureCredential(new DefaultAzureCredentialOptions 
+            { 
+                ExcludeAzurePowerShellCredential = true, 
+                ExcludeEnvironmentCredential = true,
+                ExcludeSharedTokenCacheCredential = true,
+                ExcludeInteractiveBrowserCredential = true,
+                ExcludeAzureCliCredential = true,
+
+                ExcludeManagedIdentityCredential = false,                
+                ExcludeVisualStudioCodeCredential = false, // Test purposes
+                ExcludeVisualStudioCredential = false, // Test purposes                
+            });
         }
     }
 }

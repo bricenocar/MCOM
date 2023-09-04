@@ -5,3 +5,5 @@
 *.testlog
 *.dtbcache.v2
 /src/MCOM.Functions/Properties
+/.vs/MCOM/v17
+/.vs/MCOM/FileContentIndex

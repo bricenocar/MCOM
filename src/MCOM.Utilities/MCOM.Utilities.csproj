@@ -13,6 +13,8 @@
     <PackageReference Include="Azure.Identity" Version="1.5.0" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
     <PackageReference Include="Microsoft.Azure.ApplicationInsights.Query" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.6.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
     <PackageReference Include="Microsoft.Graph" Version="4.11.0" />
     <PackageReference Include="Microsoft.Identity.Web" Version="1.21.1" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23" />
