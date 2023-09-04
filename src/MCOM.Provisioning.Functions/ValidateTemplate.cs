@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using MCOM.Services;
 using MCOM.Models;
 using MCOM.Utilities;
-using MCOM.Models.Provisioning;
 
 namespace MCOM.Provisioning.Functions
 {
@@ -39,21 +38,17 @@ namespace MCOM.Provisioning.Functions
             try
             {
                 // Get request data
-                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var fileData = JsonConvert.DeserializeObject<ProvisioningRequestPayload>(requestBody);
+                var blobTemplatePath = await new StreamReader(req.Body).ReadToEndAsync();
 
-                if (string.IsNullOrEmpty(fileData?.BlobFilePath) || string.IsNullOrEmpty(fileData?.FileName))
+                if (string.IsNullOrEmpty(blobTemplatePath))
                 {
-                    var msg = "Missing request body params (BlobFilePath, FileName).";
+                    var msg = "The template path is empty.";
                     Global.Log.LogError(msg + "Error: {ErrorMessage}", msg);
                     return HttpUtilities.HttpResponse(req, HttpStatusCode.BadRequest, "false");
                 }
 
                 // Get template uri
-                var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{fileData?.BlobFilePath}/{fileData?.FileName}");
-
-                // Replace special characters
-                var fileName = StringUtilities.RemoveSpecialChars(fileData?.FileName);
+                var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{blobTemplatePath}");                
 
                 // Init blob service client
                 _blobService.GetBlobServiceClient();
@@ -63,7 +58,7 @@ namespace MCOM.Provisioning.Functions
                 var fileStream = await _blobService.GetBlobStreamAsync(blobClient);
 
                 // Check file extension
-                var fileExtention = Path.GetExtension(fileName);
+                var fileExtention = Path.GetExtension(blobTemplatePath);
 
                 switch (fileExtention.ToLower())
                 {
