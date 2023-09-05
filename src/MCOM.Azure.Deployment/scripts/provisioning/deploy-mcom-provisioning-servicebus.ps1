@@ -57,7 +57,7 @@ Write-Host "##[group]Deployment of arm templates"
 # Deploy storage accounts and containers
 Write-Host "##[command] Running deployment of service bus template..."
 if($runLocally -eq $false) {    
-    $result = az deployment group create --name "$DeploymentName-servicebus" --template-uri $servicebusTemplateFile --parameters $servicebusParametersFile environment=$Environment | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-servicebus" --template-file $servicebusTemplateFile --parameters $servicebusParametersFile environment=$Environment | ConvertFrom-Json
 } else {    
     $result = az deployment group create --name "$DeploymentName-servicebus" --template-file $servicebusTemplateFile --parameters $servicebusParametersFile environment=$Environment | ConvertFrom-Json
 }
