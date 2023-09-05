@@ -177,7 +177,7 @@
     },
     {
       "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2022-04-01",
       "name": "[parameters('roleBlobGuid')]",
       "scope": "[concat('Microsoft.Storage/storageAccounts', '/', variables('configStorageAccountName'))]",
       "dependsOn": [
