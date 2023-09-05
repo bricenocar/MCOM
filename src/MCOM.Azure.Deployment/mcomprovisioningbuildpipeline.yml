@@ -113,7 +113,7 @@ stages:
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
                       scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-logicapps.ps1'
-                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "$(Build.ArtifactStagingDirectory)\\dropdeploymentscripts\\armtemplates\\provisioning"'           
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "$(Agent.BuildDirectory)/dropdeploymentscripts/armtemplates/provisioning"'           
                   - task: AzureCLI@2
                     displayName: Deploy infrastructure for azure function
                     inputs:
@@ -121,7 +121,7 @@ stages:
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
                       scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-functions.ps1'
-                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "$(Build.ArtifactStagingDirectory)\\dropdeploymentscripts\\armtemplates\\provisioning"'           
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "$(Agent.BuildDirectory)/dropdeploymentscripts/armtemplates/provisioning"'           
                   - task: AzureCLI@2
                     displayName: Deploy infrastructure for service bus
                     inputs:
@@ -129,7 +129,7 @@ stages:
                       scriptType: 'ps'
                       scriptLocation: 'scriptPath'
                       scriptPath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/deploy-mcom-provisioning-servicebus.ps1'
-                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "$(Build.ArtifactStagingDirectory)\\dropdeploymentscripts\\armtemplates\\provisioning"'           
+                      arguments: '-SubscriptionId $(subscriptionId) -ResourceGroupName $(resourceGroupName) -ResourceGroupLocation $(resourceGroupLocation) -Environment $(environment) -armLocation "$(Agent.BuildDirectory)/dropdeploymentscripts/armtemplates/provisioning"'           
                   - task: AzureFunctionApp@2
                     displayName: 'Deploy functions in app'
                     inputs:
