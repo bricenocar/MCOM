@@ -152,6 +152,10 @@
               "value": "[parameters('runtime')]"
             },
             {
+              "name": "BlobStorageAccountName",
+              "value": "stmcomprovconfiginttest"
+            },
+            {
               "name": "BlobStorageConnectionString",
               "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('configStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('configStorageAccountName')), '2019-06-01').keys[0].value)]"
             },
