@@ -28,10 +28,10 @@ namespace MCOM.Provisioning.Functions
             {
                 GlobalEnvironment.SetEnvironmentVariables(logger);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 var msg = "Config values missing or bad formatted in app config.";
-                Global.Log.LogError(e, msg + "Error: {ErrorMessage}", e.Message);
+                Global.Log.LogError(ex, msg + "Error: {ErrorMessage}", ex.Message);
                 return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
             }
 
