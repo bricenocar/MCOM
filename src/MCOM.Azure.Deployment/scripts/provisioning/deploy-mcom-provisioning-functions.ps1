@@ -29,9 +29,6 @@ az configure --defaults location=$ResourceGroupLocation group=$RGName
 Write-Host "##[debug]Resource Group location: $ResourceGroupLocation"
 
 # Set location of parameter armLocation is null
-if($runLocally -eq $true) {
-    $armLocation = "./armtemplates/"    
-}
 Write-Host "##[debug]Location of arm templates: $armLocation"
 
 # Prepare Deploy templates
