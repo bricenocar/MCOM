@@ -57,7 +57,7 @@ Write-Host "##[group]Deployment of arm templates"
 # Deploy storage accounts and containers
 Write-Host "##[command] Running deployment of logic apps template..."
 if($runLocally -eq $false) {    
-    $result = az deployment group create --name "$DeploymentName-logicapps" --template-uri $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-logicapps" --template-file $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment | ConvertFrom-Json
 } else {    
     $result = az deployment group create --name "$DeploymentName-logicapps" --template-file $logicappsTemplateFile --parameters $logicappsParametersFile environment=$Environment | ConvertFrom-Json
 }
