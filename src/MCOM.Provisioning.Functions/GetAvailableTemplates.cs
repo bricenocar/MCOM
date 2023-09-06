@@ -48,14 +48,62 @@ namespace MCOM.Provisioning.Functions
                     new GetAvailableTemplatesPayload()
                     {
                         OptionId = optionId,
-                        FileName = "Json Template",
-                        FilePath = "templates/JsonFile.json"
+                        Icon = "",
+                        Title = "Standard Template",
+                        Description = "<div>" +
+                                          "<div>" +
+                                            "<h3>Sharepoint Collaboration site:</h3>" +
+                                            "<div>" +
+                                              "<ul>" +
+                                                "<li>Document library</li>" +
+                                                "<li>Lists and Pages</li>" +
+                                                "<li>OneNote</li>" +
+                                              "</ul>" +
+                                            "</div>" +
+                                          "</div>" +
+                                          "<div>" +
+                                              "<h3>Teams:</h3>" +
+                                            "<div>" +
+                                              "<ul>" +
+                                                "<li>Channels</li>" +
+                                                "<li>Posts</li>" +
+                                                "<li>Files</li>" +
+                                              "</ul>" +
+                                            "</div>" +
+                                          "</div>" +
+                                        "</div>",
+                        FileBlobName = "Json Template",
+                        FileBlobPath = "templates/JsonFile.json"
                     },
                     new GetAvailableTemplatesPayload()
                     {
                         OptionId = optionId,
-                        FileName = "Xml Template",
-                        FilePath = "templates/XmlFile.xml"
+                        Icon = "",
+                        Title = "Nice Template",
+                         Description = "<div>" +
+                                          "<div>" +
+                                            "<h3>Sharepoint Collaboration site:</h3>" +
+                                            "<div>" +
+                                              "<ul>" +
+                                                "<li>Document library</li>" +
+                                                "<li>Lists and Pages</li>" +
+                                                "<li>OneNote</li>" +
+                                              "</ul>" +
+                                            "</div>" +
+                                          "</div>" +
+                                          "<div>" +
+                                              "<h3>Teams:</h3>" +
+                                            "<div>" +
+                                              "<ul>" +
+                                                "<li>Channels</li>" +
+                                                "<li>Posts</li>" +
+                                                "<li>Files</li>" +
+                                              "</ul>" +
+                                            "</div>" +
+                                          "</div>" +
+                                        "</div>",
+                        FileBlobName = "Xml Template",
+                        FileBlobPath = "templates/XmlFile.xml"
                     }
                 };
 
