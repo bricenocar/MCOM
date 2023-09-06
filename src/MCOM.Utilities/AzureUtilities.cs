@@ -16,11 +16,7 @@ namespace MCOM.Utilities
 
         public static DefaultAzureCredential GetDefaultCredential()
         {
-            // For using Managed Identity when deployed in Azure and Azure CLI for local development purposes
-            /*return new ChainedTokenCredential(                    
-                    new ManagedIdentityCredential(),
-                    new DefaultAzureCredential(),
-                    new AzureCliCredential()*/
+            // For using Managed Identity when deployed in Azure and VS for testing purposes
             return new DefaultAzureCredential(new DefaultAzureCredentialOptions 
             { 
                 ExcludeAzurePowerShellCredential = true, 
@@ -31,10 +27,10 @@ namespace MCOM.Utilities
 
                 ExcludeManagedIdentityCredential = false,
 
-                #if DEBUG
+#if DEBUG
                 ExcludeVisualStudioCodeCredential = false, // Test purposes
                 ExcludeVisualStudioCredential = false, // Test purposes
-                #endif
+#endif          
             });
         }
     }
