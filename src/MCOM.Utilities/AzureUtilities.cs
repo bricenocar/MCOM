@@ -29,9 +29,12 @@ namespace MCOM.Utilities
                 ExcludeInteractiveBrowserCredential = true,
                 ExcludeAzureCliCredential = true,
 
-                ExcludeManagedIdentityCredential = false,                
+                ExcludeManagedIdentityCredential = false,
+
+                #if DEBUG
                 ExcludeVisualStudioCodeCredential = false, // Test purposes
-                ExcludeVisualStudioCredential = false, // Test purposes                
+                ExcludeVisualStudioCredential = false, // Test purposes
+                #endif
             });
         }
     }
