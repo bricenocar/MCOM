@@ -33,8 +33,8 @@ namespace MCOM.Provisioning.Functions
 
             try
             {
-                // Temporary static code to build the templates
-                var availableTemplates = new List<GetOptionalValuesPayload>()
+                // Temporary static code to build the the options
+                var optionalValues = new List<GetOptionalValuesPayload>()
                 {
                     new GetOptionalValuesPayload()
                     {
@@ -75,7 +75,7 @@ namespace MCOM.Provisioning.Functions
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json");
-                response.WriteString(JsonConvert.SerializeObject(availableTemplates));
+                response.WriteString(JsonConvert.SerializeObject(optionalValues));
 
                 return response;
             }
