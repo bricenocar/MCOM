@@ -19,7 +19,11 @@
                 "type": "ServiceProvider",
                 "inputs": {
                     "parameters": {
-                        "storedProcedureName": "UpdateRequestStatus"
+                        "storedProcedureName": "UpdateRequestStatus",
+                        "storedProcedureParameters": {
+                            "@pRequestId": "@{triggerBody()?['contentData']?['metadata']?['requestId']}",
+                            "@pRequestStatus": "requested"
+                        }
                     },
                     "serviceProviderConfiguration": {
                         "connectionName": "sql",

@@ -6,11 +6,23 @@ using System.Threading.Tasks;
 using Azure.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.Graph.Identity;
+using Microsoft.Graph.IdentityProviders;
+using Microsoft.Graph.Models;
 using Microsoft.SharePoint.Client;
 using Newtonsoft.Json;
 using MCOM.Models;
 using MCOM.Utilities;
 using MCOM.Models.Archiving;
+using DriveUpload = Microsoft.Graph.Drives.Item.Items.Item.CreateUploadSession;
+using Azure.Identity;
+using Microsoft.Graph.Authentication;
+using Microsoft.Kiota.Abstractions.Authentication;
+using System.Threading;
+using Newtonsoft.Json.Linq;
+using Microsoft.VisualBasic;
+using Microsoft.Graph.Drives.Item.Items.Item.SearchWithQ;
+using Microsoft.Graph.Drives.Item.SearchWithQ;
 
 namespace MCOM.Services
 {
@@ -18,20 +30,24 @@ namespace MCOM.Services
     {
         Task<GraphServiceClient> GetGraphServiceClientAsync();
 
-        Task<DriveItem> ReplaceSharePointFileContentAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream);
-        Task<UploadResult<DriveItem>> ReplaceLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail");
-        Task<DriveItem> UploadSharePointFileAsync(string domain, string siteId, string webId, string listId, string fileName, Stream stream);
-        Task<DriveItem> UploadDriveItemAsync(string driveId, string fileName, Stream stream);
+        Task<Microsoft.Graph.Models.Site> CreateSiteAsync(Microsoft.Graph.Models.Site site, string sensitivityLabel);
+
         Task<DriveItem> CopySharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, string name, ItemReference parentReference);
+
+        Task<DriveItem> UploadSharePointFileAsync(string domain, string siteId, string webId, string listId, string fileName, Stream stream);
+        Task<DriveItem> ReplaceSharePointFileContentAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream);
+        Task<DriveItem> UploadDriveItemAsync(string driveId, string fileName, Stream stream);
+        
         Task<UploadResult<DriveItem>> UploadLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail");
+        Task<UploadResult<DriveItem>> ReplaceLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail");
         Task<UploadResult<DriveItem>> UploadLargeDriveItemAsync(string driveId, string fileName, Stream stream, int maxSliceSize, string blobFilePath, string conflictBehaviour = "fail");
 
         Task<IListItemsCollectionPage> SearchItemAsync(string domain, string siteId, string webId, string listId, string filter);
-        Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string driveId, string queryString);
+        Task<Microsoft.Graph.Drives.Item.SearchWithQ.SearchWithQResponse> SearchDriveAsync(string driveId, string queryString);
         Task<List<Models.Search.SearchResult>> SearchItemAsync(string documentId);
 
-        Task<Microsoft.Graph.ListItem> GetListItemAsync(string driveId, string driveItemId);
-        Task<Microsoft.Graph.ListItem> GetListItemAsync(string domain, string siteId, string webId, string listId, string itemId);
+        Task<Microsoft.Graph.Models.ListItem> GetListItemAsync(string driveId, string driveItemId);
+        Task<Microsoft.Graph.Models.ListItem> GetListItemAsync(string domain, string siteId, string webId, string listId, string itemId);
         Task<ISiteDrivesCollectionPage> GetDriveCollectionPageAsync(Uri uri);
         Task<Stream> GetFileContentAsync(string driveId, string driveItemId);
         Task<Drive> GetDriveAsync(string driveId, string select);
@@ -54,23 +70,36 @@ namespace MCOM.Services
             if (GraphServiceClient == null || GraphToken.ExpiresOn >= DateTime.Now)
             {
                 GraphToken = await AzureUtilities.GetAzureServiceTokenAsync("https://graph.microsoft.com");
-                GraphServiceClient = new GraphServiceClient(
-                new DelegateAuthenticationProvider((requestMessage) =>
-                {
-                    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("bearer", GraphToken.Token);
-                    return Task.CompletedTask;
-                }));
+                TokenProvider provider = new TokenProvider(GraphToken);
+                var authenticationProvider = new BaseBearerTokenAuthenticationProvider(provider);
+                GraphServiceClient = new GraphServiceClient(authenticationProvider);
             }
 
             return GraphServiceClient;
         }
 
-        public virtual async Task<DriveItem> CopySharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, string name, ItemReference parentReference)
+
+
+        #region Sites
+        public virtual async Task<Microsoft.Graph.Models.Site> CreateSiteAsync(Microsoft.Graph.Models.Site site, string sensitivityLabel)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
 
-            return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items[itemId].DriveItem.Copy(name, parentReference).Request().PostAsync();
+            // Create the SharePoint site
+            var createdSite = await GraphServiceClient.Sites.Add.PostAsync(site);
+
+            var sensitivityLabelAssignment = new SensitivityLabelAssignment
+            {
+                 SensitivityLabelId = sensitivityLabel
+            };
+
+            // Apply the sensitivity label
+            await GraphServiceClient.Sites[createdSite.Id].SiteCollection.SensitivityLabel
+                .SetAsync(sensitivityLabelAssignment);
+            
+            return createdSite;
         }
+        #endregion
 
         public virtual async Task<DriveItem> ReplaceSharePointFileContentAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream)
         {
@@ -79,38 +108,20 @@ namespace MCOM.Services
             return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items[itemId].DriveItem.Content.Request().PutAsync<DriveItem>(stream);
         }
 
-        public virtual async Task<UploadResult<DriveItem>> ReplaceLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail")
-        {
-            GraphServiceClient = await GetGraphServiceClientAsync();
-
-            // Use properties to specify the conflict behavior
-            var uploadProps = new DriveItemUploadableProperties
-            {
-                ODataType = null,
-                AdditionalData = new Dictionary<string, object>
-                {
-                    { "@microsoft.graph.conflictBehavior", conflictBehaviour},
-                }
-            };
-
-            var uploadSession = await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items[itemId].DriveItem.CreateUploadSession(uploadProps).Request().PostAsync();
-            var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, stream, maxSliceSize);
-
-            // Create a callback that is invoked after each slice is uploaded
-            var progress = new Progress<long>(prog =>
-            {
-                Global.Log.LogInformation("Uploaded {UploadProgress} bytes of {StreamLength} bytes for {BlobName}", prog, stream.Length, fileName);
-            });
-
-            // Upload the file
-            return await fileUploadTask.UploadAsync(progress);
-        }
+        
 
         public virtual async Task<DriveItem> UploadSharePointFileAsync(string domain, string siteId, string webId, string listId, string fileName, Stream stream)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
 
             return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Drive.Root.ItemWithPath(fileName).Content.Request().PutAsync<DriveItem>(stream);
+        }
+
+        public virtual async Task<DriveItem> CopySharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, string name, ItemReference parentReference)
+        {
+            GraphServiceClient = await GetGraphServiceClientAsync();
+
+            return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items[itemId].DriveItem.Copy(name, parentReference).Request().PostAsync();
         }
 
         public virtual async Task<DriveItem> UploadDriveItemAsync(string driveId, string fileName, Stream stream)
@@ -125,16 +136,59 @@ namespace MCOM.Services
             GraphServiceClient = await GetGraphServiceClientAsync();
 
             // Use properties to specify the conflict behavior
-            var uploadProps = new DriveItemUploadableProperties
+            var uploadSessionRequestBody = new DriveUpload.CreateUploadSessionPostRequestBody
             {
-                ODataType = null,
-                AdditionalData = new Dictionary<string, object>
+                Item = new DriveItemUploadableProperties
                 {
-                    { "@microsoft.graph.conflictBehavior", conflictBehaviour},
+                    AdditionalData = new Dictionary<string, object>
+                    {
+                        { "@microsoft.graph.conflictBehavior", conflictBehaviour},
+                    }
                 }
             };
 
-            var uploadSession = await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Drive.Root.ItemWithPath(fileName).CreateUploadSession(uploadProps).Request().PostAsync();
+            // var uploadSession = await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Drive.Root.ItemWithPath(fileName).CreateUploadSession(uploadProps).Request().PostAsync();
+            var drive= await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Drive.GetAsync();
+            var uploadSession = await GraphServiceClient.Drives[drive?.Id].Root                
+                .ItemWithPath(fileName)
+                .CreateUploadSession
+                .PostAsync(uploadSessionRequestBody);
+
+            var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, stream, maxSliceSize, GraphServiceClient.RequestAdapter);
+
+            // Create a callback that is invoked after each slice is uploaded
+            var progress = new Progress<long>(prog =>
+            {
+                Global.Log.LogInformation("Uploaded {UploadProgress} bytes of {StreamLength} bytes for {BlobName}", prog, stream.Length, fileName);
+            });
+
+            // Upload the file
+            return await fileUploadTask.UploadAsync(progress);
+        }
+
+        public virtual async Task<UploadResult<DriveItem>> ReplaceLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail")
+        {
+            GraphServiceClient = await GetGraphServiceClientAsync();
+
+            // Use properties to specify the conflict behavior
+            var uploadSessionRequestBody = new DriveUpload.CreateUploadSessionPostRequestBody
+            {
+                Item = new DriveItemUploadableProperties
+                {
+                    AdditionalData = new Dictionary<string, object>
+                    {
+                        { "@microsoft.graph.conflictBehavior", conflictBehaviour},
+                    }
+                }
+            };          
+
+            var drive = await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Drive.GetAsync();
+            //var driveItem = await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items[itemId].DriveItem.GetAsync();
+            var uploadSession = await GraphServiceClient.Drives[drive?.Id]
+                .Items[itemId]
+                .CreateUploadSession
+                .PostAsync(uploadSessionRequestBody);
+
             var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, stream, maxSliceSize);
 
             // Create a callback that is invoked after each slice is uploaded
@@ -154,7 +208,7 @@ namespace MCOM.Services
             // Use properties to specify the conflict behavior
             var uploadProps = new DriveItemUploadableProperties
             {
-                ODataType = null,
+                OdataType = null,
                 AdditionalData = new Dictionary<string, object>
                 {
                     { "@microsoft.graph.conflictBehavior", conflictBehaviour},
@@ -175,18 +229,24 @@ namespace MCOM.Services
         }
 
 
-        public virtual async Task<IListItemsCollectionPage> SearchItemAsync(string domain, string siteId, string webId, string listId, string filter)
+        public virtual async Task<ListItemCollectionResponse> SearchItemAsync(string domain, string siteId, string webId, string listId, string filter)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
 
-            return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items.Request().Filter(filter).GetAsync();
+            return await GraphServiceClient.Sites[$"{domain},{siteId},{webId}"].Lists[listId].Items.GetAsync(
+                requestConfig =>
+                {
+                    requestConfig.QueryParameters.Filter = filter;
+                }
+            );
         }
 
-        public virtual async Task<IDriveItemSearchCollectionPage> SearchDriveAsync(string driveId, string queryString)
+        public virtual async Task<Microsoft.Graph.Drives.Item.SearchWithQ.SearchWithQResponse> SearchDriveAsync(string driveId, string queryString)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
 
-            return await GraphServiceClient.Drives[driveId].Root.Search(queryString).Request().GetAsync();
+            //return await GraphServiceClient.Drives[driveId].Root.Search(queryString).Request().GetAsync();
+            return await GraphServiceClient.Drives[driveId].SearchWithQ(queryString).GetAsync();
         }
 
         public virtual async Task<List<Models.Search.SearchResult>> SearchItemAsync(string queryString)
@@ -236,14 +296,14 @@ namespace MCOM.Services
         }
 
 
-        public virtual async Task<Microsoft.Graph.ListItem> GetListItemAsync(string driveId, string driveItemId)
+        public virtual async Task<Microsoft.Graph.Models.ListItem> GetListItemAsync(string driveId, string driveItemId)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
 
             return await GraphServiceClient.Drives[driveId].Items[driveItemId].ListItem.Request().GetAsync();
         }
 
-        public virtual async Task<Microsoft.Graph.ListItem> GetListItemAsync(string domain, string siteId, string webId, string listId, string itemId)
+        public virtual async Task<Microsoft.Graph.Models.ListItem> GetListItemAsync(string domain, string siteId, string webId, string listId, string itemId)
         {
             GraphServiceClient = await GetGraphServiceClientAsync();
 
@@ -419,5 +479,22 @@ namespace MCOM.Services
                 throw;
             }
         }
+    }
+
+    public class TokenProvider : IAccessTokenProvider
+    {
+        public AccessToken GraphToken { get; set; }
+
+        public TokenProvider(AccessToken token) {
+            GraphToken = token;
+        }
+
+        public Task<string> GetAuthorizationTokenAsync(Uri uri, Dictionary<string, object> additionalAuthenticationContext = default,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(GraphToken.Token);
+        }
+
+        public AllowedHostsValidator AllowedHostsValidator { get; }
     }
 }
