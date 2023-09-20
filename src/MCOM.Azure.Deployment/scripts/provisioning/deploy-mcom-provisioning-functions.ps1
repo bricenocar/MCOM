@@ -87,9 +87,9 @@ if($result.Length -gt 0 -and $result.properties.provisioningState -eq "Succeeded
 # Deploy the function app
 Write-Host "##[command] Running deployment of function app template..."
 if($runLocally -eq $false) {
-    $result = az deployment group create --name "$DeploymentName-func" --template-file $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl mcomRG=$mcomRGName roleBlobGuid=$roleBlobGuid | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-func" --mode Incremental --template-file $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl mcomRG=$mcomRGName roleBlobGuid=$roleBlobGuid | ConvertFrom-Json
 } else {
-    $result = az deployment group create --name "$DeploymentName-func" --template-file $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl mcomRG=$mcomRGName roleBlobGuid=$roleBlobGuid | ConvertFrom-Json
+    $result = az deployment group create --name "$DeploymentName-func" --mode Incremental --template-file $functionTemplateFile --parameters $funcParametersFile environment=$Environment SharePointUrl=$SharePointUrl mcomRG=$mcomRGName roleBlobGuid=$roleBlobGuid | ConvertFrom-Json
 }
 
 # Evaluate result from deployment
