@@ -42,7 +42,7 @@ namespace MCOM.Services
         Task<UploadResult<DriveItem>> ReplaceLargeSharePointFileAsync(string domain, string siteId, string webId, string listId, string itemId, Stream stream, int maxSliceSize, string fileName, string conflictBehaviour = "fail");
         Task<UploadResult<DriveItem>> UploadLargeDriveItemAsync(string driveId, string fileName, Stream stream, int maxSliceSize, string blobFilePath, string conflictBehaviour = "fail");
 
-        Task<IListItemsCollectionPage> SearchItemAsync(string domain, string siteId, string webId, string listId, string filter);
+        Task<ListItemCollectionResponse> SearchItemAsync(string domain, string siteId, string webId, string listId, string filter);
         Task<Microsoft.Graph.Drives.Item.SearchWithQ.SearchWithQResponse> SearchDriveAsync(string driveId, string queryString);
         Task<List<Models.Search.SearchResult>> SearchItemAsync(string documentId);
 
