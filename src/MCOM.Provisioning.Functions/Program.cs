@@ -8,16 +8,11 @@ var host = new HostBuilder()
                .ConfigureServices((context, s) =>
                {
                    // Adding services to DI               
-                   s.AddScoped<IQueueService, QueueService>();
-                   s.AddScoped<IGraphService, GraphService>();
                    s.AddScoped<IBlobService, BlobService>();
-                   s.AddScoped<IAppInsightsService, AppInsightsService>();
-                   s.AddScoped<ISharePointService, SharePointService>();
-                   s.AddScoped<IAzureService, AzureService>();
                })
                .ConfigureLogging((context, builder) =>
                {
-                   builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
+                   //builder.AddApplicationInsights(context.Configuration["APPINSIGHTS_INSTRUMENTATIONKEY"]);
                }).Build();
 
 host.Run();

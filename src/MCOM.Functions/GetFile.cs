@@ -268,7 +268,7 @@ namespace MCOM.Functions
 
             // Get item from drive
             var items = await _graphService.SearchDriveAsync(driveId, documentId);
-            var item = items.Value.FirstOrDefault();
+            var item = items.FirstOrDefault();
             if (item == null)
             {
                 Global.Log.LogWarning("File with unique id: {DocumentId} was not found in SharePoint, proceeding to get logs from app insights", documentId);

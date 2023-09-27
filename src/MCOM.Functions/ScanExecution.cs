@@ -15,7 +15,6 @@ using Azure.Core;
 using Microsoft.SharePoint.Client.Search.Query;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Taxonomy;
-using Microsoft.Graph.Models;
 
 namespace MCOM.Functions
 {
