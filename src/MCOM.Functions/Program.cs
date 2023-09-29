@@ -1,8 +1,16 @@
+using MCOM.Services;
+using MCOM.Services.V2;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MCOM.Services;
+using Microsoft.Identity.Client;
+using PnP.Core.Admin.Model.Microsoft365;
+using PnP.Core.Auth;
+using PnP.Core.Auth.Services.Builder.Configuration;
+using PnP.Core.Services.Builder.Configuration;
+using System;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MCOM.Functions
 {
@@ -12,15 +20,60 @@ namespace MCOM.Functions
         {
             var host = new HostBuilder()
                 .ConfigureFunctionsWorkerDefaults()
-                .ConfigureServices(s =>
+                .ConfigureServices((hostingContext, services) =>
                 {
                     // Adding services to DI
-                    s.AddScoped<IQueueService, QueueService>();
-                    s.AddScoped<IGraphService, GraphService>();
-                    s.AddScoped<IBlobService, BlobService>();
-                    s.AddScoped<IAppInsightsService, AppInsightsService>();
-                    s.AddScoped<ISharePointService, SharePointService>();
-                    s.AddScoped<IAzureService, AzureService>();                    
+                    services.AddScoped<IQueueService, QueueService>();
+                    services.AddScoped<IGraphService, GraphService>();
+                    services.AddScoped<IBlobService, BlobService>();
+                    services.AddScoped<IAppInsightsService, AppInsightsService>();
+                    services.AddScoped<ISharePointService, SharePointService>();
+                    services.AddScoped<IMicrosoft365Service, Microsoft365Service>();
+                    services.AddScoped<IAzureService, AzureService>();
+                    services.AddScoped<IDatabaseService, DatabaseService>();
+
+                    // Add pnp core sdk services config
+                    services.AddPnPCore(options =>
+                    {
+                        var siteUrl = Environment.GetEnvironmentVariable("SharePointUrl");
+                        bool isMSI = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("MSI_SECRET"));
+                        if (isMSI)
+                        {
+                            var authProvider = new ManagedIdentityTokenProvider();
+                            options.DefaultAuthenticationProvider = authProvider;
+                            options.Sites.Add("Default",
+                                new PnPCoreSiteOptions
+                                {
+                                    SiteUrl = siteUrl,
+                                    AuthenticationProvider = authProvider
+                                }
+                            );
+                        }
+                        else
+                        {
+                            // local dev
+                            string ClientId = Environment.GetEnvironmentVariable("ClientId");
+                            string TenantId = Environment.GetEnvironmentVariable("TenantId");
+                            string CertificateThumbprint = Environment.GetEnvironmentVariable("CertificateThumbprint");
+                            // Configure an authentication provider with certificate (Required for app only)
+                            // App-only authentication against SharePoint Online requires certificate based authentication for calling the "classic" SharePoint REST/CSOM APIs. The SharePoint Graph calls can work with clientid+secret, but since PnP Core SDK requires both type of APIs (as not all features are exposed via the Graph APIs) you need to use certificate based auth.
+                            var authProvider = new X509CertificateAuthenticationProvider(ClientId,
+                                TenantId,
+                                StoreName.My,
+                                StoreLocation.CurrentUser,
+                                CertificateThumbprint);
+                            // And set it as default
+                            options.DefaultAuthenticationProvider = authProvider;
+
+                            // Add a default configuration with the site configured in app settings
+                            options.Sites.Add("Default",
+                                   new PnPCoreSiteOptions
+                                   {
+                                       SiteUrl = siteUrl,
+                                       AuthenticationProvider = authProvider
+                                   });
+                        }
+                    });
                 })
                 .ConfigureLogging((context, builder) =>
                 {
