@@ -6,6 +6,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MCOM.Provisioning.Functions
 {
@@ -13,7 +14,7 @@ namespace MCOM.Provisioning.Functions
     {
         public GetSensitivityLabels()
         {
-           
+
         }
 
         [Function("GetSensitivityLabels")]

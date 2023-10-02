@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using MCOM.Services;
 using MCOM.Models;
 using MCOM.Utilities;
+using Microsoft.AspNetCore.Mvc;
 
 namespace MCOM.Provisioning.Functions
 {
@@ -20,7 +21,7 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("ValidateTemplate")]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, FunctionContext context)
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, [FromBody] string blobTemplatePath, FunctionContext context)
         {            
             var logger = context.GetLogger("ValidateTemplate");
 
@@ -37,9 +38,6 @@ namespace MCOM.Provisioning.Functions
 
             try
             {
-                // Get request data
-                var blobTemplatePath = await new StreamReader(req.Body).ReadToEndAsync();
-
                 if (string.IsNullOrEmpty(blobTemplatePath))
                 {
                     var msg = "The template path is empty.";
