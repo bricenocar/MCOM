@@ -5,11 +5,12 @@ using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.SharePoint.Client;
 using Newtonsoft.Json;
+using PnP.Core.Admin.Model.SharePoint;
 using PnP.Core.Services;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -17,19 +18,11 @@ namespace MCOM.Functions
 {
     public class CreateWorkload
     {
-        private IGraphService _graphService;
-        private ISharePointService _sharePointService;
-        private IAppInsightsService _appInsightsService;
-        private IAzureService _azureService;
         private readonly IPnPContextFactory _pnpContextFactory;
         private IMicrosoft365Service _microsoft365Service;
 
-        public CreateWorkload(IPnPContextFactory pnpContextFactory, IAzureService azureService, IMicrosoft365Service microsoft365Service, ISharePointService sharePointService, IGraphService graphService, IAppInsightsService appInsightsService)
+        public CreateWorkload(IPnPContextFactory pnpContextFactory, IMicrosoft365Service microsoft365Service)
         {
-            _azureService = azureService;
-            _graphService = graphService;
-            _sharePointService = sharePointService;
-            _appInsightsService = appInsightsService;
             _pnpContextFactory = pnpContextFactory;
             _microsoft365Service = microsoft365Service;
         }
@@ -53,76 +46,146 @@ namespace MCOM.Functions
                 return response;
             }
 
-            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "CreateSite");
+            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "CreateWorkload");
 
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "CreateWorkload", "Provisioning"))
             {
-                // Initialize graph service and app insights service
-                await _graphService.GetGraphServiceClientAsync();
-                await _appInsightsService.GetApplicationInsightsDataClientAsync();
+                HttpResponseData response = null;
+                WorkloadCreationRequestResponse workloadCreationRequestResponse = new WorkloadCreationRequestResponse();
 
-                // Parse the JSON request body to get parameters
-                var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                WorkloadCreationRequestPayload workloadData = JsonConvert.DeserializeObject<WorkloadCreationRequestPayload>(requestBody);
-
-                // Check if there is a site in the request payload
-                if (workloadData.Site != null)
+                try
                 {
+                    // Initialize response
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    response.Headers.Add("Content-Type", "application/json");
+
+                    // Parse the JSON request body to get parameters
+                    var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                    WorkloadCreationRequestPayload workloadData = JsonConvert.DeserializeObject<WorkloadCreationRequestPayload>(requestBody);
+
+                    // Validate request vefore continuiung
+                    ValidateRequestPayload(workloadData);
+
+                    // Create the PnP Context
                     using (var pnpContext = await _pnpContextFactory.CreateAsync("Default"))
                     {
-                        await _microsoft365Service.CreateCommunicationSite(pnpContext, Global.SharePointUrl, 
-                            workloadData.Site.SiteConfig.SiteName, 
-                            workloadData.Site.SiteConfig.SiteName,
-                            workloadData.Site.SiteConfig.SensitivityLabel,
-                            PnP.Core.Admin.Model.SharePoint.Language.English);
+
+                        // Check if there is a site in the request payload
+                        if (workloadData.Site != null)
+                        {
+
+                            if (workloadData.Site.SiteConfig.SiteType == SiteType.CommunicationSite)
+                            {
+                                // Create the SharePoint communication site
+                                var createdSite = await _microsoft365Service.CreateCommunicationSite(pnpContext,
+                                    workloadData.Site.SiteConfig.SiteURL,
+                                    workloadData.Site.SiteConfig.SiteName,
+                                    workloadData.Site.SiteConfig.Description,
+                                    workloadData.Site.SiteConfig.SiteClassification,
+                                    workloadData.Site.SiteConfig.SensitivityLabel,
+                                    Language.English, workloadData.Site.SiteUsers.Owners.First());
+
+                                // Add site information to the response
+                                if (createdSite.SiteId != Guid.Empty)
+                                {
+                                    workloadCreationRequestResponse.CreatedSite = createdSite;
+                                    Global.Log.LogInformation("SharePoint communication site created successfully.");
+                                }
+                            }
+                            else if (workloadData.Site.SiteConfig.SiteType == SiteType.TeamSite)
+                            {
+                                // Create the SharePoint team site
+                                var createdSite = await _microsoft365Service.CreateTeamSite(pnpContext,
+                                    workloadData.Site.SiteConfig.SiteURL,
+                                    workloadData.Site.SiteConfig.Alias,
+                                    workloadData.Site.SiteConfig.SiteName,                                    
+                                    workloadData.Site.SiteConfig.Description,
+                                    workloadData.Site.SiteConfig.SensitivityLabel,
+                                    Language.English,
+                                    workloadData.Site.GroupUsers.Owners);
+
+                                // Add site information to the response
+                                if (createdSite.SiteId != Guid.Empty)
+                                {
+                                    workloadCreationRequestResponse.CreatedSite = createdSite;
+                                    Global.Log.LogInformation("SharePoint team site created successfully.");
+                                }
+                            }                            
+
+                            if (workloadData.Team != null)
+                            {
+                                // The "Teams" object is present in the request, proceeding link to group
+                                if (workloadCreationRequestResponse.CreatedSite.GroupId != Guid.Empty)
+                                {
+                                    var createdTeam = await _microsoft365Service.CreateTeamFromGroup(pnpContext,
+                                        workloadCreationRequestResponse.CreatedSite.GroupId);
+                                    if (createdTeam.TeamId != Guid.Empty)
+                                    {
+                                        workloadCreationRequestResponse.CreatedTeam = createdTeam;
+                                        Global.Log.LogInformation($"Team created successfully. Id: {createdTeam.TeamId}");
+                                    }                                    
+                                }
+                            }
+                        }
+                        //return response with workloadCreationRequestResponse
+                        response.WriteString(JsonConvert.SerializeObject(workloadCreationRequestResponse));
                     }
-                    Global.Log.LogInformation("SharePoint site created successfully.");
+                }                
+                catch(InvalidRequestException invEx)
+                {
+                    response = req.CreateResponse(HttpStatusCode.BadRequest);
+                    response.WriteString(invEx.Message);
                 }
-
-                if (workloadData.Teams != null)
+                catch(JsonSerializationException jex)
                 {
-                    // The "Teams" object is present in the request, proceeding to create or link to a Site
-
+                    response = req.CreateResponse(HttpStatusCode.BadRequest);
+                    response.WriteString(jex.Message);
                 }
-            }
-
-            try
-            {
-                var tenant = "statoilintegrationtest";
-                var targetTenantUrl = $"https://{tenant}.sharepoint.com/";
-
-
-
-                using var context = new ClientContext(targetTenantUrl);
-
-                context.ExecutingWebRequest += (sender, e) =>
+                catch (UnavailableUrlException siteException)
                 {
-                    e.WebRequestExecutor.RequestHeaders["Authorization"] = "Bearer " + accessToken.Token;
-                };
-
-                var communicationContext = await context.CreateSiteAsync(new CommunicationSiteCollectionCreationInformation
+                    response = req.CreateResponse(HttpStatusCode.Locked);
+                    response.WriteString(siteException.Message);
+                }
+                catch (SiteCreationException siteException)
                 {
-                    Title = "MCOMTest", // Mandatory
-                    Description = "description", // Mandatory
-                    Lcid = 1033, // Mandatory
-                                 // ShareByEmailEnabled = false, // Optional
-                                 // Classification = "classification", // Optional
-                    SiteDesign = CommunicationSiteDesign.Blank, // Mandatory
-                    Url = $"{targetTenantUrl}sites/mymoderncommunicationsite", // Mandatory
-                });
-                communicationContext.Load(communicationContext.Web, w => w.Url);
-                communicationContext.ExecuteQueryRetry();
-
-                logger.LogInformation($"Communication site web url. {communicationContext.Web.Url}");
+                    response = req.CreateResponse(HttpStatusCode.Conflict);
+                    response.WriteString(siteException.Message);
+                }
+                catch (Exception ex)
+                {
+                    Global.Log.LogError(ex, ex.Message);
+                    response = req.CreateResponse(HttpStatusCode.InternalServerError);
+                    response.WriteString(ex.Message);
+                }
+                return response;
             }
-            catch (Exception ex)
+        }
+
+        /// <summary>
+        /// Validate the request payload
+        private static void ValidateRequestPayload(WorkloadCreationRequestPayload workloadData)
+        {
+            // Validate the request
+            if (workloadData == null)
             {
-                response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                response.WriteString(ex.Message);
+                throw new InvalidRequestException("body", "There is no body present");
             }
 
-            response.WriteString("Site created!");
-            return response;
+            if (workloadData.Site == null || workloadData.Site.SiteConfig == null)
+            {
+                throw new InvalidRequestException("There is no site object or site config present in the request");
+            }
+
+            if (workloadData.Site.SiteConfig.SiteType == SiteType.CommunicationSite && 
+                workloadData.Site.SiteUsers.Owners.Count == 0)
+            {
+                throw new InvalidRequestException("There communication site requires a site owner");
+            }
+
+            if (workloadData.Team != null && workloadData.Site.GroupUsers.Owners.Count == 0)
+            {
+                throw new InvalidRequestException("There are no group owners present in the request. It is mandatory when creating Teams");
+            }
         }
     }
 }

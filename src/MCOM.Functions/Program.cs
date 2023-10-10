@@ -1,13 +1,9 @@
 using MCOM.Services;
-using MCOM.Services.V2;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
-using PnP.Core.Admin.Model.Microsoft365;
 using PnP.Core.Auth;
-using PnP.Core.Auth.Services.Builder.Configuration;
 using PnP.Core.Services.Builder.Configuration;
 using System;
 using System.Security.Cryptography.X509Certificates;
@@ -67,11 +63,12 @@ namespace MCOM.Functions
 
                             // Add a default configuration with the site configured in app settings
                             options.Sites.Add("Default",
-                                   new PnPCoreSiteOptions
-                                   {
-                                       SiteUrl = siteUrl,
-                                       AuthenticationProvider = authProvider
-                                   });
+                                new PnPCoreSiteOptions
+                                {
+                                    SiteUrl = siteUrl,
+                                    AuthenticationProvider = authProvider
+                                }
+                            );
                         }
                     });
                 })

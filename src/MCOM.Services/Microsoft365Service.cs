@@ -1,21 +1,29 @@
-﻿using MCOM.Models;
+﻿using AngleSharp.Io;
+using Azure;
+using MCOM.Models;
+using MCOM.Models.InformationProtection;
+using MCOM.Models.Provisioning;
+using MCOM.Utilities;
 using Microsoft.Extensions.Logging;
-using PnP.Core.Admin.Model.Microsoft365;
+using PnP.Core;
 using PnP.Core.Admin.Model.SharePoint;
 using PnP.Core.Admin.Model.Teams;
-using PnP.Core.Model.SharePoint;
-using PnP.Core.Model.Teams;
 using PnP.Core.Services;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace MCOM.Services
 {
     public interface IMicrosoft365Service
     {
-        Task<bool> CreateCommunicationSite(PnPContext context, string url, string title, string description, Guid sensitivityLabel, Language language);
+        Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, Language language = Language.English, string owner = null);
+        Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, Language language = Language.English, List<string> owners = null, bool isPublic = true);
+        Task<CreatedTeam> CreateTeamFromGroup(PnPContext context, Guid groupId);
+        Task<bool> CheckIfSiteExists(PnPContext context, string url);
+        Task<bool> HideAddTeamsPrompt(PnPContext context, string siteUrl);
+        Task<List<SensitivityLabel>> GetSensitivityLabels(PnPContext context);
     }
     
     public class Microsoft365Service : IMicrosoft365Service
@@ -30,26 +38,27 @@ namespace MCOM.Services
         // / <param name="url">URL of the site to create</param>
         // / <param name="title">Title of the site to create</param>
         // / <param name="description">Description of the site to create</param>
+        // / <param name="SiteClassification">Site classification of the site to create</param>
+        // / <param name="sensitivityLabel">Sensitivity label of the site to create</param>
         // / <param name="language">Language of the site to create</param>
-        public async Task<bool> CreateCommunicationSite(PnPContext context, string url, string title, string description, Guid sensitivityLabel, Language language)
+        // / <param name="owner">Owner of the site to create</param>
+        // / <returns>Created site ID</returns>
+        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, Language language = Language.English, string owner = null)
         {
-            bool created = false;
             try
             {
                 // Create communication site
-                var communicationSiteToCreate = new CommunicationSiteOptions(new Uri(url), title)
+                var fullUrl = StringUtilities.GetFullUrl(url);
+                var communicationSiteToCreate = new CommunicationSiteOptions(new Uri(fullUrl), title)
                 {
                     Description = description,
                     Language = language,
-                    SensitivityLabelId = sensitivityLabel                    
+                    SensitivityLabelId = sensitivityLabel, 
+                    Owner = owner                    
                 };
 
                 // use pnp core admin to check if site collection already exists
-                bool siteExists = await CheckIfSiteExists(context, url);
-                if (siteExists)
-                {
-                    return false;                
-                }                
+                bool siteExists = await CheckIfSiteExists(context, fullUrl);
 
                 // Create the site collection creation options
                 SiteCreationOptions siteCreationOptions = new SiteCreationOptions()
@@ -57,27 +66,185 @@ namespace MCOM.Services
                     WaitForAsyncProvisioning = true,                    
                 };
 
+                Global.Log.LogInformation($"Creating site: {communicationSiteToCreate.Url}");
+
                 // Create the site collection and get the context for the newly created site collection, this will be used to do the actual work
                 using (var newSiteContext = await context.GetSiteCollectionManager().CreateSiteCollectionAsync(communicationSiteToCreate, siteCreationOptions))
                 {
-                    // Do work on the created site collection via the newSiteContext
-                    created = true;
-
                     // use pnp to get site url
-                    var site = await newSiteContext.Web.GetAsync(w => w.Url);
-                    var newSiteUrl = site.Url;
-                    var newSiteTitle = site.Title;
+                    var web = await newSiteContext.Web.GetAsync(w => w.Url, w => w.Title);
+                    var newSiteUrl = web.Url;
+                    var newSiteTitle = web.Title;
+
+                    // use pnp to get site info
+                    var site = await newSiteContext.Site.GetAsync(s => s.Id);
+                    var newSiteId = site.Id;
+
+                    var createdSite = new CreatedSite();
+                    createdSite.SiteId = newSiteId;
+                    createdSite.SiteUrl = newSiteUrl.ToString();
 
                     // Log to application insights
                     Global.Log.LogInformation("Site created: {0}, Url of new site: {1}", newSiteTitle, newSiteUrl);
+                    return createdSite;
+
                 }
+            }
+            catch (UnavailableUrlException siteException)
+            {
+                Global.Log.LogError(siteException, siteException.Message);
+                throw;
+            }
+            catch (MicrosoftGraphServiceException gex)
+            {
+                var errorMessage = "";
+                if (gex.Error != null)
+                {
+                    MicrosoftGraphError error = gex.Error as MicrosoftGraphError;
+                    errorMessage = error.Message;
+                    Global.Log.LogError(gex, errorMessage);
+                }
+                else
+                {
+                    errorMessage = gex.Message;
+                }
+
+                throw new SiteCreationException(url, errorMessage);
+            }
+            catch (SharePointRestServiceException spEx)
+            {
+                var errorMessage = "";
+                if (spEx.Error != null)
+                {
+                    SharePointRestError error = spEx.Error as SharePointRestError;
+                    errorMessage = error.Message;
+                    Global.Log.LogError(spEx, errorMessage);
+                }
+                else
+                {
+                    errorMessage = spEx.Message;
+                }
+                throw new SiteCreationException(url, errorMessage);
             }
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, ex.Message);
-                created = false;
+                throw new SiteCreationException(url, ex.Message);
             }
-            return created;
+        }
+
+        // / <summary> 
+        // / Create a team site
+        // / </summary>
+        // / <param name="context">PnPContext</param>
+        // / <param name="url">URL of the site to create</param>
+        // / <param name="title">Title of the site to create</param>
+        // / <param name="alias">Alias of the site to create (Group Name)</param>
+        // / <param name="description">Description of the site to create</param>
+        // / <param name="SiteClassification">Site classification of the site to create</param>
+        // / <param name="sensitivityLabel">Sensitivity label of the site to create</param>
+        // / <param name="language">Language of the site to create</param>
+        // / <param name="owners">List of owners of the site to create</param>
+        // / <returns>Created site ID</returns>
+        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, Language language = Language.English, List<string> owners = null, bool isPublic = true)
+        {            
+            try
+            {
+                // Create communication site
+                var fullUrl = StringUtilities.GetFullUrl(alias);
+                var teamSiteToCreate = new TeamSiteOptions(StringUtilities.NormalizeSiteAlias(alias), title)
+                {                    
+                    Description = description,
+                    Language = language,
+                    SensitivityLabelId = sensitivityLabel,
+                    WelcomeEmailDisabled = true,
+                    IsPublic = isPublic
+                };
+
+                // Add owners to the site
+                if(owners != null)
+                {
+                    teamSiteToCreate.Owners = owners.ToArray();
+                }
+
+                // use pnp core admin to check if site collection already exists
+                bool siteExists = await CheckIfSiteExists(context, fullUrl);
+
+                // Create the site collection creation options
+                SiteCreationOptions siteCreationOptions = new SiteCreationOptions()
+                {
+                    WaitForAsyncProvisioning = true                    
+                };
+
+                Global.Log.LogInformation($"Creating site: {teamSiteToCreate.DisplayName}");
+               
+                // Create the site collection and get the context for the newly created site collection, this will be used to do the actual work
+                using (var newSiteContext = await context.GetSiteCollectionManager().CreateSiteCollectionAsync(teamSiteToCreate, siteCreationOptions))
+                {
+                    // use pnp to get web info
+                    var web = await newSiteContext.Web.GetAsync(w => w.Url, w => w.Title, w => w.Id);
+                    var newSiteUrl = web.Url;
+                    var newSiteTitle = web.Title;
+
+                    // use pnp to get site info
+                    var site = await newSiteContext.Site.GetAsync(s => s.Id);
+                    var newSiteId = site.Id;
+
+                    // Log to application insights
+                    Global.Log.LogInformation("Site id({0}) created: {1}, Url of new site: {2}", newSiteId, newSiteTitle, newSiteUrl);
+
+                    // use pnp to get site group id
+                    var microsoft365Group = await newSiteContext.Group.GetAsync();
+                    var groupId = microsoft365Group.Id;
+
+                    // Prepare output
+                    var createdSite = new CreatedSite();
+                    createdSite.SiteId = newSiteId;
+                    createdSite.GroupId = new Guid(groupId);
+                    createdSite.SiteUrl = newSiteUrl.ToString();
+                    return createdSite;
+                }
+            }
+            catch (UnavailableUrlException siteException)
+            {
+                Global.Log.LogError(siteException, siteException.Message);
+                throw;
+            }
+            catch (MicrosoftGraphServiceException gex)
+            {
+                var errorMessage = "";
+                if(gex.Error != null)
+                {
+                    MicrosoftGraphError error = gex.Error as MicrosoftGraphError;
+                    errorMessage = error.Message;
+                    Global.Log.LogError(gex, errorMessage);
+                }else
+                {
+                    errorMessage = gex.Message;
+                }
+                
+                throw new SiteCreationException(url, errorMessage);
+            }
+            catch (SharePointRestServiceException spEx)
+            {
+                var errorMessage = "";
+                if (spEx.Error != null)
+                {
+                    SharePointRestError error = spEx.Error as SharePointRestError;
+                    errorMessage = error.Message;
+                    Global.Log.LogError(spEx, errorMessage);
+                }
+                else
+                {
+                    errorMessage = spEx.Message;
+                }
+                throw new SiteCreationException(url, errorMessage);
+            }
+            catch (Exception ex)
+            {
+                Global.Log.LogError(ex, ex.Message);
+                throw new SiteCreationException(url, ex.Message);
+            }            
         }
 
         // / <summary>
@@ -89,20 +256,11 @@ namespace MCOM.Services
         public async Task<bool> CheckIfSiteExists(PnPContext context, string url)
         {
             bool exists;
-            try
+            // use pnp core admin to check if site collection already exists
+            exists = await context.GetSiteCollectionManager().SiteExistsAsync(new Uri(url));
+            if (exists)
             {
-                // use pnp core admin to check if site collection already exists
-                exists = await context.GetSiteCollectionManager().SiteExistsAsync(new Uri(url));
-                if (exists)
-                {
-                    var message = $"Site collection {url} already exists.";
-                    Global.Log.LogError(new ArgumentException(message), message);
-                }
-            }
-            catch (Exception ex)
-            {
-                Global.Log.LogError(ex, ex.Message);
-                exists = false;
+                throw new UnavailableUrlException(url);
             }
             return exists;
         }
@@ -140,52 +298,79 @@ namespace MCOM.Services
         // / </summary>
         // / <param name="context">PnPContext</param>
         // / <param name="groupId">Group ID</param>
-        public async Task<bool> CreateTeamFromGroup(PnPContext context, Guid groupId)
+        public async Task<CreatedTeam> CreateTeamFromGroup(PnPContext context, Guid groupId)
         {
-            bool created = false;
+            CreatedTeam team = new CreatedTeam();
             try
             {
                 // create team options
                 var teamOptions = new TeamForGroupOptions(groupId);
 
                 // Create a Microsoft Teams team
-                using (var team = await context.GetTeamManager().CreateTeamAsync(teamOptions))
+                using (var teamContext = await context.GetTeamManager().CreateTeamAsync(teamOptions))
                 {
                     // Post a message in the Teams general channel
-                    await context.Team.LoadAsync(p => p.PrimaryChannel);
-                    await context.Team.PrimaryChannel.LoadAsync(p => p.Messages);
-                    await context.Team.PrimaryChannel.Messages.AddAsync("Hi from the MCOM provisioning service!");
+                    await teamContext.Team.LoadAsync(p => p.PrimaryChannel);
+                    await teamContext.Team.PrimaryChannel.LoadAsync(p => p.Messages);
+                    await teamContext.Team.PrimaryChannel.Messages.AddAsync("Hi from the MCOM provisioning service!");
+
+                    team.TeamId = teamContext.Team.Id;
+                    team.TeamName = teamContext.Team.DisplayName;                    
                 };
+            }
+            catch (MicrosoftGraphServiceException gex)
+            {
+                if (gex.Error != null)
+                {
+                    MicrosoftGraphError error = gex.Error as MicrosoftGraphError;
+                    Global.Log.LogError(error.Message);
+                    throw new TeamCreationException(groupId.ToString(), error.Message);
+                }
+                throw new TeamCreationException(groupId.ToString(), gex.Message);
             }
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, ex.Message);
-                created = false;
+                throw;
             }
-            return created;
+            return team;
         }
         #endregion
 
-        #region Governance
+        #region Information Protection
         // comment this function
         // / <summary>
         // / Get all sensitivity labels
         // / </summary>
         // / <param name="context">PnPContext</param>
         // / <returns>List of sensitivity labels</returns>
-        public async Task<List<ISensitivityLabel>> GetSensitivityLabels(PnPContext context)
+        public async Task<List<SensitivityLabel>> GetSensitivityLabels(PnPContext context)
         {
-            List<ISensitivityLabel> sensitivityLabels = new List<ISensitivityLabel>();
+            List<SensitivityLabel> sensitivityLabels = new List<SensitivityLabel>();
             try
             {
-                sensitivityLabels = await context.GetMicrosoft365Admin().GetSensitivityLabelsAsync();
+                // The permissions for the application need to be set to allow the application to read the sensitivity labels
+                // skipping this until we get approval of permissions
+                // sensitivityLabels = await context.GetMicrosoft365Admin().GetSensitivityLabelsAsync();
+                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("e0f5f7cd-0254-4430-a0f2-a7139dffb529"), Name = "Open Site" });
+                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("36d4c168-d682-4cf2-b30a-94831a69b6b8"), Name = "Internal Site" });
+                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("ac2e480a-209a-4afd-9930-4767eb05d784"), Name = "Restricted site \\ Allow guests " });
+                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("d8472a30-749c-40c3-8941-a470493a054b"), Name = "Restricted site \\ No guests" });
+                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("4689068c-2d45-4a43-83d6-44c8d7d5f350"), Name = "Confidential site \\ Allow guests" });
+                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("c9aa46f2-f060-4022-8f3a-cc32c0e821c9"), Name = "Confidential site \\ No guests" });
+
             }
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, ex.Message);
+                throw;
             }
             return sensitivityLabels;
-        }        
+        }
+        #endregion
+
+        #region Helper functions
+        
         #endregion
     }
 }

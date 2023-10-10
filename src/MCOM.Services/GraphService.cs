@@ -11,6 +11,10 @@ using Newtonsoft.Json;
 using MCOM.Models;
 using MCOM.Utilities;
 using MCOM.Models.Archiving;
+using System.Net.Http;
+using PnP.Core.Services;
+using Microsoft.AspNetCore.Mvc;
+using PnP.Core.Admin.Model.Microsoft365;
 
 namespace MCOM.Services
 {
@@ -41,6 +45,7 @@ namespace MCOM.Services
         Task SetMetadataByGraphAsync(Dictionary<string, object> fileMetadata, DriveItem extendedItem);
         Task SetMetadataByGraphAsync(Dictionary<string, object> fileMetadata, string siteId, string listId, string itemId);
         Task SetMetadataByCSOMAsync(Dictionary<string, object> fileMetadata, DriveItem extendedItem);
+        Task<string> GetSensitivityLabels(PnPContext context);
     }
 
     public class GraphService : IGraphService
@@ -418,6 +423,48 @@ namespace MCOM.Services
                 Global.Log.LogError(itemUpdateException, "Update of item metadata failed for {SPPath}. {ErrorMessage}", extendedItem.WebUrl, itemUpdateException.Message);
                 throw;
             }
+        }
+
+        public virtual async Task<string> GetSensitivityLabels(PnPContext context)
+        {
+            // PnP Core i using a deprecated method to get sensitivity labels, waiting for a fix
+            // meanwhile we call the beta endpoint via the graphclient instance in PnP Core sdk
+
+            // Initialize return value
+            var sensitivityLabels = string.Empty;
+
+            // Set the version to beta
+            var graphApiVersion = "beta"; // 'beta' or 'v1.0'
+
+            // Set the endpoint and the action to get sensitivity labels
+            var endpoint = $"https://graph.microsoft.com/{graphApiVersion}";
+            var action = "/security/informationProtection/sensitivityLabels";
+
+            sensitivityLabels = await SendGraphRequest(context, endpoint + action);
+
+            return sensitivityLabels;
+        }
+
+        private async Task<string> SendGraphRequest(PnPContext context, string graphEndpoint)
+        {            
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, graphEndpoint);
+            httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GraphToken.Token);
+            var response = context.GraphClient.Client.SendAsync(httpRequestMessage);
+            Global.Log.LogInformation($"Response status code: {response.Result.StatusCode}");
+            // Prepare return message
+            string result;
+            if (response.Result.IsSuccessStatusCode)
+            {
+                Global.Log.LogInformation($"Successfully called endpoint: {response.Result.StatusCode}");
+                result = await response.Result.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                var errorMessage = await response.Result.Content.ReadAsStringAsync();
+                throw new Exception($"Error getting sensitivity labels: {errorMessage}. HttpStatusCode: {response.Result.StatusCode}");
+            }
+
+            return result;
         }
     }
 }
