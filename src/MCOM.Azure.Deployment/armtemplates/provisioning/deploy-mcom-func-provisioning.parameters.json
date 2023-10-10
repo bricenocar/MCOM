@@ -23,6 +23,9 @@
       "mcomRG": {
         "value": "rg"
       },
+      "databaseName": {
+        "value": "GovernanceDB"
+      },
       "roleBlobGuid": {
         "value": ""
       }
