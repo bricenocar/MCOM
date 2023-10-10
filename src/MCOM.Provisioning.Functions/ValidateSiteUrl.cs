@@ -21,8 +21,11 @@ namespace MCOM.Provisioning.Functions
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
+            // Temp test
+            var response = string.Equals(siteUrl, "https://www.statoilsrm.sharepoint.com/sites/test", StringComparison.OrdinalIgnoreCase) ? "false" : "true";
+
             // Temp true response
-            return HttpUtilities.HttpResponse(req, HttpStatusCode.OK, "true");
+            return HttpUtilities.HttpResponse(req, HttpStatusCode.OK, response);
         }
     }
 }

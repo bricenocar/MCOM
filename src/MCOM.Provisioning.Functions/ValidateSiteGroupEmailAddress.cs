@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.SharePoint.Client;
 
 namespace MCOM.Provisioning.Functions
 {
@@ -21,8 +22,11 @@ namespace MCOM.Provisioning.Functions
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
+            // Temp test
+            var response = string.Equals(siteGroupName, "test", StringComparison.OrdinalIgnoreCase) ? "false" : "true";
+
             // Temp true response
-            return HttpUtilities.HttpResponse(req, HttpStatusCode.OK, "true");
+            return HttpUtilities.HttpResponse(req, HttpStatusCode.OK, response);
         }
     }
 }
