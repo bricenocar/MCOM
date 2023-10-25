@@ -18,3 +18,5 @@ __blobstorage__/*
 __queuestorage__/*
 .debug/Microsoft.Azure.Workflows.Debug.Symbols.pdb
 .debug/Microsoft.Azure.Workflows.Debug.Symbols.dll
+__azurite_db_blob_extent__.json
+__azurite_db_blob__.json
