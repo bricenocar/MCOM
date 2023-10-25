@@ -14,6 +14,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MCOM.Controllers\MCOM.Controllers.csproj" />
     <ProjectReference Include="..\MCOM.Models\MCOM.Models.csproj" />
     <ProjectReference Include="..\MCOM.Services\MCOM.Services.csproj" />
   </ItemGroup>
