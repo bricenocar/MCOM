@@ -1,0 +1,12 @@
+{
+    "email": "{{ content.Request.Requester.Email }}",
+    "businessAreaId": {{ content.Request.Requester.BusinessAreaId }},
+    "roleId": {{ content.Request.Requester.RoleId }},
+    "purposes": [
+        {% for purpose in content.Request.Purposes %}
+            "{{ purpose }}"{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+    ],
+    "approverEmail": "{{ content.Request.Approver.Email }}",
+    "approverComments": "{{ content.Request.Approver.Comments }}"    
+}

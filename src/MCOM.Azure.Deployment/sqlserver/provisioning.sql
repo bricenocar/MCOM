@@ -1,8 +1,15 @@
+/* To execute this script, use the following example command:
+sqlcmd -S server\instance -E -v logicappmanagedidentity="logig-mcom-provisioning-inttest" -i provisioning.sql
+*/
+
 /*Assign permissions to logic app managed identity*/
-CREATE USER [logig-mcom-provisioning-inttest] FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
+CREATE USER $(logicappmanagedidentity) FROM  EXTERNAL PROVIDER  WITH DEFAULT_SCHEMA=[dbo]
 GO
 
-ALTER ROLE [db_datawriter] ADD MEMBER [logig-mcom-provisioning-inttest]
+ALTER ROLE [db_datawriter] ADD MEMBER $(logicappmanagedidentity)
+GO
+
+GRANT Execute TO $(logicappmanagedidentity)
 GO
 
 /****** Object:  Table [dbo].[BusinessAreas]    Script Date: 05.09.2023 10:23:42 ******/
@@ -420,3 +427,6 @@ REFERENCES [dbo].[ProvisioningSitesInformation] ([site_id])
 GO
 ALTER TABLE [dbo].[ProvisioningSitesMetadata] CHECK CONSTRAINT [FK_ProvisioningSitesMetadata_ProvisioningSitesInformation]
 GO
+
+
+

@@ -162,7 +162,7 @@ namespace MCOM.Services
                 };
 
                 // Add owners to the site
-                if(owners != null)
+                if (owners != null)
                 {
                     teamSiteToCreate.Owners = owners.ToArray();
                 }

@@ -68,6 +68,14 @@ stages:
             - publish: '$(Build.ArtifactStagingDirectory)'
               displayName: 'Publish function app artifact'
               artifact: dropazfunc
+            - task: PowerShell@2
+              displayName: 'Rename connection file'
+              inputs:
+                targetType: 'inline'
+                script: |
+                  # Rename connections files.                  
+                  Rename-Item -Path "$(pathToLogicAppProjectDirectory)/mcom_workflows/LogicApp/connections.json" -NewName "connections_localfile.json"
+                  Rename-Item -Path "$(pathToLogicAppProjectDirectory)/mcom_workflows/LogicApp/connections_azure.json" -NewName "connections.json"'
             - task: ArchiveFiles@2
               displayName: 'Create project zip for provisioning logic app'
               inputs:
