@@ -85,6 +85,9 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
+			},
+			"options": {
+				"cwd": "${workspaceFolder}/src\\MCOM.Provisioning.Workflows\\mcom_workflows\\LogicApp"
 			}
 		}
 	],

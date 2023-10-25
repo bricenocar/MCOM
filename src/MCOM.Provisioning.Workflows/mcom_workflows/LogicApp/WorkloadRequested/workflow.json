@@ -2,24 +2,14 @@
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "actions": {
-            "Response": {
-                "type": "Response",
-                "kind": "http",
-                "inputs": {
-                    "statusCode": 200,
-                    "body": "@body('Execute_stored_procedure')"
-                },
-                "runAfter": {
-                    "Execute_stored_procedure": [
-                        "SUCCEEDED"
-                    ]
-                }
-            },
-            "Execute_stored_procedure": {
+            "Save_request_in_database": {
                 "type": "ServiceProvider",
                 "inputs": {
                     "parameters": {
-                        "storedProcedureName": "UpdateRequestStatus"
+                        "storedProcedureName": "Proc_CreateRequest",
+                        "storedProcedureParameters": {
+                            "RequestData": "@{body('Prepare_data_to_save_in_Database')}"
+                        }
                     },
                     "serviceProviderConfiguration": {
                         "connectionName": "sql",
@@ -27,7 +17,366 @@
                         "serviceProviderId": "/serviceProviders/sql"
                     }
                 },
+                "runAfter": {
+                    "Prepare_data_to_save_in_Database": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Parse_request_payload": {
+                "type": "ParseJson",
+                "inputs": {
+                    "content": "@triggerBody()?['contentData']",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "Request": {
+                                "type": "object",
+                                "properties": {
+                                    "Requester": {
+                                        "type": "object",
+                                        "properties": {
+                                            "Email": {
+                                                "type": "string"
+                                            },
+                                            "BusinessAreaId": {
+                                                "type": "integer"
+                                            },
+                                            "RoleId": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    },
+                                    "RequestDate": {
+                                        "type": "string"
+                                    },
+                                    "RequestOrderedThrough": {
+                                        "type": "string"
+                                    },
+                                    "Purposes": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "Approver": {
+                                        "type": "object",
+                                        "properties": {
+                                            "Email": {
+                                                "type": "string"
+                                            },
+                                            "Comments": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "Bulk": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "Site": {
+                                "type": "object",
+                                "properties": {
+                                    "GroupUsers": {
+                                        "type": "object",
+                                        "properties": {
+                                            "Members": {
+                                                "type": "array"
+                                            },
+                                            "Owners": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "SiteConfig": {
+                                        "type": "object",
+                                        "properties": {
+                                            "SiteType": {
+                                                "type": "integer"
+                                            },
+                                            "Description": {
+                                                "type": "string"
+                                            },
+                                            "Alias": {
+                                                "type": "string"
+                                            },
+                                            "GroupEmailAddress": {
+                                                "type": "string"
+                                            },
+                                            "SiteName": {
+                                                "type": "string"
+                                            },
+                                            "SiteURL": {
+                                                "type": "string"
+                                            },
+                                            "SiteClassification": {
+                                                "type": "string"
+                                            },
+                                            "SensitivityLabel": {
+                                                "type": "string"
+                                            },
+                                            "ExternalSharing": {
+                                                "type": "boolean"
+                                            },
+                                            "IsPublic": {
+                                                "type": "boolean"
+                                            }
+                                        }
+                                    },
+                                    "SiteMetadata": {
+                                        "type": "object",
+                                        "properties": {
+                                            "EIMMetadata": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "BCL1": {
+                                                        "type": "string"
+                                                    },
+                                                    "BCL2": {
+                                                        "type": "string"
+                                                    },
+                                                    "BusinessArea": {
+                                                        "type": "string"
+                                                    },
+                                                    "Country": {
+                                                        "type": "string"
+                                                    },
+                                                    "InformationType": {
+                                                        "type": "string"
+                                                    },
+                                                    "Block": {
+                                                        "type": "string"
+                                                    },
+                                                    "LegalEntity": {
+                                                        "type": "string"
+                                                    },
+                                                    "SecurityClassification": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "TemplateMetadata": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "AssetType": {
+                                                        "type": "string"
+                                                    },
+                                                    "Basin": {
+                                                        "type": "string"
+                                                    },
+                                                    "Continent": {
+                                                        "type": "string"
+                                                    },
+                                                    "Counterparty": {
+                                                        "type": "string"
+                                                    },
+                                                    "Field": {
+                                                        "type": "string"
+                                                    },
+                                                    "FieldStatus": {
+                                                        "type": "string"
+                                                    },
+                                                    "ProspectStatus": {
+                                                        "type": "string"
+                                                    },
+                                                    "License": {
+                                                        "type": "string"
+                                                    },
+                                                    "LicenseStatus": {
+                                                        "type": "string"
+                                                    },
+                                                    "AssetHubType": {
+                                                        "type": "string"
+                                                    },
+                                                    "Well": {
+                                                        "type": "string"
+                                                    },
+                                                    "WellType": {
+                                                        "type": "string"
+                                                    },
+                                                    "Wellbore": {
+                                                        "type": "string"
+                                                    },
+                                                    "GeoXID": {
+                                                        "type": "string"
+                                                    },
+                                                    "Discipline": {
+                                                        "type": "string"
+                                                    },
+                                                    "Responsible": {
+                                                        "type": "string"
+                                                    },
+                                                    "ExpiryDate": {
+                                                        "type": "string"
+                                                    },
+                                                    "ProjectStartDate": {
+                                                        "type": "string"
+                                                    },
+                                                    "ProjectEndDate": {
+                                                        "type": "string"
+                                                    },
+                                                    "DecisionGate": {
+                                                        "type": "string"
+                                                    },
+                                                    "ProjectStatus": {
+                                                        "type": "string"
+                                                    },
+                                                    "SurveyType": {
+                                                        "type": "string"
+                                                    },
+                                                    "SurveyStatus": {
+                                                        "type": "string"
+                                                    },
+                                                    "SeismicDimension": {
+                                                        "type": "string"
+                                                    },
+                                                    "Year": {
+                                                        "type": "string"
+                                                    },
+                                                    "ProtractionArea": {
+                                                        "type": "string"
+                                                    },
+                                                    "BusinessArrangementArea": {
+                                                        "type": "string"
+                                                    },
+                                                    "SeismicSurvey": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "SiteUsers": {
+                                        "type": "object",
+                                        "properties": {
+                                            "Owners": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "Members": {
+                                                "type": "array"
+                                            },
+                                            "Visitors": {
+                                                "type": "array"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "Team": {
+                                "type": "object",
+                                "properties": {
+                                    "Channels": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "DisplayName": {
+                                                    "type": "string"
+                                                },
+                                                "Description": {
+                                                    "type": "string"
+                                                },
+                                                "IsPrivate": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "DisplayName",
+                                                "Description",
+                                                "IsPrivate"
+                                            ]
+                                        }
+                                    },
+                                    "SharedChannels": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "DisplayName": {
+                                                    "type": "string"
+                                                },
+                                                "Description": {
+                                                    "type": "string"
+                                                },
+                                                "IsPrivate": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "DisplayName",
+                                                "Description",
+                                                "IsPrivate"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 "runAfter": {}
+            },
+            "Prepare_data_to_save_in_Database": {
+                "type": "Liquid",
+                "kind": "JsonToJson",
+                "inputs": {
+                    "content": "@body('Parse_request_payload')",
+                    "map": {
+                        "source": "LogicApp",
+                        "name": "requestmetadata.liquid"
+                    }
+                },
+                "runAfter": {
+                    "Parse_request_payload": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Complete_the_requested_queue_message": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "messageId": "@triggerBody()?['messageId']"
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "completeMessage",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "runAfter": {
+                    "Send_message_to_approved_queue": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Send_message_to_approved_queue": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "entityName": "approved",
+                        "message": {
+                            "contentData": "@triggerBody()?['contentData']"
+                        }
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "sendMessage",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "runAfter": {
+                    "Save_request_in_database": [
+                        "SUCCEEDED"
+                    ]
+                }
             }
         },
         "triggers": {

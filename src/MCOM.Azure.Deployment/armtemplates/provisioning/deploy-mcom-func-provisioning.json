@@ -172,6 +172,10 @@
               "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('functionStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
+              "name": "MCOMGovernanceDatabaseConnection",
+              "value": "[concat('Server=tcp:', variables('sqldatabase'), '.database.windows.net,1433;Initial Catalog=', parameters('databaseName'), ';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Default\";')]"
+            },
+            {
               "name": "AppInsightsAppId",
               "value": "[reference(resourceId(parameters('mcomRG'), 'microsoft.insights/components', variables('applicationInsightsName')), '2020-02-02-preview').AppId]"
             },
@@ -185,22 +189,6 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Web/sites/config",
-      "apiVersion": "2021-02-01",
-      "name": "[concat(variables('functionAppName'), '/config/connectionStrings')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-      ],
-      "properties": {
-        "connectionStrings": [
-          {
-            "name": "MCOMGovernanceDatabaseConnection",
-            "connectionString": "[concat('Server=tcp:', variables('sqldatabase'), '.database.windows.net,1433;Initial Catalog=', parameters('databaseName'), ';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Default\";')]"
-          }
-        ]
       }
     },
     {

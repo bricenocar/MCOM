@@ -5,26 +5,37 @@ using System.Text.RegularExpressions;
 using MCOM.Models;
 using MCOM.Models.UnitTesting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MCOM.Utilities
 {
     public class StringUtilities
     {
         public static string RemoveSpecialChars(string str)
-        {           
-            // Create  a string array and add the special characters you want to remove
-            var chars = new string[] { "~", "#", "%", "&", "*", ":", "<", ">", "?", "/", "\\", "{", "|", "}", "\"" };
-
-            // Iterate the number of times based on the String array length.
-            for (int i = 0; i < chars.Length; i++)
+        {
+            try
             {
-                if (str.Contains(chars[i]))
-                {
-                    str = str.Replace(chars[i], "");
-                }
-            }
+                // Create  a string array and add the special characters you want to remove
+                var chars = new string[] { "~", "#", "%", "&", "*", ":", "<", ">", "?", "/", "\\", "{", "|", "}", "\"" };
 
-            return str.Trim();
+                if (!str.IsNullOrEmpty())
+                {
+                    // Iterate the number of times based on the String array length.
+                    for (int i = 0; i < chars.Length; i++)
+                    {
+                        if (str.Contains(chars[i]))
+                        {
+                            str = str.Replace(chars[i], "");
+                        }
+                    }
+                }
+                return str.Trim();
+            }
+            catch (Exception)
+            {
+                Global.Log.LogError("Error removing special characters from string {String}", str);
+                return str.Trim();
+            }            
         }
 
         public static string GetFullUrl(string url)
