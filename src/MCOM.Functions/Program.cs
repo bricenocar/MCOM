@@ -26,7 +26,7 @@ namespace MCOM.Functions
                     services.AddScoped<ISharePointService, SharePointService>();
                     services.AddScoped<IMicrosoft365Service, Microsoft365Service>();
                     services.AddScoped<IAzureService, AzureService>();
-                    services.AddScoped<IDatabaseService, DatabaseService>();
+                    services.AddScoped<IDataBaseService, DataBaseService>();
 
                     // Add pnp core sdk services config
                     services.AddPnPCore(options =>
