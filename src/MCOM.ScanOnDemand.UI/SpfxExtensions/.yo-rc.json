@@ -2,11 +2,19 @@
   "@microsoft/generator-sharepoint": {
     "plusBeta": false,
     "isCreatingSolution": true,
-    "environment": "spo",
-    "version": "1.13.1",
+    "nodeVersion": "16.20.0",
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.9.1"
+    },
+    "version": "1.17.1",
     "libraryName": "spfx-extensions",
     "libraryId": "68a20ba7-ccae-46cf-be9e-a023381246ef",
+    "environment": "spo",
     "packageManager": "npm",
+    "solutionName": "spfx-extensions",
+    "solutionShortDescription": "New extension in command set with a configured url with some querystring parameters.",
+    "skipFeatureDeployment": true,
     "isDomainIsolated": false,
     "componentType": "extension",
     "extensionType": "ListViewCommandSet"

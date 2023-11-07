@@ -3,7 +3,12 @@ import * as ReactDom from 'react-dom';
 import { Version } from '@microsoft/sp-core-library';
 import {
   IPropertyPaneConfiguration,
-  PropertyPaneTextField
+  IPropertyPaneField,
+  IPropertyPaneLabelProps,
+  IPropertyPaneTextFieldProps,
+  PropertyPaneLabel,
+  PropertyPaneTextField,
+  PropertyPaneToggle
 } from '@microsoft/sp-property-pane';
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 
@@ -15,17 +20,23 @@ export interface IScanRequestControlWebPartProps {
   appId: string;
   width: string;
   height: string;
+  checkAppPermissions: boolean;
+  checkAppPermissionsMessage: string;
 }
 
 export default class ScanRequestControlWebPart extends BaseClientSideWebPart<IScanRequestControlWebPartProps> {
 
   public render(): void {
+    const { appId, width, height, checkAppPermissions, checkAppPermissionsMessage } = this.properties;
     const element: React.ReactElement<IScanRequestControlProps> = React.createElement(
       ScanRequestControl,
       {
-        appId: this.properties.appId,
-        width: this.properties.width,
-        height: this.properties.height,
+        appId,
+        width,
+        height,
+        wpContext: this.context,
+        checkAppPermissions,
+        checkAppPermissionsMessage,
       }
     );
 
@@ -41,6 +52,19 @@ export default class ScanRequestControlWebPart extends BaseClientSideWebPart<ISc
   }
 
   protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
+    let templateProperty: IPropertyPaneField<IPropertyPaneTextFieldProps | IPropertyPaneLabelProps>;
+
+    if (this.properties.checkAppPermissions) {
+      templateProperty = PropertyPaneTextField('checkAppPermissionsMessage', {
+        label: strings.CheckAppPermissionsMessageFieldLabel,
+        multiline: true,
+      });
+    } else {
+      templateProperty = PropertyPaneLabel('', {
+        text: ''
+      });
+    }
+
     return {
       pages: [
         {
@@ -59,7 +83,11 @@ export default class ScanRequestControlWebPart extends BaseClientSideWebPart<ISc
                 }),
                 PropertyPaneTextField('height', {
                   label: strings.HeightFieldLabel
-                })
+                }),
+                PropertyPaneToggle('checkAppPermissions', {
+                  label: strings.CheckAppPermissionsFieldLabel
+                }),
+                templateProperty
               ]
             }
           ]
