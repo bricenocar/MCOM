@@ -43,7 +43,7 @@
             "EIMMetadata": {
                 "BCL1": "-1;#Subsurface|802127e8-0262-4b48-989c-77ab55f45c91",
                 "BCL2": "-1;#Subsurface - N/A|2c3ce976-7d79-487a-a221-c4a36ea03bec",
-                "BusinessArea": "-1;#EXPLORATION & PRODUCTION NORWAY (EPN)|549f4d9b-e032-4f6f-88fa-913655c22a47",
+                "BusinessArea": "-1;#EXPLORATION & PRODUCTION NORWAY (EPN)|0a3a7019-e79a-4170-bc63-21ca50bf18ef",
                 "Country": "-1;#Norway|cd21f0fc-a0f3-48c6-8f36-ae1c60534e37",
                 "InformationType": "-1;#Subsurface document|f69f6bc9-d7f4-4b61-8bb3-208b4a1d7f7d",
                 "Block": "",
@@ -51,14 +51,13 @@
                 "SecurityClassification": "-1;#Restricted|2778d0cb-d518-40da-b77b-8925576cf660"
             },
             "TemplateMetadata": {
-                
             },
-            "OptionalMetadata" : {
-                "AssetType": "-1;#Field development|1c962b1c-a45e-4d39-bdf1-521c71afb40b",
+            "OptionalMetadata": {
+                "AssetType": "-1;#Field development|0310aaf0-9de0-4bff-bfd8-40f940e768f1",
                 "Basin": "-1;#NO North Sea|bba030d3-3249-4bb4-a7db-9a5ffc0dc626",
                 "Continent": "-1;#Europe|68b4b685-d09b-4c08-b252-b770bcf4524d",
                 "Counterparty": "",
-                "Field": "-1;#GRANE|e1e9e1d9-f90f-4fe2-858d-0f1c20b08dc5",
+                "Field": "",
                 "FieldStatus": "",
                 "ProspectStatus": "",
                 "License": "",

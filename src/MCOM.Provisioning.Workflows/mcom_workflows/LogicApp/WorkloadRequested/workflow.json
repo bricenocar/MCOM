@@ -263,10 +263,16 @@
                                                 }
                                             },
                                             "Members": {
-                                                "type": "array"
+                                                "type": [
+                                                    "array",
+                                                    "null"
+                                                ]
                                             },
                                             "Visitors": {
-                                                "type": "array"
+                                                "type": [
+                                                    "array",
+                                                    "null"
+                                                ]
                                             }
                                         }
                                     }

@@ -7,6 +7,7 @@ using Microsoft.SharePoint.Client;
 using PnP.Core;
 using PnP.Core.Admin.Model.SharePoint;
 using PnP.Core.Admin.Model.Teams;
+using PnP.Core.Model.Teams;
 using PnP.Core.Services;
 using PnP.Framework.Provisioning.Model;
 using PnP.Framework.Provisioning.ObjectHandlers;
@@ -205,9 +206,17 @@ namespace MCOM.Services
                     // use pnp to get site group id
                     var microsoft365Group = await newSiteContext.Group.GetAsync();
                     var groupId = microsoft365Group.Id;
+                    ITeam team = null;
 
-                    // Get the team Id
-                    var team = await newSiteContext.Team.GetAsync();
+                    try
+                    {
+                        // Get the team Id
+                        team = await newSiteContext.Team.GetAsync();
+                    }
+                    catch (MicrosoftGraphServiceException gex)
+                    {
+                        Global.Log.LogWarning(gex.Message);
+                    }                   
 
                     // Prepare output
                     var createdSite = new CreatedSite();

@@ -18,10 +18,10 @@ namespace MCOM.Functions
     {
         private readonly IPnPContextFactory _pnpContextFactory;
         private IMicrosoft365Service _microsoft365Service;
-        private readonly ILogger<PreProcessRequest> _logger;
+        private readonly ILogger<CreateWorkload> _logger;
 
 
-        public CreateWorkload(ILogger<PreProcessRequest> logger, IPnPContextFactory pnpContextFactory, IMicrosoft365Service microsoft365Service)
+        public CreateWorkload(ILogger<CreateWorkload> logger, IPnPContextFactory pnpContextFactory, IMicrosoft365Service microsoft365Service)
         {
             _logger = logger;
             _pnpContextFactory = pnpContextFactory;
