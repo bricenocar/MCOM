@@ -2,27 +2,6 @@
     "definition": {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "actions": {
-            "Save_request_in_database": {
-                "type": "ServiceProvider",
-                "inputs": {
-                    "parameters": {
-                        "storedProcedureName": "Proc_CreateRequest",
-                        "storedProcedureParameters": {
-                            "RequestData": "@{body('Prepare_data_to_save_in_Database')}"
-                        }
-                    },
-                    "serviceProviderConfiguration": {
-                        "connectionName": "sql",
-                        "operationId": "executeStoredProcedure",
-                        "serviceProviderId": "/serviceProviders/sql"
-                    }
-                },
-                "runAfter": {
-                    "Prepare_data_to_save_in_Database": [
-                        "SUCCEEDED"
-                    ]
-                }
-            },
             "Parse_request_payload": {
                 "type": "ParseJson",
                 "inputs": {
@@ -33,9 +12,6 @@
                             "Request": {
                                 "type": "object",
                                 "properties": {
-                                    "WorkloadId": {
-                                        "type": "integer"
-                                    },
                                     "Requester": {
                                         "type": "object",
                                         "properties": {
@@ -75,6 +51,12 @@
                                     },
                                     "Bulk": {
                                         "type": "boolean"
+                                    },
+                                    "MessageId": {
+                                        "type": "string"
+                                    },
+                                    "RequestId": {
+                                        "type": "integer"
                                     }
                                 }
                             },
@@ -127,6 +109,18 @@
                                             },
                                             "IsPublic": {
                                                 "type": "boolean"
+                                            },
+                                            "SiteGuid": {
+                                                "type": "string"
+                                            },
+                                            "CreatedDate": {
+                                                "type": "string"
+                                            },
+                                            "GroupId": {
+                                                "type": "string"
+                                            },
+                                            "TeamId": {
+                                                "type": "string"
                                             }
                                         }
                                     },
@@ -330,19 +324,70 @@
                 "type": "Liquid",
                 "kind": "JsonToJson",
                 "inputs": {
-                    "content": "@outputs('Append_messageId')",
+                    "content": "@body('Parse_request_payload')",
                     "map": {
                         "source": "LogicApp",
-                        "name": "requestmetadata.liquid"
+                        "name": "teamsitecreationmetadata.liquid"
                     }
                 },
                 "runAfter": {
-                    "Append_messageId": [
+                    "Parse_request_payload": [
                         "SUCCEEDED"
                     ]
                 }
             },
-            "Complete_the_requested_queue_message": {
+            "Save_request_in_database": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "storedProcedureName": "Proc_CreateWorkload",
+                        "storedProcedureParameters": {
+                            "RequestData": "@{body('Prepare_data_to_save_in_Database')}"
+                        }
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "sql",
+                        "operationId": "executeStoredProcedure",
+                        "serviceProviderId": "/serviceProviders/sql"
+                    }
+                },
+                "runAfter": {
+                    "Prepare_data_to_save_in_Database": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Append_site_Id": {
+                "type": "Compose",
+                "inputs": "@setProperty(body('Parse_request_payload'), 'Request', addProperty(body('Parse_request_payload')['Request'],'SiteId',body('Save_request_in_database')?['OutputParameters']?['@SiteId']))",
+                "runAfter": {
+                    "Save_request_in_database": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Send_message_to_processed_queue": {
+                "type": "ServiceProvider",
+                "inputs": {
+                    "parameters": {
+                        "entityName": "processed",
+                        "message": {
+                            "contentData": "@outputs('Append_template_location')"
+                        }
+                    },
+                    "serviceProviderConfiguration": {
+                        "connectionName": "serviceBus",
+                        "operationId": "sendMessage",
+                        "serviceProviderId": "/serviceProviders/serviceBus"
+                    }
+                },
+                "runAfter": {
+                    "Append_template_location": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Complete_the_message": {
                 "type": "ServiceProvider",
                 "inputs": {
                     "parameters": {
@@ -355,57 +400,29 @@
                     }
                 },
                 "runAfter": {
-                    "Send_message_to_approved_queue": [
+                    "Send_message_to_processed_queue": [
                         "SUCCEEDED"
                     ]
                 }
             },
-            "Send_message_to_approved_queue": {
-                "type": "ServiceProvider",
-                "inputs": {
-                    "parameters": {
-                        "entityName": "approved",
-                        "message": {
-                            "contentData": "@outputs('Append_request_id')"
-                        }
-                    },
-                    "serviceProviderConfiguration": {
-                        "connectionName": "serviceBus",
-                        "operationId": "sendMessage",
-                        "serviceProviderId": "/serviceProviders/serviceBus"
-                    }
-                },
-                "runAfter": {
-                    "Append_request_id": [
-                        "SUCCEEDED"
-                    ]
-                }
-            },
-            "Append_messageId": {
+            "Append_template_location": {
                 "type": "Compose",
-                "inputs": "@setProperty(body('Parse_request_payload'), 'Request', addProperty(body('Parse_request_payload')['Request'],'MessageID', triggerBody()?['messageId']))",
+                "inputs": "@setProperty(outputs('Append_site_Id'), 'Request', setProperty(outputs('Append_site_Id')['Request'],'ProvisioningTemplateUrl',body('Save_request_in_database')?['OutputParameters']?['@TemplateLocation']))",
                 "runAfter": {
-                    "Parse_request_payload": [
-                        "SUCCEEDED"
-                    ]
-                }
-            },
-            "Append_request_id": {
-                "type": "Compose",
-                "inputs": "@setProperty(outputs('Append_messageId'), 'Request', addProperty(outputs('Append_messageId')['Request'],'RequestId',body('Save_request_in_database')?['OutputParameters']?['@RequestId']))",
-                "runAfter": {
-                    "Save_request_in_database": [
+                    "Append_site_Id": [
                         "SUCCEEDED"
                     ]
                 }
             }
         },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
         "triggers": {
             "When_messages_are_available_in_a_queue_(peek-lock)": {
                 "type": "ServiceProvider",
                 "inputs": {
                     "parameters": {
-                        "queueName": "requested",
+                        "queueName": "preprocessed",
                         "isSessionsEnabled": false
                     },
                     "serviceProviderConfiguration": {
@@ -414,13 +431,9 @@
                         "serviceProviderId": "/serviceProviders/serviceBus"
                     }
                 },
-                "trackedProperties": {},
                 "splitOn": "@triggerOutputs()?['body']"
             }
-        },
-        "contentVersion": "1.0.0.0",
-        "outputs": {},
-        "parameters": {}
+        }
     },
     "kind": "Stateful"
 }

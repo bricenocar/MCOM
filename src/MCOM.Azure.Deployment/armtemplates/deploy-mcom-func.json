@@ -15,7 +15,6 @@
         "description": "Location for all resources."
       }
     },
-    // App service plan
     "appServicePlanName": {
       "type": "string",
       "defaultValue": "plan-mcom",
@@ -23,7 +22,6 @@
         "description": "The name of the function app that you wish to create."
       }
     },
-    // Function App
     "appName": {
       "type": "string",
       "defaultValue": "function-mcom",
@@ -51,7 +49,6 @@
         "description": "Name for storage account"
       }
     },
-    // App insights
     "appInsightsName": {
       "type": "string",
       "defaultValue": "appi-mcom",
@@ -59,7 +56,6 @@
         "description": "Location for Application Insights"
       }
     },
-    // SharePoint online
     "SharePointUrl": {
       "type": "string",
       "metadata": {
@@ -78,20 +74,28 @@
       "metadata": {
         "description": "Name for Azure queue"
       }
+    },
+    "serviceBusPrefix": {
+      "type": "string",
+      "defaultValue": "sb-mcom-provisioning",
+      "metadata": {
+        "description": "Prefix for service bus namespace"
+      }
     }
   },
   "variables": {
     "functionStorageAccountName": "[concat(parameters('storageAccountName'), 'functions', parameters('environment'))]",
     "archivingFunctionStorageAccountName": "[concat(parameters('storageAccountName'), 'archfunc', parameters('environment'))]",
     "stagingareaStorageAccountName": "[concat(parameters('storageAccountName'), 'stgarea', parameters('environment'))]",
+    "provisioningConfigStorageAccountName": "[concat(parameters('storageAccountName'), 'provconfig', parameters('environment'))]",
     "functionAppName": "[concat(parameters('appName'), '-', parameters('environment'))]",
     "archivingFunctionAppName": "[concat(parameters('appName'), '-archiving-', parameters('environment'))]",
     "hostingPlanName": "[concat(parameters('appServicePlanName'), '-', parameters('environment'))]",
     "archivingHostingPlanName": "[concat(parameters('appServicePlanName'), '-archiving-', parameters('environment'))]",
-    "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]"
+    "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]",
+    "serviceBusNamespaceName": "[concat(parameters('serviceBusPrefix'), '-',  parameters('environment'), '.servicebus.windows.net/')]"
   },
   "resources": [
-    // App service plan
     {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2020-06-01",
@@ -120,7 +124,6 @@
         "computeMode": "Dynamic"
       }
     },
-    // Function App
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2021-02-01",
@@ -175,12 +178,20 @@
               "value": "[variables('stagingareaStorageAccountName')]"
             },
             {
+              "name": "ProvisioningBlobStorageAccountName",
+              "value": "[variables('provisioningConfigStorageAccountName')]"
+            },
+            {
               "name": "BlobStorageConnectionString",
               "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('stagingareaStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('stagingareaStorageAccountName')), '2019-06-01').keys[0].value)]"
             },
             {
               "name": "QueueConnectionString",
               "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('functionStorageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName')), '2019-06-01').keys[0].value)]"
+            },
+            {
+              "name": "ServiceBusConnectionString",
+              "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/AuthorizationRules',variables('serviceBusNamespaceName'),'RootManageSharedAccessKey')), '2019-06-01').primaryConnectionString]"           
             },
             {
               "name": "MandatoryMetadataFields",
@@ -355,7 +366,6 @@
         }
       }
     },
-    // Application insights
     {
       "type": "microsoft.insights/components",
       "apiVersion": "2020-02-02-preview",
@@ -369,6 +379,20 @@
         "Application_Type": "web",
         "ApplicationId": "[variables('applicationInsightsName')]",
         "Request_Source": "rest"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[parameters('roleBlobGuid')]",
+      "scope": "[concat('Microsoft.Storage/storageAccounts', '/', variables('provisioningConfigStorageAccountName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('blobReaderRoleId')]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2022-09-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
       }
     }
   ],

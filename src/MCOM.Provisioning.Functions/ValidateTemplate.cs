@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using MCOM.Services;
 using MCOM.Models;
 using MCOM.Utilities;
-using Microsoft.AspNetCore.Mvc;
 
 namespace MCOM.Provisioning.Functions
 {

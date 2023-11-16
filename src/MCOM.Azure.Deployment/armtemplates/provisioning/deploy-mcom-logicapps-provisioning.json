@@ -114,10 +114,6 @@
                             "value": "EnableMultiLanguageWorker"
                         },
                         {
-                            "name": "FUNCTIONS_V2_COMPATIBILITY_MODE",
-                            "value": "true"
-                        },
-                        {
                             "name": "WEBSITE_CONTENTSHARE",
                             "value": "[parameters('logicAppName')]"
                           },

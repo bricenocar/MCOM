@@ -72,7 +72,7 @@ stages:
               displayName: 'Rename connection file'
               inputs:
                 targetType: 'inline'
-                script: Write-Host "Renaming connection file";Write-Host "Path to file $(pathToLogicAppProjectDirectory)/mcom_workflows/LogicApp/connections.json";#Rename-Item -Path "$(pathToLogicAppProjectDirectory)/mcom_workflows/LogicApp/connections.json" -NewName "connections_localfile.json";#Rename-Item -Path "$(pathToLogicAppProjectDirectory)/mcom_workflows/LogicApp/connections_azure.json" -NewName "connections.json"';
+                script: Write-Host "Renaming connection file";Write-Host "Path to file $(pathToLogicAppProjectDirectory)/mcom_workflows/LogicApp/connections.json";Rename-Item -Path "$(pathToLogicAppProjectDirectory)/mcom_workflows/LogicApp/connections.json" -NewName "connections_localfile.json";Rename-Item -Path "$(pathToLogicAppProjectDirectory)/mcom_workflows/LogicApp/connections_azure.json" -NewName "connections.json"';
             - task: ArchiveFiles@2
               displayName: 'Create project zip for provisioning logic app'
               inputs:

@@ -2,9 +2,11 @@
   "serviceProviderConnections": {
     "serviceBus": {
       "parameterValues": {
-        "connectionString": "@appsetting('serviceBus_connectionString')"
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        },
+        "fullyQualifiedNamespace": "@appsetting('ServiceBus-FullyQualifiedNamespace')"
       },
-      "parameterSetName": "connectionString",
       "serviceProvider": {
         "id": "/serviceProviders/serviceBus"
       },
@@ -12,9 +14,14 @@
     },
     "sql": {
       "parameterValues": {
-        "connectionString": "@appsetting('sql_connectionString')"
+        "managedIdentityType": "SystemAssigned",
+        "serverName": "@appsetting('SQL-FullyQualifiedNamespace')",
+        "databaseName": "@appsetting('SQL-DatabaseName')",
+        "authProvider": {
+          "Type": "ManagedServiceIdentity"
+        }
       },
-      "parameterSetName": "connectionString",
+      "parameterSetName": "ManagedServiceIdentity",
       "serviceProvider": {
         "id": "/serviceProviders/sql"
       },

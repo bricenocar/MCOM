@@ -82,6 +82,13 @@
       "metadata": {
         "description": "A new GUID used to identify the role assignment"
       }
+    },
+    "serviceBusPrefix": {
+      "type": "string",
+      "defaultValue": "sb-mcom-provisioning",
+      "metadata": {
+        "description": "Prefix for service bus namespace"
+      }
     }
   },
   "variables": {
@@ -91,7 +98,8 @@
     "functionAppName": "[concat(parameters('appName'), '-provisioning-', parameters('environment'))]",
     "hostingPlanName": "[concat(parameters('appServicePlanName'), '-provisioning-', parameters('environment'))]",
     "applicationInsightsName": "[concat(parameters('appInsightsName'), '-', parameters('environment'))]",
-    "blobReaderRoleId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]"
+    "blobReaderRoleId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]",
+    "serviceBusNamespaceName": "[concat(parameters('serviceBusPrefix'), '-',  parameters('environment'), '.servicebus.windows.net/')]"
   },
   "resources": [
     {
@@ -174,6 +182,10 @@
             {
               "name": "MCOMGovernanceDatabaseConnection",
               "value": "[concat('Server=tcp:', variables('sqldatabase'), '.database.windows.net,1433;Initial Catalog=', parameters('databaseName'), ';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Default\";')]"
+            },
+            {
+              "name": "ServiceBusConnectionString",
+              "value": "[listKeys(resourceId('Microsoft.ServiceBus/namespaces/AuthorizationRules',variables('serviceBusNamespaceName'),'RootManageSharedAccessKey')), '2019-06-01').primaryConnectionString]"           
             },
             {
               "name": "AppInsightsAppId",

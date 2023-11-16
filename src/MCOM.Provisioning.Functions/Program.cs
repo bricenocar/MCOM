@@ -9,7 +9,7 @@ var host = new HostBuilder()
                {
                    // Adding services to DI               
                    s.AddScoped<IBlobService, BlobService>();
-                   s.AddScoped<IDataBaseService, DataBaseService>();
+                   s.AddScoped<IDataBaseService, DataBaseService>();                   
                })
                .ConfigureLogging((context, builder) =>
                {
