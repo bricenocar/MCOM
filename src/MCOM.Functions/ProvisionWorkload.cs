@@ -87,9 +87,6 @@ namespace MCOM.Functions
                         throw new InvalidRequestException("Alias or SiteURL", "The URL is empty or null. Check the input parameters in tue queue");
                     }
 
-                    // Get the full URL
-                    var fullUrl = StringUtilities.GetFullUrl(urlSufix);
-
                     // Create the PnP Context
                     using (var pnpContext = await _pnpContextFactory.CreateAsync("Default"))
                     {
@@ -107,7 +104,7 @@ namespace MCOM.Functions
                         }
 
                         // Apply the provisioning template to the target site
-                        var result = _microsoft365Service.ApplyProvisioningTemplateAsync(pnpContext, provisioningTemplate, fullUrl);
+                        var result = _microsoft365Service.ApplyProvisioningTemplateAsync(pnpContext, provisioningTemplate, urlSufix);
                     }
                 } else
                 {
