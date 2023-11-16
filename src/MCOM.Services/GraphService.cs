@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Azure.Core;
+﻿using Azure.Core;
+using MCOM.Models;
+using MCOM.Models.Archiving;
+using MCOM.Utilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Microsoft.SharePoint.Client;
 using Newtonsoft.Json;
-using MCOM.Models;
-using MCOM.Utilities;
-using MCOM.Models.Archiving;
-using System.Net.Http;
 using PnP.Core.Services;
-using Microsoft.AspNetCore.Mvc;
-using PnP.Core.Admin.Model.Microsoft365;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 
 namespace MCOM.Services
 {
@@ -399,7 +397,7 @@ namespace MCOM.Services
                     itemMetadata.Add(new ListItemFormUpdateValue() { FieldName = metadata.Key, FieldValue = metadata.Value.ToString() });
                 }
 
-                var returnValues = item.ValidateUpdateListItem(itemMetadata, false, string.Empty, true, true);
+                var returnValues = item.ValidateUpdateListItem(itemMetadata, false, string.Empty, true, true, string.Empty);
                 await context.ExecuteQueryAsync();
 
                 Global.Log.LogInformation("Completed updating metadata. Checking for individual errors.");

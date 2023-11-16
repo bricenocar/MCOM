@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using MCOM.Models;
+using MCOM.Models.Provisioning;
 using MCOM.Models.UnitTesting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -170,6 +173,12 @@ namespace MCOM.Utilities
             stringBuilder.Append(trailer);
 
             return stringBuilder;
+        }
+
+        public static Dictionary<string, string> MergeDictionaries(params Dictionary<string, string>[] dictionaries)
+        {
+            // Use Union to merge dictionaries, and ToDictionary to convert the result to a dictionary
+            return dictionaries.Aggregate((dict1, dict2) => dict1.Union(dict2).ToDictionary(x => x.Key, x => x.Value));
         }
     }
 }

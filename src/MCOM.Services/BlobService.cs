@@ -26,6 +26,7 @@ namespace MCOM.Services
         Task<bool> BlobClientExistsAsync(BlobClient blobClient);
         Task<bool> DeleteBlobClientIfExistsAsync(BlobClient blobClient);
         Task<Response<BlobContainerProperties>> GetBlobContainerPropertiesAsync(BlobContainerClient blobContainerClient);
+        void InitializeBlobServiceClient(string storageAccountName);
     }
 
     public class BlobService : IBlobService
@@ -51,6 +52,27 @@ namespace MCOM.Services
                 }
 
                 BlobServiceClient = new BlobServiceClient(new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/"), credential, options);
+            }
+        }
+
+        public virtual void InitializeBlobServiceClient(string storageAccountName)
+        {
+            if (BlobServiceClient == null)
+            {
+                var options = new BlobClientOptions();
+                options.Diagnostics.IsLoggingEnabled = Global.BlobIsLoggingEnabled;
+                options.Diagnostics.IsTelemetryEnabled = Global.BlobIsTelemetryEnabled;
+                options.Diagnostics.IsDistributedTracingEnabled = Global.BlobIsDistributedTracingEnabled;
+                options.Retry.MaxRetries = Global.BlobMaxRetries;
+
+                var credential = AzureUtilities.GetDefaultCredential();
+                if (credential == null)
+                {
+                    Global.Log.LogError(new NullReferenceException(), "Failed to get chained token credential");
+                    throw new AuthenticationFailedException("Failed to get chained token credential");
+                }
+
+                BlobServiceClient = new BlobServiceClient(new Uri($"https://{storageAccountName}.blob.core.windows.net/"), credential, options);
             }
         }
 

@@ -1,17 +1,15 @@
+using Azure.Messaging.ServiceBus;
 using MCOM.Models;
 using MCOM.Models.Provisioning;
 using MCOM.Services;
 using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PnP.Core.Admin.Model.SharePoint;
 using PnP.Core.Services;
 using System;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace MCOM.Functions
@@ -20,50 +18,42 @@ namespace MCOM.Functions
     {
         private readonly IPnPContextFactory _pnpContextFactory;
         private IMicrosoft365Service _microsoft365Service;
+        private readonly ILogger<PreProcessRequest> _logger;
 
-        public CreateWorkload(IPnPContextFactory pnpContextFactory, IMicrosoft365Service microsoft365Service)
+
+        public CreateWorkload(ILogger<PreProcessRequest> logger, IPnPContextFactory pnpContextFactory, IMicrosoft365Service microsoft365Service)
         {
+            _logger = logger;
             _pnpContextFactory = pnpContextFactory;
             _microsoft365Service = microsoft365Service;
         }
 
-        [Function("CreateWorkload")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req,
-            FunctionContext executionContext)
+        [Function(nameof(CreateWorkload))]
+        [ServiceBusOutput("created", Connection = "ServiceBusConnectionString")]
+        public async Task<string> Run([ServiceBusTrigger("approved", Connection = "ServiceBusConnectionString")] ServiceBusReceivedMessage message)
         {
-            var logger = executionContext.GetLogger("CreateWorkload");
-
             try
             {
-                GlobalEnvironment.SetEnvironmentVariables(logger);
+                GlobalEnvironment.SetEnvironmentVariables(_logger);
             }
             catch (Exception e)
             {
                 string msg = "Config values missing or bad formatted in app config.";
                 Global.Log.LogError(e, msg + "Error: {ErrorMessage}", e.Message);
-                var response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                response.WriteString(msg);
-                return response;
+                throw new ArgumentException(msg, e);
             }
 
             System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "CreateWorkload");
 
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "CreateWorkload", "Provisioning"))
             {
-                HttpResponseData response = null;
-                WorkloadCreationRequestResponse workloadCreationRequestResponse = new WorkloadCreationRequestResponse();
-
                 try
                 {
-                    // Initialize response
-                    response = req.CreateResponse(HttpStatusCode.OK);
-                    response.Headers.Add("Content-Type", "application/json");
-
                     // Parse the JSON request body to get parameters
-                    var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                    WorkloadCreationRequestPayload workloadData = JsonConvert.DeserializeObject<WorkloadCreationRequestPayload>(requestBody);
+                    var body = message.Body.ToString();
+                    WorkloadCreationRequestPayload workloadData = JsonConvert.DeserializeObject<WorkloadCreationRequestPayload>(body);
 
-                    // Validate request vefore continuiung
+                    // Validate request before continuiung
                     ValidateRequestPayload(workloadData);
 
                     // Create the PnP Context
@@ -88,7 +78,11 @@ namespace MCOM.Functions
                                 // Add site information to the response
                                 if (createdSite.SiteId != Guid.Empty)
                                 {
-                                    workloadCreationRequestResponse.CreatedSite = createdSite;
+                                    workloadData.Site.SiteConfig.SiteGuid = createdSite.SiteId;
+                                    workloadData.Site.SiteConfig.GroupId = createdSite.GroupId;
+                                    workloadData.Site.SiteConfig.TeamId = createdSite.TeamId;
+                                    workloadData.Site.SiteConfig.CreatedDate = DateTime.Now;
+
                                     Global.Log.LogInformation("SharePoint communication site created successfully.");
                                 }
                             }
@@ -98,7 +92,7 @@ namespace MCOM.Functions
                                 var createdSite = await _microsoft365Service.CreateTeamSite(pnpContext,
                                     workloadData.Site.SiteConfig.SiteURL,
                                     workloadData.Site.SiteConfig.Alias,
-                                    workloadData.Site.SiteConfig.SiteName,                                    
+                                    workloadData.Site.SiteConfig.SiteName,
                                     workloadData.Site.SiteConfig.Description,
                                     workloadData.Site.SiteConfig.SensitivityLabel,
                                     Language.English,
@@ -107,57 +101,63 @@ namespace MCOM.Functions
                                 // Add site information to the response
                                 if (createdSite.SiteId != Guid.Empty)
                                 {
-                                    workloadCreationRequestResponse.CreatedSite = createdSite;
+                                    workloadData.Site.SiteConfig.SiteGuid = createdSite.SiteId;
+                                    workloadData.Site.SiteConfig.GroupId = createdSite.GroupId;
+                                    workloadData.Site.SiteConfig.TeamId = createdSite.TeamId;
+                                    workloadData.Site.SiteConfig.CreatedDate = DateTime.Now;
                                     Global.Log.LogInformation("SharePoint team site created successfully.");
-                                }
+                                }                        
                             }                            
 
                             if (workloadData.Team != null)
                             {
                                 // The "Teams" object is present in the request, proceeding link to group
-                                if (workloadCreationRequestResponse.CreatedSite.GroupId != Guid.Empty)
+                                if (workloadData.Site.SiteConfig.GroupId != Guid.Empty)
                                 {
-                                    var createdTeam = await _microsoft365Service.CreateTeamFromGroup(pnpContext,
-                                        workloadCreationRequestResponse.CreatedSite.GroupId);
-                                    if (createdTeam.TeamId != Guid.Empty)
+                                    if(workloadData.Site.SiteConfig.TeamId == Guid.Empty)
                                     {
-                                        workloadCreationRequestResponse.CreatedTeam = createdTeam;
-                                        Global.Log.LogInformation($"Team created successfully. Id: {createdTeam.TeamId}");
-                                    }                                    
+                                        var createdTeam = await _microsoft365Service.CreateTeamFromGroup(pnpContext,
+                                                                               workloadData.Site.SiteConfig.GroupId);
+                                        if (createdTeam.TeamId != Guid.Empty)
+                                        {
+                                            workloadData.Site.SiteConfig.TeamId = createdTeam.TeamId;
+                                            Global.Log.LogInformation($"Team created successfully. Id: {createdTeam.TeamId}");
+                                        }
+                                    } else
+                                    {
+                                        Global.Log.LogWarning($"The team for the site {workloadData.Site.SiteConfig.Alias} already exists from before");
+                                    }                                                                      
                                 }
                             }
                         }
-                        //return response with workloadCreationRequestResponse
-                        response.WriteString(JsonConvert.SerializeObject(workloadCreationRequestResponse));
+
+                        // return the json payload of workload data
+                        return JsonConvert.SerializeObject(workloadData, Formatting.Indented, new JsonSerializerSettings
+                        {
+                            NullValueHandling = NullValueHandling.Ignore
+                        });
                     }
                 }                
                 catch(InvalidRequestException invEx)
                 {
-                    response = req.CreateResponse(HttpStatusCode.BadRequest);
-                    response.WriteString(invEx.Message);
+                    throw;
                 }
                 catch(JsonSerializationException jex)
                 {
-                    response = req.CreateResponse(HttpStatusCode.BadRequest);
-                    response.WriteString(jex.Message);
+                    throw;
                 }
                 catch (UnavailableUrlException siteException)
                 {
-                    response = req.CreateResponse(HttpStatusCode.Locked);
-                    response.WriteString(siteException.Message);
+                    throw;
                 }
                 catch (SiteCreationException siteException)
                 {
-                    response = req.CreateResponse(HttpStatusCode.Conflict);
-                    response.WriteString(siteException.Message);
+                    throw;
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogError(ex, ex.Message);
-                    response = req.CreateResponse(HttpStatusCode.InternalServerError);
-                    response.WriteString(ex.Message);
+                    throw;
                 }
-                return response;
             }
         }
 

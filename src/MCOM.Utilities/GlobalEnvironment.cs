@@ -10,7 +10,8 @@ namespace MCOM.Utilities
         public static void SetEnvironmentVariables(ILogger log)
         {
             Global.Log = log;            
-            Global.BlobStorageAccountName = Environment.GetEnvironmentVariable("BlobStorageAccountName");            
+            Global.BlobStorageAccountName = Environment.GetEnvironmentVariable("BlobStorageAccountName");
+            Global.ProvisioningBlobStorageAccountName = Environment.GetEnvironmentVariable("ProvisioningBlobStorageAccountName");
             Global.BlobMaxRetries = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BlobMaxRetries")) ? Convert.ToInt32(Environment.GetEnvironmentVariable("BlobMaxRetries")) : 5;
             Global.BlobOverwriteExistingFile = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BlobOverwriteExistingFile")) && Convert.ToBoolean(Environment.GetEnvironmentVariable("BlobOverwriteExistingFile"));
             Global.BlobIsLoggingEnabled = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BlobIsLoggingEnabled")) && Convert.ToBoolean(Environment.GetEnvironmentVariable("BlobIsLoggingEnabled"));

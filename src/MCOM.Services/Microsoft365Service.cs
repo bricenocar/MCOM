@@ -1,35 +1,37 @@
-﻿using AngleSharp.Io;
-using Azure;
-using MCOM.Models;
+﻿using MCOM.Models;
 using MCOM.Models.InformationProtection;
 using MCOM.Models.Provisioning;
 using MCOM.Utilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.SharePoint.Client;
 using PnP.Core;
 using PnP.Core.Admin.Model.SharePoint;
 using PnP.Core.Admin.Model.Teams;
 using PnP.Core.Services;
+using PnP.Framework.Provisioning.Model;
+using PnP.Framework.Provisioning.ObjectHandlers;
+using PnP.Framework.Provisioning.Providers.Xml;
 using System;
 using System.Collections.Generic;
-using System.Net;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace MCOM.Services
 {
     public interface IMicrosoft365Service
     {
-        Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, Language language = Language.English, string owner = null);
-        Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, Language language = Language.English, List<string> owners = null, bool isPublic = true);
+        Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null);
+        Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true);
         Task<CreatedTeam> CreateTeamFromGroup(PnPContext context, Guid groupId);
+        ProvisioningTemplate GetProvisioningTemplate(Stream xmlTemplate);
+        bool ApplyProvisioningTemplateAsync(PnPContext pnpContext, ProvisioningTemplate provisioningTemplate, string siteUrl);
         Task<bool> CheckIfSiteExists(PnPContext context, string url);
         Task<bool> HideAddTeamsPrompt(PnPContext context, string siteUrl);
-        Task<List<SensitivityLabel>> GetSensitivityLabels(PnPContext context);
+        Task<List<SensitivityLabel>> GetSensitivityLabels(PnPContext context);        
     }
     
     public class Microsoft365Service : IMicrosoft365Service
     {
-        public Microsoft365Service() { }
-
         #region Site and Site collections
         // / <summary> 
         // / Create a communication site
@@ -43,7 +45,7 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owner">Owner of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, Language language = Language.English, string owner = null)
+        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null)
         {
             try
             {
@@ -146,7 +148,7 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owners">List of owners of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, Language language = Language.English, List<string> owners = null, bool isPublic = true)
+        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true)
         {            
             try
             {
@@ -168,7 +170,14 @@ namespace MCOM.Services
                 }
 
                 // use pnp core admin to check if site collection already exists
-                bool siteExists = await CheckIfSiteExists(context, fullUrl);
+                try
+                {
+                    bool siteExists = await CheckIfSiteExists(context, fullUrl);
+                }
+                catch (UnavailableUrlException siteException)
+                {
+                    Global.Log.LogWarning("The site already exists, it will not be re-created");
+                }
 
                 // Create the site collection creation options
                 SiteCreationOptions siteCreationOptions = new SiteCreationOptions()
@@ -197,19 +206,25 @@ namespace MCOM.Services
                     var microsoft365Group = await newSiteContext.Group.GetAsync();
                     var groupId = microsoft365Group.Id;
 
+                    // Get the team Id
+                    var team = await newSiteContext.Team.GetAsync();
+
                     // Prepare output
                     var createdSite = new CreatedSite();
                     createdSite.SiteId = newSiteId;
                     createdSite.GroupId = new Guid(groupId);
                     createdSite.SiteUrl = newSiteUrl.ToString();
+                    if (team != null)
+                    {
+                        createdSite.TeamId = team.Id;
+                    } else
+                    {
+                        createdSite.TeamId = Guid.Empty;
+                    }
+
                     return createdSite;
                 }
-            }
-            catch (UnavailableUrlException siteException)
-            {
-                Global.Log.LogError(siteException, siteException.Message);
-                throw;
-            }
+            }            
             catch (MicrosoftGraphServiceException gex)
             {
                 var errorMessage = "";
@@ -245,6 +260,39 @@ namespace MCOM.Services
                 Global.Log.LogError(ex, ex.Message);
                 throw new SiteCreationException(url, ex.Message);
             }            
+        }
+
+        public ProvisioningTemplate GetProvisioningTemplate(Stream xmlTemplate)
+        {
+            try
+            {
+                // Serialize the site template to an XML file
+                var provider = new XMLStreamTemplateProvider();
+                ProvisioningTemplate template = provider.GetTemplate(xmlTemplate);
+                Global.Log.LogInformation($"Found the proivisioning template. {template.DisplayName}");
+                return template;
+            }
+            catch (Exception ex)
+            {
+                Global.Log.LogError(ex, ex.Message);
+                throw;
+            }            
+        }
+
+        public bool ApplyProvisioningTemplateAsync(PnPContext pnpContext, ProvisioningTemplate provisioningTemplate, string siteUrl)
+        {
+            var authManager = PnP.Framework.AuthenticationManager.CreateWithPnPCoreSdk(pnpContext);
+            var fullUrl = StringUtilities.GetFullUrl(siteUrl);
+            using (var clientContext = authManager.GetContext(fullUrl))
+            {
+                // Define the site template applying options
+                var applyingInformation = new ProvisioningTemplateApplyingInformation();
+                applyingInformation.HandlersToProcess = Handlers.All;
+
+                // Apply template to web
+                clientContext.Web.ApplyProvisioningTemplate(provisioningTemplate, applyingInformation);
+            }
+            return true;
         }
 
         // / <summary>
@@ -306,13 +354,15 @@ namespace MCOM.Services
                 // create team options
                 var teamOptions = new TeamForGroupOptions(groupId);
 
+                // Check if teams exists
+
                 // Create a Microsoft Teams team
                 using (var teamContext = await context.GetTeamManager().CreateTeamAsync(teamOptions))
                 {
-                    // Post a message in the Teams general channel
-                    await teamContext.Team.LoadAsync(p => p.PrimaryChannel);
-                    await teamContext.Team.PrimaryChannel.LoadAsync(p => p.Messages);
-                    await teamContext.Team.PrimaryChannel.Messages.AddAsync("Hi from the MCOM provisioning service!");
+                    // Post a message in the Teams general channel (API requires one of 'Teamwork.Migrate.All')
+                    //await teamContext.Team.LoadAsync(p => p.PrimaryChannel);
+                    //await teamContext.Team.PrimaryChannel.LoadAsync(p => p.Messages);
+                    //await teamContext.Team.PrimaryChannel.Messages.AddAsync("Hi from the MCOM provisioning service!");
 
                     team.TeamId = teamContext.Team.Id;
                     team.TeamName = teamContext.Team.DisplayName;                    
@@ -366,11 +416,11 @@ namespace MCOM.Services
                 throw;
             }
             return sensitivityLabels;
-        }
+        }       
         #endregion
 
         #region Helper functions
-        
+
         #endregion
     }
 }

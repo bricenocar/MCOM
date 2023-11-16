@@ -1,0 +1,47 @@
+{
+  "siteGuid": "{{ content.Site.SiteConfig.SiteGuid }}",
+  "requestId": "{{ content.Request.RequestId }}",
+  "workloadId": "{{ content.Request.WorkloadId }}",
+  "templateId": "{{ content.Site.SiteConfig.TemplateId }}",
+  "siteTitle": "{{ content.Site.SiteConfig.SiteName }}",
+  "siteAdress": "{{ content.Site.SiteConfig.Alias }}",
+  "siteDescription": "{{ content.Site.SiteConfig.Description }}",
+  "siteLockState": "Unlock",
+  "siteReadOnly": false,
+  "siteSensitivity": "{{ content.Site.SiteConfig.SensitivityLabel }}",
+  "siteExternalSharing": "{{ content.Site.SiteConfig.ExternalSharing }}",
+  "siteLifeSpan": "90",
+  "siteLocale": "en-US",
+  "siteTimeZone": "UTC",
+  "siteLastActivity": "",
+  "siteCreatedDate": "{{ content.Site.SiteConfig.CreatedDate }}",
+  "siteCreatedBy": "{{ content.Site.GroupUsers.Owners[0] }}",
+  "siteProvisionedDate": "{{ content.Request.RequestDate }}",
+  "siteProvisionedBy": "{{ content.Request.Requester.Email }}",
+  "siteDeletedDate": "",
+  "siteDeletedBy": "",
+  "hubId": "",
+  "hubConnected": false,
+  "groupId": "{{ content.Site.SiteConfig.GroupId }}",
+  "groupName": "{{ content.Site.SiteConfig.SiteName }}",
+  "groupEmail": "{{ content.Site.SiteConfig.GroupEmailAddress }}",
+  "groupCreatedDate": "{{ content.Site.SiteConfig.CreatedDate }}",  
+  {% if content.Site.SiteConfig.GroupId != blank %}
+    "groupConnected": true,
+  {% else %}
+    "groupConnected": false,
+  {% endif %}
+  "teamId": "{{ content.Site.SiteConfig.TeamId }}",
+  {% if content.Site.SiteConfig.teamId != blank %}
+    "teamConnected": true,
+  {% else %}
+    "teamConnected": false,
+  {% endif %}
+  "standardChannelCount": "{{ content.Team.Channels.size }}",
+  "privateChannelCount": 0,
+  "sharedChannelCount": "{{ content.Team.SharedChannels.size }}",
+  "channelId": "",
+  "channelConnected": false,
+  "channelType": "standard",
+  "yammerConnected": false
+}

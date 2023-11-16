@@ -38,7 +38,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Provisioning.Functions
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Provisioning.PowerPlatform", "MCOM.Provisioning.PowerPlatform\MCOM.Provisioning.PowerPlatform.csproj", "{843DE8DF-1B69-486D-8D91-4F01CA7E8028}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCOM.Controllers", "MCOM.Controllers\MCOM.Controllers.csproj", "{468CBF73-839D-433F-BB46-5352A017F524}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCOM.Controllers", "MCOM.Controllers\MCOM.Controllers.csproj", "{468CBF73-839D-433F-BB46-5352A017F524}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

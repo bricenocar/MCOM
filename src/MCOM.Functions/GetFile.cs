@@ -1,3 +1,14 @@
+using MCOM.Models;
+using MCOM.Models.AppInsights;
+using MCOM.Services;
+using MCOM.Utilities;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Graph;
+using Microsoft.SharePoint.Client;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -5,18 +16,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Graph;
-using Microsoft.SharePoint.Client;
-using Microsoft.SharePoint.Client.Search.Query;
-using Newtonsoft.Json;
-using MCOM.Models;
-using MCOM.Models.AppInsights;
-using MCOM.Services;
-using MCOM.Utilities;
 
 namespace MCOM.Functions
 {
