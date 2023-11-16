@@ -2,11 +2,19 @@
   "@microsoft/generator-sharepoint": {
     "plusBeta": false,
     "isCreatingSolution": true,
-    "environment": "spo",
-    "version": "1.13.1",
+    "nodeVersion": "16.20.0",
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.9.1"
+    },
+    "version": "1.17.1",
     "libraryName": "spfx-webparts",
     "libraryId": "c01b1348-831f-48c0-9514-d3ead84e1b3c",
+    "environment": "spo",
     "packageManager": "npm",
+    "solutionName": "spfx-webparts",
+    "solutionShortDescription": "WebPart showing an Iframe/PowerApp based on the given PowerApp id",
+    "skipFeatureDeployment": true,
     "isDomainIsolated": false,
     "componentType": "webpart"
   }

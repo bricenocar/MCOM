@@ -13,8 +13,9 @@ export interface IFileProps {
   FileType?: string;
   IsFile?: boolean;
   ID?: string;
-  UniqueID?: any;
+  UniqueID?: string;
   ValidFileType?: boolean;
+  FileID?: string; // Record Id
 }
 
 export interface IScanRequestCommandSetProperties {
@@ -38,7 +39,7 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
     const compareOneCommand: Command = this.tryGetCommand('ScanRequest');
     if (compareOneCommand) {
       // Check if only one row is selected
-      const visible = event.selectedRows.length === 1 && event.selectedRows[0].getValueByName('FSObjType') == "0";
+      const visible = event.selectedRows.length === 1 && event.selectedRows[0].getValueByName('FSObjType') === "0";
 
       // This command should be hidden unless exactly one row is selected.
       compareOneCommand.visible = visible;
@@ -47,11 +48,12 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
       if (visible) { // Add content type id check
         this.fileInfo = {
           FileType: event.selectedRows[0].getValueByName('File_x0020_Type'),
-          IsFile: event.selectedRows[0].getValueByName('FSObjType') == "0",
+          IsFile: event.selectedRows[0].getValueByName('FSObjType') === "0",
           ID: event.selectedRows[0].getValueByName('ID'),
           UniqueID: event.selectedRows[0].getValueByName('UniqueId'),
           FileName: event.selectedRows[0].getValueByName('FileLeafRef'),
-          FileURL: event.selectedRows[0].getValueByName('FileRef')
+          FileURL: event.selectedRows[0].getValueByName('FileRef'),
+          FileID: event.selectedRows[0].getValueByName('LRMHPECMRecordID') ?? 'None',
         };
       }
     }
@@ -60,7 +62,7 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
   @override
   public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
     switch (event.itemId) {
-      case 'ScanRequest':
+      case 'ScanRequest': {
         const siteUrl = this.context.pageContext.site.absoluteUrl;
         const siteId = this.context.pageContext.site.id;
         const webId = this.context.pageContext.web.id;
@@ -68,11 +70,13 @@ export default class ScanRequestCommandSet extends BaseListViewCommandSet<IScanR
         const pathUrl = this.properties.targetUrl
           .replace('{iid}', this.fileInfo.ID)
           .replace('{name}', this.fileInfo.FileName)
+          .replace('{rid}', this.fileInfo.FileID)
           .replace('{sid}', siteId.toString())
           .replace('{wid}', webId.toString())
           .replace('{lid}', listId.toString());
 
         window.open(`${siteUrl}${pathUrl}`, '_blank').focus();
+      }
         break;
       default:
         throw new Error('Unknown command');

@@ -4,23 +4,23 @@
   "https": true,
   "serveConfigurations": {
     "default": {
-      "pageUrl": "https://statoilintegrationtest.sharepoint.com/sites/ScanOnDemandTestSite/Shared%20Documents/Forms/AllItems.aspx",
+      "pageUrl": "https://statoilsrm.sharepoint.com/sites/RelatedRecordsScripts/Shared%20Documents/Forms/AllItems.aspx",
       "customActions": {
         "02fe7e06-3f7b-4b1f-84af-8020cff0fea7": {
           "location": "ClientSideExtension.ListViewCommandSet",
           "properties": {
-            "targetUrl": "/SitePages/ScanOnDemand.aspx?iid={iid}&name={name}&sid={sid}&wid={wid}&lid={lid}"
+            "targetUrl": "/SitePages/ScanOnDemand.aspx?iid={iid}&name={name}&rid={rid}&sid={sid}&wid={wid}&lid={lid}"
           }
         }
       }
     },
     "scanRequest": {
-      "pageUrl": "https://statoilintegrationtest.sharepoint.com/sites/ScanOnDemandTestSite/Shared%20Documents/Forms/AllItems.aspx",
+      "pageUrl": "https://statoilsrm.sharepoint.com/sites/RelatedRecordsScripts/Shared%20Documents/Forms/AllItems.aspx",
       "customActions": {
         "02fe7e06-3f7b-4b1f-84af-8020cff0fea7": {
           "location": "ClientSideExtension.ListViewCommandSet",
           "properties": {
-            "targetUrl": "/SitePages/ScanOnDemand.aspx?iid={iid}&name={name}&sid={sid}&wid={wid}&lid={lid}"
+            "targetUrl": "/SitePages/ScanOnDemand.aspx?iid={iid}&name={name}&rid={rid}&sid={sid}&wid={wid}&lid={lid}"
           }
         }
       }

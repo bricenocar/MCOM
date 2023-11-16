@@ -4,6 +4,8 @@ declare interface IScanRequestControlWebPartStrings {
   ApplicationIdFieldLabel: string;
   HeightFieldLabel: string;
   WidthFieldLabel: string;
+  CheckAppPermissionsFieldLabel: string;
+  CheckAppPermissionsMessageFieldLabel: string;
 }
 
 declare module 'ScanRequestControlWebPartStrings' {

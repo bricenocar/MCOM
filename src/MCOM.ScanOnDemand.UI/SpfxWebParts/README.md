@@ -1,5 +1,9 @@
 # spfx-web-parts
 
+## Node Version
+Build tools version: 3.17.20
+Node versions: v16.20.0
+
 ## Summary
 
 Short summary on functionality and used technologies.
