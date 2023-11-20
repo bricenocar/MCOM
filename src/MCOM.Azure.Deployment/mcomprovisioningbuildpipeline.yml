@@ -71,7 +71,7 @@ stages:
             - task: PowerShell@2
               displayName: 'Rename connection file'
               inputs:
-                filePath: '$(Agent.BuildDirectory)/dropdeploymentscripts/scripts/provisioning/rename-connection-file.ps1'
+                filePath: 'src/MCOM.Azure.Deployment/scripts/provisioning/rename-connection-file.ps1'
                 arguments: '$(pathToLogicAppProjectDirectory)'
             - task: ArchiveFiles@2
               displayName: 'Create project zip for provisioning logic app'
