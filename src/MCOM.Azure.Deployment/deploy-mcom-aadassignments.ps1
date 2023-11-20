@@ -37,6 +37,8 @@ $sitesReadAll = "332a536c-c7ef-4017-ab91-336970924f0d"
 #$spSitesReadAll = "d13f72ca-a275-4b96-b789-48ebcc4da984"
 $readApplicationInsights = "3c63f9fe-1706-42a7-9f53-25b47753d668"
 $readInformationProtectionPolicies = "19da66cb-0fb0-4390-b071-ebc76a349482"
+$graphSitesFullControllAll = "a82116e5-55eb-4c41-a434-62fe8a61c773"
+$graphGroupsReadWriteAll = "62a82d76-70ea-41e2-9197-370581804d09"
 
 # If running locally and you have enough permissions then uncomment these line
 Write-Host "##[command] Adding permissions required to the managed identity object."
@@ -47,6 +49,8 @@ New-AzureADServiceAppRoleAssignment -ObjectId $objectId -PrincipalId $objectId -
 New-AzureADServiceAppRoleAssignment -ObjectId $objectId -PrincipalId $objectId -ResourceId $graphPrincipalId -Id $sitesReadAll
 New-AzureADServiceAppRoleAssignment -ObjectId $objectId -PrincipalId $objectId -ResourceId $appInsightsPrincipalId -Id $readApplicationInsights
 New-AzureADServiceAppRoleAssignment -ObjectId $objectId -PrincipalId $objectId -ResourceId $graphPrincipalId -Id $readInformationProtectionPolicies
+New-AzureADServiceAppRoleAssignment -ObjectId $objectId -PrincipalId $objectId -ResourceId $graphPrincipalId -Id $graphSitesFullControllAll
+New-AzureADServiceAppRoleAssignment -ObjectId $objectId -PrincipalId $objectId -ResourceId $graphPrincipalId -Id $graphGroupsReadWriteAll
 Write-Host "##[debug]Assignation completed"
 
     
