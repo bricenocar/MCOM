@@ -4,5 +4,6 @@
     "azureLogicAppsStandard.projectLanguage": "C#",
     "azureLogicAppsStandard.projectRuntime": "~4",    
     "debug.internalConsoleOptions": "neverOpen",
-    "azureFunctions.suppressProject": true
+    "azureFunctions.suppressProject": true,
+    "azurite.location": "C:\\Users\\carlos.briceno\\.azurelogicapps\\.azurite"
 }
