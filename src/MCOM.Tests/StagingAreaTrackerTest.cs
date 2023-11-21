@@ -18,6 +18,7 @@ using Xunit;
 using MCOM.Functions;
 using MCOM.Services;
 using MCOM.Models.UnitTesting;
+using Microsoft.Graph.Models;
 
 namespace MCOM.Tests
 {
@@ -239,10 +240,10 @@ namespace MCOM.Tests
             var driveItem = new DriveItem();
 
             // Graph mocking
-            mockGraphService.SetupAllProperties();
-            mockGraphService.Object.GraphServiceClient = mockGraphServiceClient.Object;
-            mockGraphService.Setup(g => g.GetDriveAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(drive);
-            mockGraphService.Setup(g => g.UploadDriveItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>())).ReturnsAsync(driveItem);
+            //mockGraphService.SetupAllProperties();
+            //mockGraphService.Object.GraphServiceClient = mockGraphServiceClient.Object;
+            //mockGraphService.Setup(g => g.GetDriveAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(drive);
+            //mockGraphService.Setup(g => g.UploadDriveItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Stream>())).ReturnsAsync(driveItem);
 
 
             var accessToken = new AccessToken();
