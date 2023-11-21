@@ -1,6 +1,6 @@
 variables:
-  pathToLogicAppProjectDirectory: '$(System.DefaultWorkingDirectory)/src/${{ variables.logicAppProjectDirectoryName }}'
-  pathToFunctionAppProjectDirectory: '$(System.DefaultWorkingDirectory)/src/${{ variables.functionAppProjectDirectoryName }}'
+  pathToLogicAppProjectDirectory: '$(System.DefaultWorkingDirectory)/src/$(logicAppProjectDirectoryName)'
+  pathToFunctionAppProjectDirectory: '$(System.DefaultWorkingDirectory)/src/$(functionAppProjectDirectoryName)'
 
 trigger:
   branches:
