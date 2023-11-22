@@ -28,7 +28,7 @@ namespace MCOM.Services
         bool ApplyProvisioningTemplateAsync(PnPContext pnpContext, ProvisioningTemplate provisioningTemplate, string siteUrl);
         Task<bool> CheckIfSiteExists(PnPContext context, string url);
         Task<bool> HideAddTeamsPrompt(PnPContext context, string siteUrl);
-        Task<List<SensitivityLabel>> GetSensitivityLabels(PnPContext context);        
+        Task<List<Models.InformationProtection.SensitivityLabel>> GetSensitivityLabels(PnPContext context);        
     }
     
     public class Microsoft365Service : IMicrosoft365Service
@@ -403,20 +403,20 @@ namespace MCOM.Services
         // / </summary>
         // / <param name="context">PnPContext</param>
         // / <returns>List of sensitivity labels</returns>
-        public async Task<List<SensitivityLabel>> GetSensitivityLabels(PnPContext context)
+        public async Task<List<Models.InformationProtection.SensitivityLabel>> GetSensitivityLabels(PnPContext context)
         {
-            List<SensitivityLabel> sensitivityLabels = new List<SensitivityLabel>();
+            List<Models.InformationProtection.SensitivityLabel> sensitivityLabels = new List<Models.InformationProtection.SensitivityLabel>();
             try
             {
                 // The permissions for the application need to be set to allow the application to read the sensitivity labels
                 // skipping this until we get approval of permissions
                 // sensitivityLabels = await context.GetMicrosoft365Admin().GetSensitivityLabelsAsync();
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("e0f5f7cd-0254-4430-a0f2-a7139dffb529"), Name = "Open Site" });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("36d4c168-d682-4cf2-b30a-94831a69b6b8"), Name = "Internal Site" });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("ac2e480a-209a-4afd-9930-4767eb05d784"), Name = "Restricted site \\ Allow guests " });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("d8472a30-749c-40c3-8941-a470493a054b"), Name = "Restricted site \\ No guests" });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("4689068c-2d45-4a43-83d6-44c8d7d5f350"), Name = "Confidential site \\ Allow guests" });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("c9aa46f2-f060-4022-8f3a-cc32c0e821c9"), Name = "Confidential site \\ No guests" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("e0f5f7cd-0254-4430-a0f2-a7139dffb529"), Name = "Open Site" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("36d4c168-d682-4cf2-b30a-94831a69b6b8"), Name = "Internal Site" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("ac2e480a-209a-4afd-9930-4767eb05d784"), Name = "Restricted site \\ Allow guests " });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("d8472a30-749c-40c3-8941-a470493a054b"), Name = "Restricted site \\ No guests" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("4689068c-2d45-4a43-83d6-44c8d7d5f350"), Name = "Confidential site \\ Allow guests" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("c9aa46f2-f060-4022-8f3a-cc32c0e821c9"), Name = "Confidential site \\ No guests" });
 
             }
             catch (Exception ex)

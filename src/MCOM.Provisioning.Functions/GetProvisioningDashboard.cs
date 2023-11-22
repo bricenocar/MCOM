@@ -1,4 +1,3 @@
-using System.Net;
 using MCOM.Models;
 using MCOM.Models.Provisioning;
 using MCOM.Utilities;
@@ -7,6 +6,7 @@ using Microsoft.Azure.Functions.Worker.Extensions.Sql;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Net;
 
 namespace MCOM.Provisioning.Functions
 {
@@ -20,7 +20,8 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("GetProvisioningDashboard")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "getprovisioningdashboard/{user:alpha=none}")] HttpRequestData req, string? user, [SqlInput(commandText: "Proc_GetDashBoardItems",
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "getprovisioningdashboard/{user:alpha=none}")] HttpRequestData req, string? user, 
+            [SqlInput(commandText: "Proc_GetDashBoardItems",
                 commandType: System.Data.CommandType.StoredProcedure,
                 parameters: "@user={user}",
                 connectionStringSetting: "MCOMGovernanceDatabaseConnection")]

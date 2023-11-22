@@ -1,11 +1,12 @@
-using System.Net;
-using MCOM.Models.Provisioning;
 using MCOM.Models;
+using MCOM.Models.Provisioning;
 using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Extensions.Sql;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Net;
 
 namespace MCOM.Provisioning.Functions
 {
@@ -19,13 +20,16 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("GetPurposeValues")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context)
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req,
+            [SqlInput(commandText: "usp_GetAllProvisioningPurposes",
+                commandType: System.Data.CommandType.StoredProcedure,
+                parameters: "",
+                connectionStringSetting: "MCOMGovernanceDatabaseConnection")] IEnumerable<PurposeValue> purposes)
         {
-            var logger = context.GetLogger("GetPurposeValues");
 
             try
             {
-                GlobalEnvironment.SetEnvironmentVariables(logger);
+                GlobalEnvironment.SetEnvironmentVariables(_logger);
             }
             catch (Exception ex)
             {
@@ -33,52 +37,13 @@ namespace MCOM.Provisioning.Functions
                 return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
             }
 
+            // Do any required handling after getting purposes
+
             try
             {
-                // Temporary static code to build the purposes
-                var purposeValues = new List<GetPurposeValuesPayload>()
-                {
-                    new GetPurposeValuesPayload()
-                    {
-                        Id = "1",
-                        Title = "Collaborate with team"
-                    },
-                    new GetPurposeValuesPayload()
-                    {
-                        Id = "2",
-                        Title = "Communicate information"
-                    },
-                    new GetPurposeValuesPayload()
-                    {
-                        Id = "3",
-                        Title = "Store and share files"
-                    },
-                    new GetPurposeValuesPayload()
-                    {
-                        Id = "4",
-                        Title = "Chat with group"
-                    },
-                    new GetPurposeValuesPayload()
-                    {
-                        Id = "5",
-                        Title = "Collaborate with external user"
-                    },
-                    new GetPurposeValuesPayload()
-                    {
-                        Id = "6",
-                        Title = "Conversation in small group"
-                    },
-                    new GetPurposeValuesPayload()
-                    {
-                        Id = "7",
-                        Title = "Intranet site for a project"
-                    }
-                };
-
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json");
-                response.WriteString(JsonConvert.SerializeObject(purposeValues));
-
+                response.WriteString(JsonConvert.SerializeObject(purposes));
                 return response;
             }
             catch (Exception ex)

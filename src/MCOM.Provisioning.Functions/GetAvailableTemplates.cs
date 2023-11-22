@@ -1,32 +1,36 @@
-using System.Net;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using MCOM.Models;
 using MCOM.Models.Provisioning;
 using MCOM.Utilities;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Extensions.Sql;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using System.Net;
 
 namespace MCOM.Provisioning.Functions
 {
     public class GetAvailableTemplates
     {
+        private readonly ILogger _logger;
 
-        public GetAvailableTemplates()
+        public GetAvailableTemplates(ILoggerFactory loggerFactory)
         {
-            // DI services
+            _logger = loggerFactory.CreateLogger<GetAvailableTemplates>();
         }
 
         [Function("GetAvailableTemplates")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, [FromQuery] string optionId, FunctionContext context)
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req,
+            [SqlInput(commandText: "usp_GetAllProvisioningTemplates",
+                commandType: System.Data.CommandType.StoredProcedure,
+                parameters: "@workloadId={Query.workloadId}",
+                connectionStringSetting: "MCOMGovernanceDatabaseConnection")]
+            IEnumerable<AvailableTemplate> availableTemplates)
         {
-            var logger = context.GetLogger("GetAvailableTemplates");
-
             try
             {
                 // COnfigure all envirionment variables
-                GlobalEnvironment.SetEnvironmentVariables(logger);
+                GlobalEnvironment.SetEnvironmentVariables(_logger);
             }
             catch (Exception ex)
             {
@@ -36,77 +40,6 @@ namespace MCOM.Provisioning.Functions
 
             try
             {
-                // Check option id coming from querystring
-                if (string.IsNullOrEmpty(optionId))
-                {
-                    return HttpUtilities.HttpResponse(req, HttpStatusCode.BadRequest, "false");
-                }
-
-                // Temporary static code to build the templates
-                var availableTemplates = new List<GetAvailableTemplatesPayload>()
-                {
-                    new GetAvailableTemplatesPayload()
-                    {
-                        OptionId = optionId,
-                        Icon = "",
-                        Title = "Standard Template",
-                        Description = "<div>" +
-                                          "<div>" +
-                                            "<h3>Sharepoint Collaboration site:</h3>" +
-                                            "<div>" +
-                                              "<ul>" +
-                                                "<li>Document library</li>" +
-                                                "<li>Lists and Pages</li>" +
-                                                "<li>OneNote</li>" +
-                                              "</ul>" +
-                                            "</div>" +
-                                          "</div>" +
-                                          "<div>" +
-                                              "<h3>Teams:</h3>" +
-                                            "<div>" +
-                                              "<ul>" +
-                                                "<li>Channels</li>" +
-                                                "<li>Posts</li>" +
-                                                "<li>Files</li>" +
-                                              "</ul>" +
-                                            "</div>" +
-                                          "</div>" +
-                                        "</div>",
-                        FileBlobName = "Json Template",
-                        FileBlobPath = "templates/JsonFile.json"
-                    },
-                    new GetAvailableTemplatesPayload()
-                    {
-                        OptionId = optionId,
-                        Icon = "",
-                        Title = "Nice Template",
-                         Description = "<div>" +
-                                          "<div>" +
-                                            "<h3>Sharepoint Collaboration site:</h3>" +
-                                            "<div>" +
-                                              "<ul>" +
-                                                "<li>Document library</li>" +
-                                                "<li>Lists and Pages</li>" +
-                                                "<li>OneNote</li>" +
-                                              "</ul>" +
-                                            "</div>" +
-                                          "</div>" +
-                                          "<div>" +
-                                              "<h3>Teams:</h3>" +
-                                            "<div>" +
-                                              "<ul>" +
-                                                "<li>Channels</li>" +
-                                                "<li>Posts</li>" +
-                                                "<li>Files</li>" +
-                                              "</ul>" +
-                                            "</div>" +
-                                          "</div>" +
-                                        "</div>",
-                        FileBlobName = "Xml Template",
-                        FileBlobPath = "templates/XmlFile.xml"
-                    }
-                };
-
                 var response = req.CreateResponse(HttpStatusCode.OK);
                 response.Headers.Add("Content-Type", "application/json");
                 response.WriteString(JsonConvert.SerializeObject(availableTemplates));

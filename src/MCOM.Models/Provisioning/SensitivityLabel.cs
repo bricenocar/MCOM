@@ -1,6 +1,6 @@
 ﻿namespace MCOM.Models.Provisioning
 {
-    public class GetSensitivityLabelsPayload
+    public class SensitivityLabel
     {
         public string Id { get; set; }
         public string Label { get; set; }

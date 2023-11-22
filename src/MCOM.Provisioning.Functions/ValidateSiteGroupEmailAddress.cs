@@ -1,10 +1,9 @@
-using System.Net;
 using MCOM.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.SharePoint.Client;
+using System.Net;
 
 namespace MCOM.Provisioning.Functions
 {
