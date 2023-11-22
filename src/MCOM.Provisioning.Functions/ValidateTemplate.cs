@@ -78,12 +78,6 @@ namespace MCOM.Provisioning.Functions
                     case ".xml":
 
                         var readerSettings = new XmlReaderSettings();
-                        /* Start - In case of xsd validation is going to be implemented */
-                        // readerSettings.Schemas.Add("http://schemas.dev.office.com/PnP/2022/09/ProvisioningSchema", "ProvisioningSchema-2022-09.xsd");
-                        // readerSettings.ValidationType = ValidationType.Schema;
-                        // readerSettings.ValidationEventHandler += settingsValidationEventHandler;
-                        /* End - In case of xsd validation is going to be implemented */
-
                         var xmlReader = XmlReader.Create(fileStream, readerSettings);
 
                         try
