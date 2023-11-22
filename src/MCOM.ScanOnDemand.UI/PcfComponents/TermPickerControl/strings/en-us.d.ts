@@ -1,0 +1,11 @@
+export declare const ModernTaxonomyPickerDefaultPlaceHolder = "Type term to tag";
+export declare const ModernTaxonomyPickerTreeTitleSingle = "Select a tag";
+export declare const ModernTaxonomyPickerTreeTitleMulti = "Select one or more tags";
+export declare const ModernTaxonomyPickerAddTagButtonTooltip = "Add Tag";
+export declare const ModernTaxonomyPickerApplyButtonText = "Apply";
+export declare const ModernTaxonomyPickerCancelButtonText = "Cancel";
+export declare const ModernTaxonomyPickerLoadMoreText = "Load more";
+export declare const ModernTaxonomyPickerRemoveButtonText = "Remove";
+export declare const ModernTaxonomyPickerPanelCloseButtonText = "Close";
+export declare const ModernTaxonomyPickerNoResultsFound = "No results found";
+export declare const ModernTaxonomyPickerSuggestionInLabel = "in";
