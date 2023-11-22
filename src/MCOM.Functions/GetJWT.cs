@@ -22,7 +22,7 @@ namespace MCOM.Functions
         }
 
         [Function("GetJWT")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context)
         {
             var logger = context.GetLogger("GetJWT");
 
