@@ -5,6 +5,8 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json;
 using MCOM.Models.Azure;
 using MCOM.Utilities;
+using MCOM.Models;
+using Microsoft.Extensions.Logging;
 
 namespace MCOM.Provisioning.Functions
 {
@@ -19,42 +21,58 @@ namespace MCOM.Provisioning.Functions
         private readonly string scope = "api://5e0a5f0a-db01-473c-b448-0e9711ed8f9a/.default";
         private readonly string grantType = "client_credentials";
 
+        private readonly ILogger _logger;
+
         // Constructor
-        public GetSPOData()
+        public GetSPOData(ILoggerFactory loggerFactory)
         {
             this.authUrl = this.authUrl.Replace("{tenantId}", tenantId);
+            _logger = loggerFactory.CreateLogger<GetSPOData>();
         }
 
         [Function("GetSPOData")]
         public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url)
         {
-            var logger = context.GetLogger("GetSPOData");
-
-            // Get JWT     
-            var azureAdToken = await GetJWTAsync();
-
-            if (azureAdToken != null && azureAdToken.access_token != null)
+            try
             {
-                var tokenObj = await GetOffice365Token(azureAdToken.access_token);
-                var token = tokenObj?.Token;
-                if (token != null)
-                {
-                    // Get data from Office 365
-                    var data = await GetDataFromOffice365(url, token);
-
-                    // Build and send response back
-                    var response = req.CreateResponse(HttpStatusCode.OK);
-                    response.Headers.Add("Content-Type", "application/json");
-                    response.WriteString(data);
-
-                    return response;
-                }
+                GlobalEnvironment.SetEnvironmentVariables(_logger);
+            }
+            catch (Exception ex)
+            {
+                Global.Log.LogError(ex, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", ex.Message);
+                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
             }
 
-            var failResponse = req.CreateResponse(HttpStatusCode.Forbidden);
-            failResponse.Headers.Add("Content-Type", "application/json");
-            failResponse.WriteString("Error generating the tokens");
-            return failResponse;
+            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "GetSPOData");            
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetSPOData", "Provisioning"))
+            {
+                HttpResponseData? response = null;
+                // Get JWT     
+                var azureAdToken = await GetJWTAsync();
+
+                if (azureAdToken != null && azureAdToken.access_token != null)
+                {
+                    var tokenObj = await GetOffice365Token(azureAdToken.access_token);
+                    var token = tokenObj?.Token;
+                    if (token != null)
+                    {
+                        // Get data from Office 365
+                        var data = await GetDataFromOffice365(url, token);
+
+                        // Build and send response back
+                        response = req.CreateResponse(HttpStatusCode.OK);
+                        response.Headers.Add("Content-Type", "application/json");
+                        response.WriteString(data);
+
+                        return response;
+                    }
+                }
+
+                response = req.CreateResponse(HttpStatusCode.Forbidden);
+                response.Headers.Add("Content-Type", "application/json");
+                response.WriteString("Error generating the tokens");
+                return response;
+            }
         }
 
         private async Task<BearerToken?> GetJWTAsync()

@@ -21,8 +21,8 @@ namespace MCOM.Services
 {
     public interface IMicrosoft365Service
     {
-        Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null);
-        Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true);
+        Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null);
+        Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true);
         Task<CreatedTeam> CreateTeamFromGroup(PnPContext context, Guid groupId);
         ProvisioningTemplate GetProvisioningTemplate(Stream xmlTemplate);
         bool ApplyProvisioningTemplateAsync(PnPContext pnpContext, ProvisioningTemplate provisioningTemplate, string siteUrl);
@@ -46,7 +46,10 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owner">Owner of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null)
+        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context, 
+            string url, string title, string description, string siteClassification, Guid sensitivityLabel, bool externalSharingEnabled = false, 
+            PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, 
+            string owner = null)
         {
             try
             {
@@ -57,7 +60,9 @@ namespace MCOM.Services
                     Description = description,
                     Language = language,
                     SensitivityLabelId = sensitivityLabel, 
-                    Owner = owner                    
+                    Owner = owner,
+                    ShareByEmailEnabled = externalSharingEnabled
+                    //Classification = ""
                 };
 
                 // use pnp core admin to check if site collection already exists
@@ -149,7 +154,9 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owners">List of owners of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true)
+        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, 
+            string title, string description, Guid sensitivityLabel, bool externalSharingEnabled = false,
+            PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true)
         {            
             try
             {
@@ -160,8 +167,9 @@ namespace MCOM.Services
                     Description = description,
                     Language = language,
                     SensitivityLabelId = sensitivityLabel,
-                    WelcomeEmailDisabled = true,
-                    IsPublic = isPublic
+                    WelcomeEmailDisabled = true,                    
+                    IsPublic = isPublic // Privacy: Check if it is public then the group vissibility should be public
+                    //Classification = "Same as sensitivity label or its mapping"
                 };
 
                 // Add owners to the site
@@ -194,18 +202,22 @@ namespace MCOM.Services
                     // use pnp to get web info
                     var web = await newSiteContext.Web.GetAsync(w => w.Url, w => w.Title, w => w.Id);
                     var newSiteUrl = web.Url;
-                    var newSiteTitle = web.Title;
+                    var newSiteTitle = web.Title;                    
 
-                    // use pnp to get site info
+                    // use pnp to get site info and set the external sharing option
                     var site = await newSiteContext.Site.GetAsync(s => s.Id);
                     var newSiteId = site.Id;
+                    site.ShareByEmailEnabled = externalSharingEnabled;                    
 
                     // Log to application insights
                     Global.Log.LogInformation("Site id({0}) created: {1}, Url of new site: {2}", newSiteId, newSiteTitle, newSiteUrl);
 
                     // use pnp to get site group id
                     var microsoft365Group = await newSiteContext.Group.GetAsync();
-                    var groupId = microsoft365Group.Id;
+                    var groupId = microsoft365Group.Id;                    
+                    var vissibility = microsoft365Group.Visibility;
+                    Global.Log.LogInformation($"Group vissibility: {vissibility}");
+
                     ITeam team = null;
 
                     try
