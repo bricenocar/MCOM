@@ -24,9 +24,9 @@ namespace MCOM.Provisioning.Functions
             [SqlInput(commandText: "usp_GetAllProvisioningPurposes",
                 commandType: System.Data.CommandType.StoredProcedure,
                 parameters: "",
-                connectionStringSetting: "MCOMGovernanceDatabaseConnection")] IEnumerable<PurposeValue> purposes)
+                connectionStringSetting: "MCOMGovernanceDatabaseConnection")] 
+            IEnumerable<PurposeValue> purposes)
         {
-
             try
             {
                 GlobalEnvironment.SetEnvironmentVariables(_logger);
@@ -34,22 +34,25 @@ namespace MCOM.Provisioning.Functions
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", ex.Message);
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
             }
 
-            // Do any required handling after getting purposes
-
-            try
+            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "GetPurposeValues");
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetPurposeValues", "Provisioning"))
             {
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "application/json");
-                response.WriteString(JsonConvert.SerializeObject(purposes));
-                return response;
-            }
-            catch (Exception ex)
-            {
-                Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+                HttpResponseData? response = null;
+                try
+                {
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    response.Headers.Add("Content-Type", "application/json");
+                    response.WriteString(JsonConvert.SerializeObject(purposes));
+                    return response;
+                }
+                catch (Exception ex)
+                {
+                    Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
+                    return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
+                }
             }
         }
     }

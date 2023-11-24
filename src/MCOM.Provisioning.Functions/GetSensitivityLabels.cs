@@ -15,7 +15,7 @@ namespace MCOM.Provisioning.Functions
 
         public GetSensitivityLabels(ILoggerFactory loggerFactory)
         {
-            _logger = loggerFactory.CreateLogger<GetPurposeValues>();
+            _logger = loggerFactory.CreateLogger<GetSensitivityLabels>();
         }
 
         [Function("GetSensitivityLabels")]
@@ -28,13 +28,18 @@ namespace MCOM.Provisioning.Functions
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", ex.Message);
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
             }
 
-            try
+            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "GetSensitivityLabels");
+
+            HttpResponseData? response = null;
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetSensitivityLabels", "Provisioning"))
             {
-                // Temporary static code to build the the options
-                var optionalValues = new List<SensitivityLabel>()
+                try
+                {
+                    // Temporary static code to build the the options
+                    var optionalValues = new List<SensitivityLabel>()
                 {
                     new SensitivityLabel()
                     {
@@ -80,16 +85,16 @@ namespace MCOM.Provisioning.Functions
                     }
                 };
 
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "application/json");
-                response.WriteString(JsonConvert.SerializeObject(optionalValues));
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    response.Headers.Add("Content-Type", "application/json");
+                    response.WriteString(JsonConvert.SerializeObject(optionalValues));
+                    return response;
+                }
+                catch (Exception ex)
+                {
+                    Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
+                    return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
+                }
             }
         }
     }

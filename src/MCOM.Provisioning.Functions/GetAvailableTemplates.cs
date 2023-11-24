@@ -29,27 +29,30 @@ namespace MCOM.Provisioning.Functions
         {
             try
             {
-                // COnfigure all envirionment variables
                 GlobalEnvironment.SetEnvironmentVariables(_logger);
             }
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", ex.Message);
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
             }
 
-            try
+            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "GetAvailableTemplates");            
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetAvailableTemplates", "Provisioning"))
             {
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "application/json");
-                response.WriteString(JsonConvert.SerializeObject(availableTemplates));
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+                HttpResponseData? response = null;
+                try
+                {
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    response.Headers.Add("Content-Type", "application/json");
+                    response.WriteString(JsonConvert.SerializeObject(availableTemplates));
+                    return response;
+                }
+                catch (Exception ex)
+                {
+                    Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
+                    return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
+                }
             }
         }
     }

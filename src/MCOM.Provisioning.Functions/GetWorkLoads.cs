@@ -1,57 +1,58 @@
-using System.Net;
+using MCOM.Models;
+using MCOM.Models.Provisioning;
+using MCOM.Utilities;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Extensions.Sql;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using MCOM.Models;
-using MCOM.Utilities;
-using MCOM.Services;
-using MCOM.Controllers.Provisioning;
+using System.Net;
 
 namespace MCOM.Provisioning.Functions
 {
     public class GetWorkLoads
     {
-        private readonly IDataBaseService _dataBaseService;
+        private readonly ILogger _logger;
 
-        public GetWorkLoads(IDataBaseService dataBaseService)
+        public GetWorkLoads(ILoggerFactory loggerFactory)
         {
-            _dataBaseService = dataBaseService;
+            _logger = loggerFactory.CreateLogger<GetWorkLoads>();
         }
 
         [Function("GetWorkLoads")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context)
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req,
+            [SqlInput(commandText: "Proc_GetWorkloads",
+                commandType: System.Data.CommandType.StoredProcedure,
+                parameters: "",
+                connectionStringSetting: "MCOMGovernanceDatabaseConnection")] 
+            IEnumerable<PurposeValue> workLoads)
         {
-            var logger = context.GetLogger("GetWorkLoads");
-
             try
             {
-                GlobalEnvironment.SetEnvironmentVariables(logger);
+                GlobalEnvironment.SetEnvironmentVariables(_logger);
             }
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", ex.Message);
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
             }
 
-            try
+            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "GetWorkLoads");
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetWorkLoads", "Provisioning"))
             {
-                // Get workload datatable
-                var dt = await _dataBaseService.ExecuteStoredProcedureAsync("Proc_GetWorkloads");
-
-                // Get workloads
-                var workLoads = WorkLoadController.GetWorkLoads(dt);
-
-                var response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "application/json");
-                response.WriteString(JsonConvert.SerializeObject(workLoads));
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, "false");
+                HttpResponseData? response = null;
+                try
+                {
+                    response = req.CreateResponse(HttpStatusCode.OK);
+                    response.Headers.Add("Content-Type", "application/json");
+                    response.WriteString(JsonConvert.SerializeObject(workLoads));
+                    return response;
+                }
+                catch (Exception ex)
+                {
+                    Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
+                    return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
+                }
             }
         }
     }

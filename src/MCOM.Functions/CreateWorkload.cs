@@ -73,6 +73,7 @@ namespace MCOM.Functions
                                     workloadData.Site.SiteConfig.Description,
                                     workloadData.Site.SiteConfig.SiteClassification,
                                     workloadData.Site.SiteConfig.SensitivityLabel,
+                                    workloadData.Site.SiteConfig.ExternalSharing,
                                     Language.English, workloadData.Site.SiteUsers.Owners.First());
 
                                 // Add site information to the response
@@ -95,6 +96,7 @@ namespace MCOM.Functions
                                     workloadData.Site.SiteConfig.SiteName,
                                     workloadData.Site.SiteConfig.Description,
                                     workloadData.Site.SiteConfig.SensitivityLabel,
+                                    workloadData.Site.SiteConfig.ExternalSharing,
                                     Language.English,
                                     workloadData.Site.GroupUsers.Owners);
 
