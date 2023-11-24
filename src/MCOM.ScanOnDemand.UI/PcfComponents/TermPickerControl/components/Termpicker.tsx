@@ -6,7 +6,7 @@ import { ModernTaxonomyPicker } from '../controls/modernTaxonomyPicker';
 import "@pnp/sp/webs";
 
 // export default class Termpicker extends React.Component<ITermpickerProps, ITermpickerState> {
-export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onChange, allowMultipleSelections }: ITermpickerProps): JSX.Element {
+export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, errorColor }: ITermpickerProps): JSX.Element {
 
   const onModernTaxonomyPickerChange = (terms: ITermInfo[]): void => {
     onChange(terms);
@@ -22,6 +22,12 @@ export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onCh
         label={label}
         onChange={onModernTaxonomyPickerChange}
         taxonomyService={taxonomyService}
+        initialValues={initialValues}
+        placeHolder={placeHolder}
+        disabled={disabled}
+        error={error}
+        iconColor={iconColor}
+        errorColor={errorColor}
       />
     );
   } else {

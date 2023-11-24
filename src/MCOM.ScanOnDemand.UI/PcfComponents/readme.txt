@@ -37,6 +37,24 @@ dotnet build --configuration Release
 -The solution package is created under solutions\bin\release (For Unmanaged solution under solutions\bin\debug)
 -Upload the package to PowerApps solutions (Import solution)
 
+
+UPDATES - NEW VERSIONS!!!
+
+When doing changes to the Component the version has to be incremented. 
+I like to keep both the solution and the component with the same versions. 
+So let's say we want to go from 1.0.1 to 1.0.2:
+
+-Change the version in Solution.xml under ComponentFolder\solutions\src\other\solution.xml
+Ex:
+<Version>1.0.2</Version>
+
+-Change the version in ControlManifest.Input.xml under the ComponentFolder
+Ex:
+<control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.0.2" .......
+
+Package again and import ;-)
+
+
 Hope you have a nice day!!! Enjoy!!!
 
 

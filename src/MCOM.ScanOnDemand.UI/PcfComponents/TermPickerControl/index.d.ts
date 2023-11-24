@@ -1,11 +1,13 @@
 /// <reference types="powerapps-component-framework" />
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 export declare class TermPickerControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
+    private initialValues;
     private termValues;
     private notifyOutputChanged;
     private container;
     private context;
     private taxonomyService;
+    private previousTermValues;
     constructor();
     /**
      * Used to initialize the control instance. Controls can kick off remote server calls and other initialization actions here.

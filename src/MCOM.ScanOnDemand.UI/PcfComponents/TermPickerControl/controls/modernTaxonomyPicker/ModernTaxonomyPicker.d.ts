@@ -12,6 +12,9 @@ export interface IModernTaxonomyPickerProps {
     anchorTermId?: string;
     panelTitle: string;
     label: string;
+    error: boolean;
+    errorColor: string;
+    iconColor: string;
     initialValues?: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
     disabled?: boolean;
     required?: boolean;

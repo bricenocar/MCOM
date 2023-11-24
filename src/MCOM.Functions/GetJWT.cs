@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using MCOM.Models;
 using MCOM.Services;
 using Newtonsoft.Json;
+using MCOM.Utilities;
+using System.Diagnostics;
 
 namespace MCOM.Functions
 {
@@ -26,15 +28,44 @@ namespace MCOM.Functions
         {
             var logger = context.GetLogger("GetJWT");
 
-            // Get SharePoint token using managed identity
-            var sharepointUri = new Uri(Global.SharePointUrl);
-            var accessToken = await _azureService.GetAzureServiceTokenAsync(sharepointUri);
+            try
+            {
+                GlobalEnvironment.SetEnvironmentVariables(logger);
+            }
+            catch (Exception e)
+            {
+                Global.Log.LogError(e, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
+                throw;
+            }
 
-            var responseToReturn = req.CreateResponse(HttpStatusCode.OK);
-            responseToReturn.Headers.Add("Content-Type", "application/json");
-            responseToReturn.WriteString(JsonConvert.SerializeObject(accessToken));
+            Activity.Current?.AddTag("MCOMOperation", "GetJWT");
 
-            return responseToReturn;
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetJWT", "Provisioning"))
+            {
+                try
+                {
+                    // Get SharePoint token using managed identity
+                    var sharepointUri = new Uri(Global.SharePointUrl);
+                    var accessToken = await _azureService.GetAzureServiceTokenAsync(sharepointUri);
+
+                    var responseToReturn = req.CreateResponse(HttpStatusCode.OK);
+                    responseToReturn.Headers.Add("Content-Type", "application/json");
+                    responseToReturn.WriteString(JsonConvert.SerializeObject(accessToken));
+
+                    return responseToReturn;
+                }
+                catch (Exception ex)
+                {                    
+                    Global.Log.LogError(ex, "Error generating the JWT. Error: {ErrorMessage}", ex.Message);
+                }
+            }
+
+            // Generate error response
+            var failResponse = req.CreateResponse(HttpStatusCode.Forbidden);
+            failResponse.Headers.Add("Content-Type", "application/json");
+            failResponse.WriteString("Error generating the JWT");
+
+            return failResponse;
         }
     }
 }

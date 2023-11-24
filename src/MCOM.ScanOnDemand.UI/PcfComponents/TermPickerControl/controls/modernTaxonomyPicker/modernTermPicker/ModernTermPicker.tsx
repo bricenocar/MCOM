@@ -1,8 +1,6 @@
 import React from 'react';
 import { BasePicker } from 'office-ui-fabric-react/lib/components/pickers/BasePicker';
-import { IModernTermPickerProps,
-         ITermItemProps
-       } from './ModernTermPicker.types';
+import { IModernTermPickerProps } from './ModernTermPicker.types';
 import { TermItem } from '../termItem/TermItem';
 import { TermItemSuggestion } from '../termItem/TermItemSuggestion';
 import { IBasePickerStyleProps,
@@ -45,4 +43,4 @@ export const ModernTermPicker = styled<IModernTermPickerProps, IBasePickerStyleP
   {
     scope: 'ModernTermPicker',
   },
-);
+)

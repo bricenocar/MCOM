@@ -1,3 +1,4 @@
+// Example in case we need a more complex object
 export const outPutSchema2 = {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "array",
@@ -41,6 +42,7 @@ export const outPutSchema2 = {
     }
 };
 
+// Example in case we need a more complex object
 export const outPutSchema1 = {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "array",

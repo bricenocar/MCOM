@@ -5,14 +5,18 @@ import { Termpicker } from './components/Termpicker';
 import { ITermInfo } from '@pnp/sp/taxonomy';
 import { outPutSchema } from './utilities/schemas';
 import { SPTaxonomyService } from './services/SPTaxonomyService';
+import { Optional } from './controls/modernTaxonomyPicker';
+import { getTermValuesArray, validTermValues } from './utilities/common';
 
 export class TermPickerControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
-    private termValues: string = ''; // type (ITermInfo) or Array in case the whole object is needed
+    private initialValues: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
+    private termValues: string; // type (ITermInfo) or Array in case the whole object is needed
     private notifyOutputChanged: () => void;
     private container: HTMLDivElement;
     private context: ComponentFramework.Context<IInputs>;
     private taxonomyService: SPTaxonomyService;
+    private previousTermValues: string;
 
     constructor() {
 
@@ -39,16 +43,28 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
      * @param context The entire property bag available to control via Context Object; It contains values as set up by the customizer mapped to names defined in the manifest, as well as utility functions
      */
     public async updateView(context: ComponentFramework.Context<IInputs>): Promise<void> {
-        // Add code to update control view
+
         // storing the latest context from the control.
         this.context = context;
 
-        // Get Site url from context (Component properties)
+        // Get the current value of the property
         const siteUrl = context.parameters.SiteUrl.raw;
-        
-        // Get spfi object
+        const currentTermValues = context.parameters.TermValues.raw || '';
+        const areTermValuesValid = validTermValues(currentTermValues);
+
+        // Check if the termValues have changed
+        if (areTermValuesValid && currentTermValues !== this.previousTermValues) {
+            // Update the previous value for the next check
+            this.previousTermValues = currentTermValues;
+
+            // Set initial term values
+            if (currentTermValues) {
+                this.initialValues = getTermValuesArray(currentTermValues);
+            }
+        }
+
+        // Get taxonomy service
         if (!this.taxonomyService) {
-            // this.sp = await getSPFI(siteUrl);
             this.taxonomyService = new SPTaxonomyService(siteUrl);
         }
 
@@ -59,7 +75,13 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
                 label: context.parameters.Label.raw,
                 panelTitle: context.parameters.PanelTitle.raw,
                 allowMultipleSelections: context.parameters.AllowMultipleSelections.raw,
-                onChange: this.onChange
+                initialValues: this.initialValues,
+                error: context.parameters.Error.raw,
+                errorColor: context.parameters.ErrorColor.raw,
+                placeHolder: context.parameters.PlaceHolder.raw,
+                disabled: context.parameters.Disabled.raw,
+                iconColor: context.parameters.IconColor.raw,                
+                onChange: this.onChange,
             }),
             this.container,
         );

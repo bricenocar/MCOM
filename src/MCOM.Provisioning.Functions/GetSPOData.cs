@@ -5,12 +5,15 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json;
 using MCOM.Models.Azure;
 using MCOM.Utilities;
+using Microsoft.Extensions.Logging;
+using MCOM.Models;
+using System.Diagnostics;
 
 namespace MCOM.Provisioning.Functions
 {
     public class GetSPOData
     {
-        // TODO: Move to configuration!!!!!!!!!!!!!!!!!!!!!!!!!
+        // TODO: Temp solution. Move to a secure place please!!!!!!!!!!!!!!!!!!!!!!!!!
         private readonly string functionUrl = "https://function-mcom-inttest.azurewebsites.net/api/GetJWT?code=iRUkfAPXCgyW-OG_JbabWiI9bNCc1v1Zt56j4Eoc5EJKAzFuE1He4Q==";
         private readonly string tenantId = "e78a86b8-aa34-41fe-a537-9392c8870bf0";
         private readonly string authUrl = "https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";
@@ -30,30 +33,55 @@ namespace MCOM.Provisioning.Functions
         {
             var logger = context.GetLogger("GetSPOData");
 
-            // Get JWT     
-            var azureAdToken = await GetJWTAsync();
-
-            if (azureAdToken != null && azureAdToken.access_token != null)
+            try
             {
-                var tokenObj = await GetOffice365Token(azureAdToken.access_token);
-                var token = tokenObj?.Token;
-                if (token != null)
+                GlobalEnvironment.SetEnvironmentVariables(logger);
+            }
+            catch (Exception e)
+            {
+                Global.Log.LogError(e, "Config values missing or bad formatted in app config. Error: {ErrorMessage}", e.Message);
+                throw;
+            }
+
+            Activity.Current?.AddTag("MCOMOperation", "GetSPOData");
+
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetSPOData", "Provisioning"))
+            {
+                try
                 {
-                    // Get data from Office 365
-                    var data = await GetDataFromOffice365(url, token);
+                    // Get JWT
+                    var azureAdToken = await GetJWTAsync();
 
-                    // Build and send response back
-                    var response = req.CreateResponse(HttpStatusCode.OK);
-                    response.Headers.Add("Content-Type", "application/json");
-                    response.WriteString(data);
+                    // Validate
+                    if (azureAdToken != null && azureAdToken.access_token != null)
+                    {
+                        var tokenObj = await GetOffice365Token(azureAdToken.access_token);
+                        var token = tokenObj?.Token;
+                        if (token != null)
+                        {
+                            // Get data from Office 365
+                            var data = await GetDataFromOffice365(url, token);
 
-                    return response;
+                            // Build and send response back
+                            var response = req.CreateResponse(HttpStatusCode.OK);
+                            response.Headers.Add("Content-Type", "application/json");
+                            response.WriteString(data);
+
+                            return response;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Global.Log.LogError(ex, "Error getting the JWT. Error: {ErrorMessage}", ex.Message);
                 }
             }
 
+            // Generate error response
             var failResponse = req.CreateResponse(HttpStatusCode.Forbidden);
             failResponse.Headers.Add("Content-Type", "application/json");
-            failResponse.WriteString("Error generating the tokens");
+            failResponse.WriteString("Error getting the JWT");
+
             return failResponse;
         }
 
@@ -115,8 +143,8 @@ namespace MCOM.Provisioning.Functions
 
         private class TokenObject
         {
-            public string Token { get; set; }
-            public string ExpiresOn { get; set; }
+            public string? Token { get; set; }
+            public string? ExpiresOn { get; set; }
         }
     }
 }

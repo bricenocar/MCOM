@@ -46,6 +46,9 @@ export interface IModernTaxonomyPickerProps {
   anchorTermId?: string;
   panelTitle: string;
   label: string;
+  error: boolean; // Custom property
+  errorColor: string; // Custom property
+  iconColor: string; // Custom property
   initialValues?: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
   disabled?: boolean;
   required?: boolean;
@@ -64,6 +67,10 @@ export interface IModernTaxonomyPickerProps {
 }
 
 export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Element {
+
+  // TODO: Get from context
+  const languageTag = "en-US";
+
   const [panelIsOpen, setPanelIsOpen] = React.useState(false);
   const initialLoadComplete = React.useRef(false);
   const [selectedOptions, setSelectedOptions] = React.useState<ITermInfo[]>([]);
@@ -77,7 +84,6 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
     props.taxonomyService.getTermStoreInfoV2()
       .then((termStoreInfo) => {
         setCurrentTermStoreInfo(termStoreInfo);
-        const languageTag = "en-US";
         setCurrentLanguageTag(languageTag!);
         setSelectedOptions(Array.isArray(props.initialValues) ?
           props.initialValues.map(term => { return { ...term, languageTag: languageTag, termStoreInfo: termStoreInfo } as ITermInfo; }) :
@@ -113,6 +119,12 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
       props.onChange(selectedOptions);
     }
   }, [selectedOptions]);
+
+  React.useEffect(() => {
+    setSelectedOptions(Array.isArray(props.initialValues) ?
+      props.initialValues.map(term => { return { ...term, languageTag: languageTag } as ITermInfo; }) :
+      []);
+  }, [props.initialValues]);
 
   function onOpenPanel(): void {
     if (props.disabled === true) {
@@ -274,8 +286,11 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
   const calloutProps = { gapSpace: 0 };
   const tooltipId = useId('tooltip');
   const hostStyles: Partial<ITooltipHostStyles> = { root: { display: 'inline-block' } };
-  const addTermButtonStyles: IButtonStyles = { rootHovered: { backgroundColor: 'inherit' }, rootPressed: { backgroundColor: 'inherit' } };
-  const termPickerStyles: IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> = { input: { minheight: 34 }, text: { minheight: 34 } };
+  const addTermButtonStyles: IButtonStyles = (props.iconColor) ? { root: { color: props.iconColor  }, rootHovered: { backgroundColor: 'inherit' }, rootPressed: { backgroundColor: 'inherit' } } :
+                                                                 { rootHovered: { backgroundColor: 'inherit' }, rootPressed: { backgroundColor: 'inherit' } };
+  const termPickerStyles: IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> = (props.error) ?
+    { input: { minheight: 34, backgroundColor: props.errorColor }, text: { minheight: 34 } } :
+    { input: { minheight: 34 }, text: { minheight: 34 } };
 
   return (
 
