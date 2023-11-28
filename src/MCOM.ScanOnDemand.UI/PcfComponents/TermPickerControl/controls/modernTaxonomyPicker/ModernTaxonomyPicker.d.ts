@@ -13,12 +13,16 @@ export interface IModernTaxonomyPickerProps {
     panelTitle: string;
     label: string;
     error: boolean;
-    errorColor: string;
+    errorBorderColor: string;
     iconColor: string;
+    iconSize: number;
+    inputHeight: number;
+    pageSize: number;
     initialValues?: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
     disabled?: boolean;
     required?: boolean;
     onChange?: (newValue?: ITermInfo[]) => void;
+    onLoadCompleted?: (value?: boolean) => void;
     onRenderItem?: (itemProps: ITermItemProps) => JSX.Element;
     onRenderSuggestionsItem?: (term: ITermInfo, itemProps: ISuggestionItemProps<ITermInfo>) => JSX.Element;
     placeHolder?: string;

@@ -10,9 +10,12 @@ export interface ITermpickerProps {
   allowMultipleSelections: boolean;
   initialValues: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
   placeHolder: string;
+  inputHeight: number;
   disabled: boolean;
   error: boolean;
-  errorColor: string;
+  errorBorderColor: string;
   iconColor: string;
+  iconSize: number;
+  pageSize: number;
   onChange: (terms: ITermInfo[]) => void;
 }

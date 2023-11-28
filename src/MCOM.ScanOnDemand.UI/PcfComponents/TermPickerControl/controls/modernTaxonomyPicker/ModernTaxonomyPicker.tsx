@@ -47,12 +47,16 @@ export interface IModernTaxonomyPickerProps {
   panelTitle: string;
   label: string;
   error: boolean; // Custom property
-  errorColor: string; // Custom property
+  errorBorderColor: string; // Custom property
   iconColor: string; // Custom property
-  initialValues?: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
+  iconSize: number; // Custom property
+  inputHeight: number; // Custom property
+  pageSize: number; // Custom property
+  initialValues?: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[]; // Custom property
   disabled?: boolean;
   required?: boolean;
   onChange?: (newValue?: ITermInfo[]) => void;
+  onLoadCompleted?: (value?: boolean) => void;
   onRenderItem?: (itemProps: ITermItemProps) => JSX.Element;
   onRenderSuggestionsItem?: (term: ITermInfo, itemProps: ISuggestionItemProps<ITermInfo>) => JSX.Element;
   placeHolder?: string;
@@ -72,7 +76,7 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
   const languageTag = "en-US";
 
   const [panelIsOpen, setPanelIsOpen] = React.useState(false);
-  const initialLoadComplete = React.useRef(false);
+  const [initialLoadCompleted, setInitialLoadCompleted] = React.useState(false);
   const [selectedOptions, setSelectedOptions] = React.useState<ITermInfo[]>([]);
   const [selectedPanelOptions, setSelectedPanelOptions] = React.useState<ITermInfo[]>([]);
   const [currentTermStoreInfo, setCurrentTermStoreInfo] = React.useState<ITermStoreInfo>();
@@ -88,7 +92,7 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
         setSelectedOptions(Array.isArray(props.initialValues) ?
           props.initialValues.map(term => { return { ...term, languageTag: languageTag, termStoreInfo: termStoreInfo } as ITermInfo; }) :
           []);
-        initialLoadComplete.current = true;
+        setInitialLoadCompleted(true);
       })
       .catch((e) => {
         console.log('getTermStoreInfo error: ', e);
@@ -115,10 +119,16 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
   }, []);
 
   React.useEffect(() => {
-    if (props.onChange && initialLoadComplete.current) {
+    if (props.onChange && initialLoadCompleted) {
       props.onChange(selectedOptions);
     }
   }, [selectedOptions]);
+
+  React.useEffect(() => {
+    if (props.onLoadCompleted && initialLoadCompleted) {
+      props.onLoadCompleted(initialLoadCompleted);
+    }
+  }, [initialLoadCompleted]);
 
   React.useEffect(() => {
     setSelectedOptions(Array.isArray(props.initialValues) ?
@@ -286,20 +296,45 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
   const calloutProps = { gapSpace: 0 };
   const tooltipId = useId('tooltip');
   const hostStyles: Partial<ITooltipHostStyles> = { root: { display: 'inline-block' } };
-  const addTermButtonStyles: IButtonStyles = (props.iconColor) ? { root: { color: props.iconColor  }, rootHovered: { backgroundColor: 'inherit' }, rootPressed: { backgroundColor: 'inherit' } } :
-                                                                 { rootHovered: { backgroundColor: 'inherit' }, rootPressed: { backgroundColor: 'inherit' } };
-  const termPickerStyles: IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> = (props.error) ?
-    { input: { minheight: 34, backgroundColor: props.errorColor }, text: { minheight: 34 } } :
-    { input: { minheight: 34 }, text: { minheight: 34 } };
+  const addTermButtonStyles: IButtonStyles = {
+    root: {
+      selectors: {
+        '.ms-Icon': {
+          fontSize: props.iconSize ? `${props.iconSize}px` : '16px',
+          color: props.iconColor,
+        }
+      },
+    },
+    rootHovered: {
+      backgroundColor: 'inherit'
+    }, rootPressed: {
+      backgroundColor: 'inherit'
+    }
+  }
+
+  let termPickerStyles: IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> = { input: { minheight: 34, height: props.inputHeight ? `${props.inputHeight}px` : '30px' }, text: { minheight: 34 } };
+  if (props.error) {
+    if (props.errorBorderColor) {
+      termPickerStyles = {
+        root: {
+          selectors: {
+            '.ms-BasePicker-text': {
+              borderColor: props.errorBorderColor,
+            }
+          },
+        },
+        input: {
+          minheight: 34, height: `${props.inputHeight}px`, borderColor: props.errorBorderColor, borderStyle: 'solid'
+        }, text: { minheight: 34 }
+      };
+    }
+  }
 
   return (
 
     <div className={styles.modernTaxonomyPicker}>
       {props.label && <Label required={props.required}>{props.label}</Label>}
-      {!initialLoadComplete.current &&
-        <div>{'Loading controls...'}</div>
-      }
-      {initialLoadComplete.current &&
+      {initialLoadCompleted &&
         <div className={styles.termField}>
           <div className={styles.termFieldInput}>
             <ModernTermPicker
@@ -367,7 +402,7 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
                 anchorTermInfo={currentAnchorTermInfo!}
                 termSetInfo={currentTermSetInfo!}
                 termStoreInfo={currentTermStoreInfo!}
-                pageSize={50}
+                pageSize={props.pageSize || 200}
                 selectedPanelOptions={selectedPanelOptions}
                 setSelectedPanelOptions={setSelectedPanelOptions}
                 placeHolder={props.placeHolder || strings.ModernTaxonomyPickerDefaultPlaceHolder}

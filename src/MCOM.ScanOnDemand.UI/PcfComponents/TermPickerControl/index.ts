@@ -53,13 +53,15 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
         const areTermValuesValid = validTermValues(currentTermValues);
 
         // Check if the termValues have changed
-        if (areTermValuesValid && currentTermValues !== this.previousTermValues) {
+        if (currentTermValues !== this.previousTermValues) {
             // Update the previous value for the next check
             this.previousTermValues = currentTermValues;
 
-            // Set initial term values
-            if (currentTermValues) {
-                this.initialValues = getTermValuesArray(currentTermValues);
+            // Set initial term values in case is valid
+            if (areTermValuesValid) {
+                this.initialValues = getTermValuesArray(currentTermValues); // Pick values
+            } else {
+                this.initialValues = undefined; // Empty object
             }
         }
 
@@ -76,11 +78,14 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
                 panelTitle: context.parameters.PanelTitle.raw,
                 allowMultipleSelections: context.parameters.AllowMultipleSelections.raw,
                 initialValues: this.initialValues,
+                inputHeight: context.parameters.InputHeight.raw,
                 error: context.parameters.Error.raw,
-                errorColor: context.parameters.ErrorColor.raw,
+                errorBorderColor: context.parameters.ErrorBorderColor.raw,
                 placeHolder: context.parameters.PlaceHolder.raw,
                 disabled: context.parameters.Disabled.raw,
-                iconColor: context.parameters.IconColor.raw,                
+                iconColor: context.parameters.IconColor.raw,
+                iconSize: context.parameters.IconSize.raw,
+                pageSize: context.parameters.PageSize.raw,
                 onChange: this.onChange,
             }),
             this.container,

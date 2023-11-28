@@ -6,7 +6,13 @@ import { ModernTaxonomyPicker } from '../controls/modernTaxonomyPicker';
 import "@pnp/sp/webs";
 
 // export default class Termpicker extends React.Component<ITermpickerProps, ITermpickerState> {
-export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, errorColor }: ITermpickerProps): JSX.Element {
+export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, iconSize, errorBorderColor, inputHeight, pageSize }: ITermpickerProps): JSX.Element {
+
+  const [initialLoadCompleted, setInitialLoadCompleted] = React.useState(false);
+
+  const onLoadCompleted = (initialLoadCompleted: boolean): void => {
+    setInitialLoadCompleted(initialLoadCompleted);
+  }
 
   const onModernTaxonomyPickerChange = (terms: ITermInfo[]): void => {
     onChange(terms);
@@ -21,16 +27,21 @@ export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onCh
         panelTitle={panelTitle ? panelTitle : 'Select Term'}
         label={label}
         onChange={onModernTaxonomyPickerChange}
+        onLoadCompleted={onLoadCompleted}
         taxonomyService={taxonomyService}
         initialValues={initialValues}
         placeHolder={placeHolder}
         disabled={disabled}
+        inputHeight={inputHeight}
         error={error}
+        errorBorderColor={errorBorderColor}
         iconColor={iconColor}
-        errorColor={errorColor}
+        iconSize={iconSize}
+        pageSize={pageSize}
       />
     );
-  } else {
+  }
+  if (!initialLoadCompleted) {
     return (
       <div>{'Loading control...'}</div>
     );

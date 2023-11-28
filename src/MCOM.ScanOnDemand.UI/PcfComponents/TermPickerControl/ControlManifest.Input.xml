@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.0.1" display-name-key="TermPickerControl" description-key="TermPickerControl description" control-type="standard" >
+  <control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.0.3" display-name-key="TermPickerControl" description-key="TermPickerControl description" control-type="standard" >
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -46,13 +46,20 @@
       usage="input"
       required="false"
       default-value="Select Terms"/>
-    <property name="IconColor"
-      display-name-key="IconColor"
-      description-key="Icon color"
-      of-type="SingleLine.Text"
+    <property name="InputHeight"
+      display-name-key="InputHeight"
+      description-key="Input height"
+      of-type="Whole.None"
       usage="input"
-      required="false"
-      default-value="#0078D4"/>
+      required="true"
+      default-value="30"/>    
+    <property name="PageSize"
+      display-name-key="PageSize"
+      description-key="Number of terms to be loaded"
+      of-type="Whole.None"
+      usage="input"
+      required="true"
+      default-value="200"/>    
     <property name="AllowMultipleSelections"
       display-name-key="AllowMultipleSelections"
       description-key="Allow multiple Term Selections"
@@ -66,14 +73,28 @@
       of-type="TwoOptions"
       usage="input"
       required="true"
-      default-value="false"/>  
-    <property name="ErrorColor"
-      display-name-key="ErrorColor"
-      description-key="Input background color when error flag is true"
+      default-value="false"/>
+    <property name="ErrorBorderColor"
+      display-name-key="ErrorBorderColor"
+      description-key="Input border color when error flag is true"
       of-type="SingleLine.Text"
       usage="input"
       required="false"
-      default-value="#fde7e9"/>
+      default-value="#EB0000"/>
+    <property name="IconColor"
+      display-name-key="IconColor"
+      description-key="Icon color"
+      of-type="SingleLine.Text"
+      usage="input"
+      required="false"
+      default-value="#0078D4"/>
+    <property name="IconSize"
+      display-name-key="IconSize"
+      description-key="Icon size"
+      of-type="Whole.None"
+      usage="input"
+      required="false"
+      default-value="16"/>
     <property name="PlaceHolder"
       display-name-key="PlaceHolder"
       description-key="Short text hint to display in picker"
@@ -93,7 +114,7 @@
       description-key="Term values selected in the term picker component"
       of-type="SingleLine.Text"
       usage="bound"
-      required="true"
+      required="false"
       default-value="" />
     <resources>
       <code path="index.ts" order="1" />
