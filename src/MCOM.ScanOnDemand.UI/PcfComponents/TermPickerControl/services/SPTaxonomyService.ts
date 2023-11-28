@@ -60,20 +60,31 @@ export class SPTaxonomyService {
     try {
       let url = '';
       if (parentTermId && parentTermId !== Guid.empty) {
-        url = `${this.functionUrl}&url=${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/terms/${parentTermId.toString()}/getLegacyChildren%3F$top=${pageSize}&`;
+        url = `${this.functionUrl}&url=${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/terms/${parentTermId.toString()}/getLegacyChildren%3F`;
       }
       else {
-        url = `${this.functionUrl}&url=${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/getLegacyChildren%3F$top=${pageSize}&`;
-      }
-      if (hideDeprecatedTerms) {
-        url = `${url}$filter=isDeprecated+eq+false&`;
-      }
-      if (skiptoken && skiptoken !== '') {
-        url = `${url}$skiptoken=${skiptoken}`;
+        url = `${this.functionUrl}&url=${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/getLegacyChildren%3F`;
       }
 
+      /* Following the SharePoint query filter order => skiptoken, top, filter */
+
+      // Check skip token so it will get new items
+      if (skiptoken && skiptoken !== '') {
+        url = `${url}$skiptoken=${skiptoken}&`;
+      }
+
+      // Set given or default top
+      url = `${url}$top=${pageSize}`;
+
+      // Hide deprecated terms
+      if (hideDeprecatedTerms) {
+        url = `${url}&$filter=isDeprecated+eq+false`;
+      }
+
+      // Build json result
       const termsJsonResult = await getSPData(url) as { '@odata.nextLink': string | undefined, value: ITermInfo[] };
       let newSkiptoken = '';
+
       if (termsJsonResult['@odata.nextLink']) {
         const urlParams = new URLSearchParams(termsJsonResult['@odata.nextLink'].split('?')[1]);
         if (urlParams.has('$skiptoken')) {

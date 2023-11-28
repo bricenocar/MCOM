@@ -13,7 +13,7 @@
     "refreshTypes": "pcf-scripts refreshTypes"
   },
   "dependencies": {
-    "@fluentui/react": "^8.106.4",
+    "@fluentui/react": "^8.112.9",
     "@microsoft/sp-component-base": "1.18.0",
     "@microsoft/sp-core-library": "^1.18.0",
     "@microsoft/sp-lodash-subset": "1.18.0",

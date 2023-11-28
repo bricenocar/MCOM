@@ -1,35 +1,33 @@
+using System.Collections.Generic;
+using System;
 using System.Net;
-using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Newtonsoft.Json;
-using MCOM.Models.Azure;
-using MCOM.Utilities;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 using MCOM.Models;
+using MCOM.Services;
+using Newtonsoft.Json;
+using MCOM.Utilities;
 using System.Diagnostics;
+using MCOM.Models.Azure;
+using static System.Formats.Asn1.AsnWriter;
+using Microsoft.AspNetCore.Mvc;
 
-namespace MCOM.Provisioning.Functions
+namespace MCOM.Functions
 {
     public class GetSPOData
     {
-        // TODO: Temp solution. Move to a secure place please!!!!!!!!!!!!!!!!!!!!!!!!!
-        private readonly string functionUrl = "https://function-mcom-inttest.azurewebsites.net/api/GetSPOData";
-        private readonly string tenantId = "e78a86b8-aa34-41fe-a537-9392c8870bf0";
-        private readonly string authUrl = "https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";
-        private readonly string clientId = "43db244a-1e1a-4414-b60c-8279f3f7e6ff";
-        private readonly string clientSecret = "MFw8Q~y_zwrQvzrts3ggTBB0PWs64hj.qBy6QabY";
-        private readonly string scope = "api://5e0a5f0a-db01-473c-b448-0e9711ed8f9a/.default";
-        private readonly string grantType = "client_credentials";
+        private IAzureService _azureService;
 
-        // Constructor
-        public GetSPOData()
+        public GetSPOData(IAzureService azureService)
         {
-            this.authUrl = this.authUrl.Replace("{tenantId}", tenantId);
+            _azureService = azureService;
         }
 
         [Function("GetSPOData")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url)
         {
             var logger = context.GetLogger("GetSPOData");
 
@@ -49,14 +47,15 @@ namespace MCOM.Provisioning.Functions
             {
                 try
                 {
-                    // Get JWT
-                    var azureAdToken = await GetJWTAsync();
+                    // Get SharePoint token using managed identity
+                    var sharepointUri = new Uri(Global.SharePointUrl);
+                    var azureAdToken = await _azureService.GetAzureServiceTokenAsync(sharepointUri);
 
                     // Validate
-                    if (azureAdToken != null && azureAdToken.access_token != null)
+                    if (azureAdToken.Token != null)
                     {
                         // Get data from Office 365
-                        var data = await GetDataFromOffice365($"{functionUrl}?url={url}", azureAdToken.access_token);
+                        var data = await GetDataFromOffice365(url, azureAdToken.Token);
 
                         // Build and send response back
                         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -68,37 +67,16 @@ namespace MCOM.Provisioning.Functions
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogError(ex, "Error getting the JWT. Error: {ErrorMessage}", ex.Message);
+                    Global.Log.LogError(ex, "Error generating the JWT. Error: {ErrorMessage}", ex.Message);
                 }
             }
 
             // Generate error response
             var failResponse = req.CreateResponse(HttpStatusCode.Forbidden);
             failResponse.Headers.Add("Content-Type", "application/json");
-            failResponse.WriteString("Error getting the JWT");
+            failResponse.WriteString("Error getting data from Office 365");
 
             return failResponse;
-        }
-
-        private async Task<BearerToken?> GetJWTAsync()
-        {
-            var collection = new List<KeyValuePair<string, string>>
-            {
-                new("client_id", clientId),
-                new("client_secret", clientSecret),
-                new("scope", scope),
-                new("grant_type", grantType)
-            };
-
-            // Get AD token
-            var httpAzureADResponse = await HttpClientUtilities.SendAsync(authUrl, collection);
-
-            httpAzureADResponse.EnsureSuccessStatusCode();
-
-            // Get token object
-            var tokenObject = await httpAzureADResponse.Content.ReadAsStringAsync();
-
-            return JsonConvert.DeserializeObject<BearerToken>(tokenObject);
         }
 
         private async Task<string> GetDataFromOffice365(string url, string token)

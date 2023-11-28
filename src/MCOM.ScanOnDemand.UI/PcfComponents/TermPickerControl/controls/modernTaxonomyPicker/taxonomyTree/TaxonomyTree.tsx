@@ -217,8 +217,8 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
     setGroups([rootGroup]);
     setGroupsLoading((prevGroupsLoading) => [...prevGroupsLoading, props.termSetInfo.id]);
     if (props.termSetInfo.childrenCount > 0) {
-      //props.onLoadMoreData(Guid.parse(props.termSetInfo.id), props.anchorTermInfo ? Guid.parse(props.anchorTermInfo.id) : Guid.empty, '', props.hideDeprecatedTerms)
-      props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), props.anchorTermInfo ? Guid.parse(props.anchorTermInfo.id) : Guid.empty, '', props.hideDeprecatedTerms)
+      // Call taxonomy service
+      props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), props.anchorTermInfo ? Guid.parse(props.anchorTermInfo.id) : Guid.empty, '', props.hideDeprecatedTerms, props.pageSize)
         .then((loadedTerms) => {
           const grps: IGroup[] = loadedTerms.value.map(term => {
             let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));
@@ -282,8 +282,8 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
         setGroupsLoading((prevGroupsLoading) => [...prevGroupsLoading, group.key]);
         group.data.isLoading = true;
 
-        //props.onLoadMoreData(Guid.parse(props.termSetInfo.id), Guid.parse(group.key), '', props.hideDeprecatedTerms)
-        props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), Guid.parse(group.key), '', props.hideDeprecatedTerms)
+        // Call taxonomy service
+        props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), Guid.parse(group.key), '', props.hideDeprecatedTerms, props.pageSize)
           .then((loadedTerms) => {
             const grps: IGroup[] = loadedTerms.value.map(term => {
               let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));
@@ -510,7 +510,6 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
 
   const onRenderFooter = (footerProps: IGroupFooterProps): JSX.Element => {
     if ((footerProps.group.hasMoreData || footerProps.group.children && footerProps.group.children.length === 0) && !footerProps.group.isCollapsed) {
-
       if (groupsLoading.some(value => value === footerProps.group.key)) {
         const spinnerStyles: IStyleFunctionOrObject<ISpinnerStyleProps, ISpinnerStyles> = { circle: { verticalAlign: 'middle' } };
         return (
@@ -524,7 +523,9 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
         <div className={styles.loadMoreContainer}>
           <Link onClick={() => {
             setGroupsLoading((prevGroupsLoading) => [...prevGroupsLoading, footerProps.group.key]);
-            props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), footerProps.group.key === props.termSetInfo.id ? Guid.empty : Guid.parse(footerProps.group.key), footerProps.group.data.skiptoken, props.hideDeprecatedTerms)
+
+            // Call taxonomy service
+            props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), footerProps.group.key === props.termSetInfo.id ? Guid.empty : Guid.parse(footerProps.group.key), footerProps.group.data.skiptoken, props.hideDeprecatedTerms, props.pageSize)
               .then((loadedTerms) => {
                 const grps: IGroup[] = loadedTerms.value.map(term => {
                   let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));
