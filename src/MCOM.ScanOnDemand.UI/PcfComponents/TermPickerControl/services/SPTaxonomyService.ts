@@ -14,7 +14,7 @@ export class SPTaxonomyService {
 
   constructor(siteUrl: string) { // sp can passes in case it is available and can be used instead of V2
     this.siteUrl = siteUrl;
-    // this.sp = sp;
+    // this.sp = sp; in case is needed...
   }
 
   public getTerms = async (termSetId: Guid, parentTermId?: Guid, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize: number = 50): Promise<{ value: ITermInfo[], skiptoken: string }> => {
