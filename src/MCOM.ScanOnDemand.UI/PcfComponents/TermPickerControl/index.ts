@@ -18,6 +18,7 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
     private context: ComponentFramework.Context<IInputs>;
     private taxonomyService: SPTaxonomyService;
     private previousTermValues: string;
+    private checkService: boolean;
 
     constructor() {
 
@@ -31,7 +32,7 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
      * @param state A piece of data that persists in one session for a single user. Can be set at any point in a controls life cycle by calling 'setControlState' in the Mode interface.
      * @param container If a control is marked control-type='standard', it will receive an empty div element within which it can render its content.
      */
-    public init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container: HTMLDivElement): void {
+    public async init(context: ComponentFramework.Context<IInputs>, notifyOutputChanged: () => void, state: ComponentFramework.Dictionary, container: HTMLDivElement): Promise<void> {
         // Add control initialization code
         this.notifyOutputChanged = notifyOutputChanged;
         this.container = container;
@@ -66,11 +67,9 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
             }
         }
 
-        // Check service status
-        const checkService = await serviceStatusCheck();
-
-        // Get taxonomy service
+        // Get taxonomy service        
         if (!this.taxonomyService) {
+            this.checkService = await serviceStatusCheck();
             this.taxonomyService = new SPTaxonomyService(siteUrl);
         }
 
@@ -91,7 +90,7 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
                 iconSize: context.parameters.IconSize.raw,
                 pageSize: context.parameters.PageSize.raw,
                 hideDeprecatedTerms: context.parameters.HideDeprecatedTerms.raw,
-                checkService: checkService,
+                checkService: this.checkService,
                 onChange: this.onChange,
             }),
             this.container,
