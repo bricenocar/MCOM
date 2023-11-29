@@ -10,22 +10,22 @@ using System.Net;
 
 namespace MCOM.Provisioning.Functions
 {
-    public class GetPurposeValues
+    public class GetRecommendedWorkloads
     {
         private readonly ILogger _logger;
 
-        public GetPurposeValues(ILoggerFactory loggerFactory)
+        public GetRecommendedWorkloads(ILoggerFactory loggerFactory)
         {
-            _logger = loggerFactory.CreateLogger<GetPurposeValues>();
+            _logger = loggerFactory.CreateLogger<GetRecommendedWorkloads>();
         }
 
-        [Function("GetPurposeValues")]
+        [Function("GetRecommendedWorkloads")]
         public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req,
-            [SqlInput(commandText: "usp_GetAllProvisioningPurposes",
+            [SqlInput(commandText: "usp_GetRecommendedWorkloads",                
                 commandType: System.Data.CommandType.StoredProcedure,
-                parameters: "",
+                parameters: "@selectedPurposes={Query.purposes}",
                 connectionStringSetting: "MCOMGovernanceDatabaseConnection")] 
-            IEnumerable<PurposeValue> purposes)
+            IEnumerable<RecommendedWorkload> workloads)
         {
             try
             {
@@ -37,15 +37,15 @@ namespace MCOM.Provisioning.Functions
                 return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
             }
 
-            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "GetPurposeValues");
-            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetPurposeValues", "Provisioning"))
+            System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "GetRecommendedWorkloads");            
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetRecommendedWorkloads", "Provisioning"))
             {
                 HttpResponseData? response = null;
                 try
                 {
                     response = req.CreateResponse(HttpStatusCode.OK);
                     response.Headers.Add("Content-Type", "application/json");
-                    response.WriteString(JsonConvert.SerializeObject(purposes));
+                    response.WriteString(JsonConvert.SerializeObject(workloads));
                     return response;
                 }
                 catch (Exception ex)
@@ -53,7 +53,7 @@ namespace MCOM.Provisioning.Functions
                     Global.Log.LogError(ex, "Error: {ErrorMessage}", ex.Message);
                     return HttpUtilities.HttpResponse(req, HttpStatusCode.InternalServerError, ex.Message);
                 }
-            }
+            }                
         }
     }
 }

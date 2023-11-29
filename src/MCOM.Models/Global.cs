@@ -24,5 +24,10 @@ namespace MCOM.Models
         public static int DummyDocumentQueryQuantity { get; set; }
         public static string DummyDocumentProperties { get; set; }
         public static string DummyDocumentSearchResultId { get; set; }
+        public static string TenantId { get; set; }
+        public static string ClientId { get; set; }
+        public static string ClientSecret { get; set; }
+        public static string Scope { get; set; }
+        public static string ValidateUrlFunctionUrl { get; set; }
     }
 }

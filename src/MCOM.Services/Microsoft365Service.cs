@@ -21,14 +21,14 @@ namespace MCOM.Services
 {
     public interface IMicrosoft365Service
     {
-        Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null);
-        Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true);
+        Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null);
+        Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true);
         Task<CreatedTeam> CreateTeamFromGroup(PnPContext context, Guid groupId);
         ProvisioningTemplate GetProvisioningTemplate(Stream xmlTemplate);
         bool ApplyProvisioningTemplateAsync(PnPContext pnpContext, ProvisioningTemplate provisioningTemplate, string siteUrl);
         Task<bool> CheckIfSiteExists(PnPContext context, string url);
         Task<bool> HideAddTeamsPrompt(PnPContext context, string siteUrl);
-        Task<List<SensitivityLabel>> GetSensitivityLabels(PnPContext context);        
+        Task<List<Models.InformationProtection.SensitivityLabel>> GetSensitivityLabels(PnPContext context);        
     }
     
     public class Microsoft365Service : IMicrosoft365Service
@@ -46,7 +46,10 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owner">Owner of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null)
+        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context, 
+            string url, string title, string description, string siteClassification, Guid sensitivityLabel, bool externalSharingEnabled = false, 
+            PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, 
+            string owner = null)
         {
             try
             {
@@ -57,7 +60,9 @@ namespace MCOM.Services
                     Description = description,
                     Language = language,
                     SensitivityLabelId = sensitivityLabel, 
-                    Owner = owner                    
+                    Owner = owner,
+                    ShareByEmailEnabled = externalSharingEnabled
+                    //Classification = ""
                 };
 
                 // use pnp core admin to check if site collection already exists
@@ -149,7 +154,9 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owners">List of owners of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true)
+        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string alias, 
+            string title, string description, Guid sensitivityLabel, bool externalSharingEnabled = false,
+            PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true)
         {            
             try
             {
@@ -160,8 +167,9 @@ namespace MCOM.Services
                     Description = description,
                     Language = language,
                     SensitivityLabelId = sensitivityLabel,
-                    WelcomeEmailDisabled = true,
-                    IsPublic = isPublic
+                    WelcomeEmailDisabled = true,                    
+                    IsPublic = isPublic // Privacy: Check if it is public then the group vissibility should be public
+                    //Classification = "Same as sensitivity label or its mapping"
                 };
 
                 // Add owners to the site
@@ -194,20 +202,23 @@ namespace MCOM.Services
                     // use pnp to get web info
                     var web = await newSiteContext.Web.GetAsync(w => w.Url, w => w.Title, w => w.Id);
                     var newSiteUrl = web.Url;
-                    var newSiteTitle = web.Title;
+                    var newSiteTitle = web.Title;                    
 
-                    // use pnp to get site info
+                    // use pnp to get site info and set the external sharing option
                     var site = await newSiteContext.Site.GetAsync(s => s.Id);
                     var newSiteId = site.Id;
+                    site.ShareByEmailEnabled = externalSharingEnabled;                    
 
                     // Log to application insights
                     Global.Log.LogInformation("Site id({0}) created: {1}, Url of new site: {2}", newSiteId, newSiteTitle, newSiteUrl);
 
                     // use pnp to get site group id
                     var microsoft365Group = await newSiteContext.Group.GetAsync();
-                    var groupId = microsoft365Group.Id;
-                    ITeam team = null;
+                    var groupId = microsoft365Group.Id;                    
+                    var vissibility = microsoft365Group.Visibility;
+                    Global.Log.LogInformation($"Group vissibility: {vissibility}");
 
+                    ITeam team = null;
                     try
                     {
                         // Get the team Id
@@ -247,7 +258,7 @@ namespace MCOM.Services
                     errorMessage = gex.Message;
                 }
                 
-                throw new SiteCreationException(url, errorMessage);
+                throw new SiteCreationException(alias, errorMessage);
             }
             catch (SharePointRestServiceException spEx)
             {
@@ -262,12 +273,12 @@ namespace MCOM.Services
                 {
                     errorMessage = spEx.Message;
                 }
-                throw new SiteCreationException(url, errorMessage);
+                throw new SiteCreationException(alias, errorMessage);
             }
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, ex.Message);
-                throw new SiteCreationException(url, ex.Message);
+                throw new SiteCreationException(alias, ex.Message);
             }            
         }
 
@@ -403,20 +414,20 @@ namespace MCOM.Services
         // / </summary>
         // / <param name="context">PnPContext</param>
         // / <returns>List of sensitivity labels</returns>
-        public async Task<List<SensitivityLabel>> GetSensitivityLabels(PnPContext context)
+        public async Task<List<Models.InformationProtection.SensitivityLabel>> GetSensitivityLabels(PnPContext context)
         {
-            List<SensitivityLabel> sensitivityLabels = new List<SensitivityLabel>();
+            List<Models.InformationProtection.SensitivityLabel> sensitivityLabels = new List<Models.InformationProtection.SensitivityLabel>();
             try
             {
                 // The permissions for the application need to be set to allow the application to read the sensitivity labels
                 // skipping this until we get approval of permissions
                 // sensitivityLabels = await context.GetMicrosoft365Admin().GetSensitivityLabelsAsync();
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("e0f5f7cd-0254-4430-a0f2-a7139dffb529"), Name = "Open Site" });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("36d4c168-d682-4cf2-b30a-94831a69b6b8"), Name = "Internal Site" });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("ac2e480a-209a-4afd-9930-4767eb05d784"), Name = "Restricted site \\ Allow guests " });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("d8472a30-749c-40c3-8941-a470493a054b"), Name = "Restricted site \\ No guests" });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("4689068c-2d45-4a43-83d6-44c8d7d5f350"), Name = "Confidential site \\ Allow guests" });
-                sensitivityLabels.Add(new SensitivityLabel() { Id = Guid.Parse("c9aa46f2-f060-4022-8f3a-cc32c0e821c9"), Name = "Confidential site \\ No guests" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("e0f5f7cd-0254-4430-a0f2-a7139dffb529"), Name = "Open Site" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("36d4c168-d682-4cf2-b30a-94831a69b6b8"), Name = "Internal Site" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("ac2e480a-209a-4afd-9930-4767eb05d784"), Name = "Restricted site \\ Allow guests " });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("d8472a30-749c-40c3-8941-a470493a054b"), Name = "Restricted site \\ No guests" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("4689068c-2d45-4a43-83d6-44c8d7d5f350"), Name = "Confidential site \\ Allow guests" });
+                sensitivityLabels.Add(new Models.InformationProtection.SensitivityLabel() { Id = Guid.Parse("c9aa46f2-f060-4022-8f3a-cc32c0e821c9"), Name = "Confidential site \\ No guests" });
 
             }
             catch (Exception ex)

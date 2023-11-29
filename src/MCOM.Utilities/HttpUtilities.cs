@@ -1,5 +1,5 @@
-﻿using System.Net;
-using Microsoft.Azure.Functions.Worker.Http;
+﻿using Microsoft.Azure.Functions.Worker.Http;
+using System.Net;
 
 namespace MCOM.Utilities
 {

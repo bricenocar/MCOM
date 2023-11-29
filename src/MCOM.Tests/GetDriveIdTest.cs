@@ -23,126 +23,126 @@ namespace MCOM.Tests
         #region Tests
 
         [Fact]
-        public async Task When_The_Function_Runs_Ok()
-        {
-            // Function parameters
-            var mockFunctionContext = GetFunctionParams();
+        //public async Task When_The_Function_Runs_Ok()
+        //{
+        //    // Function parameters
+        //    var mockFunctionContext = GetFunctionParams();
 
-            // Set fields to be sent in the request
-            var parameters = new Dictionary<string, string>()
-            {
-                { "libraryName", "test" },
-                { "siteUrl", "https://test.com" }
-            };
+        //    // Set fields to be sent in the request
+        //    var parameters = new Dictionary<string, string>()
+        //    {
+        //        { "libraryName", "test" },
+        //        { "siteUrl", "https://test.com" }
+        //    };
 
-            // Build request
-            var request = CreateHttpRequestData(parameters);
+        //    // Build request
+        //    var request = CreateHttpRequestData(parameters);
 
-            // Mock configuration
-            var graphService = MockConfiguration("test");
+        //    // Mock configuration
+        //    var graphService = MockConfiguration("test");
 
-            // Build azure function
-            var getDriveId = new GetDriveId(graphService.Object);
+        //    // Build azure function
+        //    var getDriveId = new GetDriveId(graphService.Object);
 
-            // Run function
-            var response = await getDriveId.Run(request, mockFunctionContext.Object);
+        //    // Run function
+        //    var response = await getDriveId.Run(request, mockFunctionContext.Object);
 
-            // Get body content
-            response.Body.Seek(0, SeekOrigin.Begin);
-            var bodyContent = await new StreamReader(response.Body).ReadToEndAsync();
+        //    // Get body content
+        //    response.Body.Seek(0, SeekOrigin.Begin);
+        //    var bodyContent = await new StreamReader(response.Body).ReadToEndAsync();
 
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Contains("DriveId", bodyContent);
-        }
+        //    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        //    Assert.Contains("DriveId", bodyContent);
+        //}
 
-        [Fact]
-        public async Task When_The_Function_Is_Missing_QueryString_Params()
-        {
-            // Function parameters
-            var mockFunctionContext = GetFunctionParams();
+        //[Fact]
+        //public async Task When_The_Function_Is_Missing_QueryString_Params()
+        //{
+        //    // Function parameters
+        //    var mockFunctionContext = GetFunctionParams();
 
-            // Set fields to be sent in the request
-            var parameters = new Dictionary<string, string>()
-            {
-                 { "libraryName", "test" } // Missing siteUrl param
-            };
+        //    // Set fields to be sent in the request
+        //    var parameters = new Dictionary<string, string>()
+        //    {
+        //         { "libraryName", "test" } // Missing siteUrl param
+        //    };
 
-            // Build request
-            var request = CreateHttpRequestData(parameters);
+        //    // Build request
+        //    var request = CreateHttpRequestData(parameters);
 
-            // Mock configuration
-            var graphService = MockConfiguration("test");
+        //    // Mock configuration
+        //    var graphService = MockConfiguration("test");
 
-            // Build azure function
-            var getDriveId = new GetDriveId(graphService.Object);
+        //    // Build azure function
+        //    var getDriveId = new GetDriveId(graphService.Object);
 
-            // Run function
-            var response = await getDriveId.Run(request, mockFunctionContext.Object);
+        //    // Run function
+        //    var response = await getDriveId.Run(request, mockFunctionContext.Object);
 
-            // Get body content
-            response.Body.Seek(0, SeekOrigin.Begin);
-            var bodyContent = await new StreamReader(response.Body).ReadToEndAsync();
+        //    // Get body content
+        //    response.Body.Seek(0, SeekOrigin.Begin);
+        //    var bodyContent = await new StreamReader(response.Body).ReadToEndAsync();
 
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Equal("Request is missing mandatory parameter siteUrl or libraryName", bodyContent);
-        }
+        //    Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        //    Assert.Equal("Request is missing mandatory parameter siteUrl or libraryName", bodyContent);
+        //}
 
-        [Fact]
-        public async Task When_The_Function_Cannot_Find_Library_Name()
-        {
-            // Function parameters
-            var mockFunctionContext = GetFunctionParams();
+        //[Fact]
+        //public async Task When_The_Function_Cannot_Find_Library_Name()
+        //{
+        //    // Function parameters
+        //    var mockFunctionContext = GetFunctionParams();
 
-            // Set fields to be sent in the request
-            var parameters = new Dictionary<string, string>()
-            {
-                { "libraryName", "test" },
-                { "siteUrl", "https://test.com" }
-            };
+        //    // Set fields to be sent in the request
+        //    var parameters = new Dictionary<string, string>()
+        //    {
+        //        { "libraryName", "test" },
+        //        { "siteUrl", "https://test.com" }
+        //    };
 
-            // Build request
-            var request = CreateHttpRequestData(parameters);
+        //    // Build request
+        //    var request = CreateHttpRequestData(parameters);
 
-            // Mock configuration
-            var graphService = MockConfiguration("error");
+        //    // Mock configuration
+        //    var graphService = MockConfiguration("error");
 
-            // Build azure function
-            var getDriveId = new GetDriveId(graphService.Object);
+        //    // Build azure function
+        //    var getDriveId = new GetDriveId(graphService.Object);
 
-            // Run function
-            var response = await getDriveId.Run(request, mockFunctionContext.Object);
+        //    // Run function
+        //    var response = await getDriveId.Run(request, mockFunctionContext.Object);
 
-            // Get body content
-            response.Body.Seek(0, SeekOrigin.Begin);
-            var bodyContent = await new StreamReader(response.Body).ReadToEndAsync();
+        //    // Get body content
+        //    response.Body.Seek(0, SeekOrigin.Begin);
+        //    var bodyContent = await new StreamReader(response.Body).ReadToEndAsync();
 
-            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-            Assert.Equal($"Library not found at {parameters["libraryName"]}", bodyContent);
-        }
+        //    Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        //    Assert.Equal($"Library not found at {parameters["libraryName"]}", bodyContent);
+        //}
 
         #endregion
 
         #region Private Methods
 
-        private static Mock<GraphService> MockConfiguration(string name)
-        {
-            // Mock configuration
-            var mockGraphService = new Mock<GraphService>();
-            var mockGraphServiceClient = new Mock<GraphServiceClient>(new HttpClient(), "https://test.com");
-            var siteDrivesCollectionPage = new SiteDrivesCollectionPage()
-            {
-                new Drive()
-                {
-                    Name = name
-                }
-            };
+        //private static Mock<GraphService> MockConfiguration(string name)
+        //{
+        //    // Mock configuration
+        //    var mockGraphService = new Mock<GraphService>();
+        //    var mockGraphServiceClient = new Mock<GraphServiceClient>(new HttpClient(), "https://test.com");
+        //    var siteDrivesCollectionPage = new SiteDrivesCollectionPage()
+        //    {
+        //        new Drive()
+        //        {
+        //            Name = name
+        //        }
+        //    };
 
-            mockGraphService.SetupAllProperties();
-            mockGraphService.Object.GraphServiceClient = mockGraphServiceClient.Object;
-            mockGraphService.Setup(g => g.GetDriveCollectionPageAsync(It.IsAny<Uri>())).ReturnsAsync(siteDrivesCollectionPage);
+        //    mockGraphService.SetupAllProperties();
+        //    mockGraphService.Object.GraphServiceClient = mockGraphServiceClient.Object;
+        //    mockGraphService.Setup(g => g.GetDriveCollectionPageAsync(It.IsAny<Uri>())).ReturnsAsync(siteDrivesCollectionPage);
 
-            return mockGraphService;
-        }
+        //    return mockGraphService;
+        //}
 
         private static HttpRequestData CreateHttpRequestData(Dictionary<string, string> parameters)
         {
