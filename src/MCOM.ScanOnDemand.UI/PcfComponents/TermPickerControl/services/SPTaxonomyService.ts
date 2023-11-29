@@ -2,10 +2,10 @@ import { Guid } from '@microsoft/sp-core-library';
 import { SPFI, SPCollection, ISPCollection } from '@pnp/sp';
 import { JSONParse } from '@pnp/queryable';
 import { ITermInfo, ITermSetInfo, ITermStoreInfo } from '@pnp/sp/taxonomy';
+import { IWebInfo } from '@pnp/sp/webs';
+import { getSPData } from '../../services/spServices';
 
 import '@pnp/sp/taxonomy';
-import { getSPData } from '../../services/spServices';
-import { IWebInfo } from '@pnp/sp/webs';
 
 export class SPTaxonomyService {
 

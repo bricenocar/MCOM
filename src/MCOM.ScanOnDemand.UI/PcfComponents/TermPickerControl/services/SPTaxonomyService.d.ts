@@ -1,7 +1,7 @@
 import { Guid } from '@microsoft/sp-core-library';
 import { ITermInfo, ITermSetInfo, ITermStoreInfo } from '@pnp/sp/taxonomy';
-import '@pnp/sp/taxonomy';
 import { IWebInfo } from '@pnp/sp/webs';
+import '@pnp/sp/taxonomy';
 export declare class SPTaxonomyService {
     private sp;
     private siteUrl;
