@@ -91,7 +91,6 @@ namespace MCOM.Functions
                             {
                                 // Create the SharePoint team site
                                 var createdSite = await _microsoft365Service.CreateTeamSite(pnpContext,
-                                    workloadData.Site.SiteConfig.SiteURL,
                                     workloadData.Site.SiteConfig.Alias,
                                     workloadData.Site.SiteConfig.SiteName,
                                     workloadData.Site.SiteConfig.Description,

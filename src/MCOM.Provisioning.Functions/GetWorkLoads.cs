@@ -20,12 +20,12 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("GetWorkLoads")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req,
-            [SqlInput(commandText: "Proc_GetWorkloads",
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req,
+            [SqlInput(commandText: "usp_GetAllProvisioningWorkloads",
                 commandType: System.Data.CommandType.StoredProcedure,
                 parameters: "",
                 connectionStringSetting: "MCOMGovernanceDatabaseConnection")] 
-            IEnumerable<PurposeValue> workLoads)
+            IEnumerable<WorkLoad> workLoads)
         {
             try
             {

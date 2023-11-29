@@ -19,7 +19,12 @@ namespace MCOM.Utilities
             Global.BlobIsDistributedTracingEnabled = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BlobIsDistributedTracingEnabled")) && Convert.ToBoolean(Environment.GetEnvironmentVariable("BlobIsDistributedTracingEnabled"));
             Global.AppInsightsStrcuturedLogs = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AppInsightsStrcuturedLogs")) && Convert.ToBoolean(Environment.GetEnvironmentVariable("AppInsightsStrcuturedLogs"));
             Global.AppInsightsAppId = Environment.GetEnvironmentVariable("AppInsightsAppId");
-           
+            Global.TenantId = Environment.GetEnvironmentVariable("TenantId");
+            Global.ClientId = Environment.GetEnvironmentVariable("ClientId");
+            Global.ClientSecret = Environment.GetEnvironmentVariable("ClientSecret");
+            Global.Scope = Environment.GetEnvironmentVariable("Scope");
+            Global.ValidateUrlFunctionUrl = Environment.GetEnvironmentVariable("ValidateUrlFunctionUrl");
+
             // SharePoint related
             Global.SharePointUrl = Environment.GetEnvironmentVariable("SharePointUrl");
             Global.SharePointDomain = Environment.GetEnvironmentVariable("SharePointDomain");

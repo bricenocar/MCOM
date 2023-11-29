@@ -31,7 +31,7 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("GetSPOData")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, [FromQuery] string url)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace MCOM.Provisioning.Functions
             {
                 HttpResponseData? response = null;
                 // Get JWT     
-                var azureAdToken = await GetJWTAsync();
+                var azureAdToken = await HttpClientUtilities.GetTokenAsync(authUrl, clientId, clientSecret, scope, grantType);
 
                 if (azureAdToken != null && azureAdToken.access_token != null)
                 {
@@ -73,27 +73,6 @@ namespace MCOM.Provisioning.Functions
                 response.WriteString("Error generating the tokens");
                 return response;
             }
-        }
-
-        private async Task<BearerToken?> GetJWTAsync()
-        {
-            var collection = new List<KeyValuePair<string, string>>
-            {
-                new("client_id", clientId),
-                new("client_secret", clientSecret),
-                new("scope", scope),
-                new("grant_type", grantType)
-            };
-
-            // Get AD token
-            var httpAzureADResponse = await HttpClientUtilities.SendAsync(authUrl, collection);
-
-            httpAzureADResponse.EnsureSuccessStatusCode();
-
-            // Get token object
-            var tokenObject = await httpAzureADResponse.Content.ReadAsStringAsync();
-
-            return JsonConvert.DeserializeObject<BearerToken>(tokenObject);
         }
 
         private async Task<TokenObject?> GetOffice365Token(string azureAdToken)
