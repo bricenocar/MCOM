@@ -1,0 +1,15 @@
+@import '~office-ui-fabric-react/dist/sass/References.scss';
+
+.taxonomyPanelContents {
+  .taxonomyTreeSelector {
+    border-bottom-color: blue;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    margin-bottom: 30px;
+  }
+
+  .taxonomyTreeLabel {
+    font-size: 18px;
+    font-weight: 100;
+  }
+}
