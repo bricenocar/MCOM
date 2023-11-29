@@ -9,7 +9,7 @@ import '@pnp/sp/taxonomy';
 
 export class SPTaxonomyService {
 
-  private sp: SPFI;  
+  private sp: SPFI;
   private siteUrl: string;
 
   constructor(siteUrl: string) { // sp can passes in case it is available and can be used instead of V2
@@ -74,10 +74,10 @@ export class SPTaxonomyService {
 
       // skip = ?%24top=50&%24filter=isDeprecated+eq+false&%24skiptoken=MjAw
       // no-skip = %24filter=isDeprecated+eq+false&%24top=50
-      const urlFormat = (skiptoken && skiptoken !== '') ? '{top}&{filter}&{skiptoken}' : '{filter}&{top}';
-      const skipTokenParam = (skiptoken && skiptoken !== '') ? `%24skiptoken=${skiptoken}` : '';
-      const filterParam = `%24filter=isDeprecated+eq+false`;
-      const topParam = `%24top=${pageSize}`;
+      const urlFormat = (skiptoken && skiptoken !== '') ? '{filter}{skiptoken}' : '{filter}{top}';
+      const skipTokenParam = (skiptoken && skiptoken !== '') ? `$skiptoken=${skiptoken}` : '';
+      const filterParam = '';//`$filter=isDeprecated+eq+false`;
+      const topParam = `$top=${pageSize}`;
 
       // Replace placeholders
       url = `${url}${urlFormat}`

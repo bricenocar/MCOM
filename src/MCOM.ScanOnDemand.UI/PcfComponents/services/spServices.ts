@@ -3,7 +3,7 @@ import { BearerToken, DefaultParse, BrowserFetch } from '@pnp/queryable';
 
 const spoServiceUrl = 'https://function-mcom-provisioning-inttest.azurewebsites.net/api/GetSPOData?code=nftcNjFYXkjVaJzkJWo4o1uQD9-NCM8hU_cCubUsOkk4AzFu_rQ4fQ==';
 
-// Get the spfi object
+// Get the spfi object in case working with jwt and spfi
 export const getSPFI = async (siteUrl: string): Promise<SPFI | undefined> => {
 
     try {
@@ -31,8 +31,7 @@ export const getSPFI = async (siteUrl: string): Promise<SPFI | undefined> => {
 }
 
 export const serviceStatusCheck = async (): Promise<boolean> => {
-    const flag = await getSPData(`${spoServiceUrl}&statucCheck=true`)
-    return (flag && flag === 'true') ? true : false;
+    return await getSPData(`&statucCheck=true`);
 }
 
 // Get the spfi object

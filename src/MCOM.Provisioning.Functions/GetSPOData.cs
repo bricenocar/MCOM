@@ -23,13 +23,13 @@ namespace MCOM.Provisioning.Functions
         private readonly string grantType = "client_credentials";
 
         // Constructor
-        public GetSPOData(ILoggerFactory loggerFactory)
+        public GetSPOData()
         {
             this.authUrl = this.authUrl.Replace("{tenantId}", tenantId);
         }
 
         [Function("GetSPOData")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url, [FromQuery] bool statucCheck)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url = "", [FromQuery] bool statucCheck = false)
         {
             // This is just a service check to comply with front end functionality
             if (statucCheck)
