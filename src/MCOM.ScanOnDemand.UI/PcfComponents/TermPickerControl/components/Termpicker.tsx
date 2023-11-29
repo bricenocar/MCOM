@@ -4,8 +4,6 @@ import { ITermInfo } from '@pnp/sp/taxonomy';
 import { ModernTaxonomyPicker } from '../controls/modernTaxonomyPicker';
 import { MessageBar, MessageBarType, Shimmer, ShimmerElementType } from '@fluentui/react';
 
-import "@pnp/sp/webs";
-
 // export default class Termpicker extends React.Component<ITermpickerProps, ITermpickerState> {
 export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, iconSize, errorBorderColor, inputHeight, pageSize, hideDeprecatedTerms, checkService }: ITermpickerProps): JSX.Element {
 

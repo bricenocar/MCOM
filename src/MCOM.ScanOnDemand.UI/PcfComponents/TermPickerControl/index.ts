@@ -8,7 +8,6 @@ import { SPTaxonomyService } from './services/SPTaxonomyService';
 import { Optional } from './controls/modernTaxonomyPicker';
 import { getTermValuesArray, validTermValues } from './utilities/common';
 import { serviceStatusCheck } from '../services/spServices';
-import { MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 export class TermPickerControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
