@@ -52,6 +52,7 @@ export interface IModernTaxonomyPickerProps {
   iconSize: number; // Custom property
   inputHeight: number; // Custom property
   pageSize: number; // Custom property
+  hideDeprecatedTerms: boolean; // Custom property
   initialValues?: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[]; // Custom property
   disabled?: boolean;
   required?: boolean;
@@ -192,7 +193,7 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
     if (filter === '') {
       return [];
     }
-    
+
     const filteredTerms = await props.taxonomyService.searchTermV2(Guid.parse(props.termSetId), filter, currentLanguageTag, props.anchorTermId ? Guid.parse(props.anchorTermId) : Guid.empty, props.allowSelectingChildren);
     const filteredTermsWithoutSelectedItems = filteredTerms.filter((term) => {
       if (!selectedItems || selectedItems.length === 0) {
@@ -414,6 +415,7 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
                 termPickerProps={props.termPickerProps}
                 onRenderActionButton={props.onRenderActionButton}
                 allowSelectingChildren={props.allowSelectingChildren}
+                hideDeprecatedTerms={props.hideDeprecatedTerms}
               />
             </div>
           )

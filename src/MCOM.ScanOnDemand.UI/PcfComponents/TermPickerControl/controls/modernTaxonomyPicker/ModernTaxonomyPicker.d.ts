@@ -18,6 +18,7 @@ export interface IModernTaxonomyPickerProps {
     iconSize: number;
     inputHeight: number;
     pageSize: number;
+    hideDeprecatedTerms: boolean;
     initialValues?: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
     disabled?: boolean;
     required?: boolean;

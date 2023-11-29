@@ -29,8 +29,17 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("GetSPOData")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url, [FromQuery] bool statucCheck)
         {
+            if (statucCheck)
+            {
+                var checkResponse = req.CreateResponse(HttpStatusCode.OK);
+                checkResponse.Headers.Add("Content-Type", "application/json");
+                checkResponse.WriteString("true");
+
+                return checkResponse;
+            }
+
             var logger = context.GetLogger("GetSPOData");
 
             try

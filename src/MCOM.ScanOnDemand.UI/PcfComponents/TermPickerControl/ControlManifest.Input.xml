@@ -108,7 +108,14 @@
       of-type="TwoOptions"
       usage="input"
       required="true"
-      default-value="false"/>         
+      default-value="false"/>
+    <property name="HideDeprecatedTerms"
+      display-name-key="HideDeprecatedTerms"
+      description-key="Hide deprecated terms from results"
+      of-type="TwoOptions"
+      usage="input"
+      required="true"
+      default-value="true"/>         
     <property name="TermValues"
       display-name-key="TermValues"
       description-key="Term values selected in the term picker component"

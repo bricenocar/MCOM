@@ -16,5 +16,7 @@ export interface ITermpickerProps {
     iconColor: string;
     iconSize: number;
     pageSize: number;
+    hideDeprecatedTerms: boolean;
+    checkService: boolean;
     onChange: (terms: ITermInfo[]) => void;
 }

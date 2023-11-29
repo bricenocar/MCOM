@@ -42,6 +42,7 @@ export interface ITaxonomyPanelContentsProps {
   termPickerProps?: Optional<IModernTermPickerProps, 'onResolveSuggestions'>;
   onRenderActionButton?: (termStoreInfo: ITermStoreInfo, termSetInfo: ITermSetInfo, termInfo: ITermInfo, updateTaxonomyTreeViewCallback?: (newTermItems?: ITermInfo[], updatedTermItems?: ITermInfo[], deletedTermItems?: ITermInfo[]) => void) => JSX.Element;
   allowSelectingChildren?: boolean;
+  hideDeprecatedTerms: boolean; // Custom property
 }
 
 export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React.ReactElement<ITaxonomyPanelContentsProps> {
@@ -116,7 +117,7 @@ export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React
         terms={terms}
         allowMultipleSelections={props.allowMultipleSelections}
         onRenderActionButton={props.onRenderActionButton}
-        hideDeprecatedTerms={true}
+        hideDeprecatedTerms={props.hideDeprecatedTerms}
         showIcons={false}
         allowSelectingChildren={props.allowSelectingChildren}
       />

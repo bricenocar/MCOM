@@ -1,11 +1,12 @@
 import { Guid } from '@microsoft/sp-core-library';
 import { ITermInfo, ITermSetInfo, ITermStoreInfo } from '@pnp/sp/taxonomy';
 import '@pnp/sp/taxonomy';
+import { IWebInfo } from '@pnp/sp/webs';
 export declare class SPTaxonomyService {
     private sp;
-    private functionUrl;
     private siteUrl;
     constructor(siteUrl: string);
+    getWebInfo: () => Promise<IWebInfo>;
     getTerms: (termSetId: Guid, parentTermId?: Guid, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize?: number) => Promise<{
         value: ITermInfo[];
         skiptoken: string;

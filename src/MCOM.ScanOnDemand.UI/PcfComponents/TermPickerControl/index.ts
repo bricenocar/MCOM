@@ -7,6 +7,8 @@ import { outPutSchema } from './utilities/schemas';
 import { SPTaxonomyService } from './services/SPTaxonomyService';
 import { Optional } from './controls/modernTaxonomyPicker';
 import { getTermValuesArray, validTermValues } from './utilities/common';
+import { serviceStatusCheck } from '../services/spServices';
+import { MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 export class TermPickerControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
@@ -16,7 +18,7 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
     private container: HTMLDivElement;
     private context: ComponentFramework.Context<IInputs>;
     private taxonomyService: SPTaxonomyService;
-    private previousTermValues: string;
+    private previousTermValues: string;;
 
     constructor() {
 
@@ -65,6 +67,9 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
             }
         }
 
+        // Check service status
+        const checkService = await serviceStatusCheck();
+
         // Get taxonomy service
         if (!this.taxonomyService) {
             this.taxonomyService = new SPTaxonomyService(siteUrl);
@@ -86,6 +91,8 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
                 iconColor: context.parameters.IconColor.raw,
                 iconSize: context.parameters.IconSize.raw,
                 pageSize: context.parameters.PageSize.raw,
+                hideDeprecatedTerms: context.parameters.HideDeprecatedTerms.raw,
+                checkService: checkService,
                 onChange: this.onChange,
             }),
             this.container,

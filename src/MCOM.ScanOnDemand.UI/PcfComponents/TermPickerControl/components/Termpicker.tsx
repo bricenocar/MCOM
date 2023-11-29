@@ -2,12 +2,12 @@ import * as React from 'react';
 import type { ITermpickerProps } from './ITermpickerProps';
 import { ITermInfo } from '@pnp/sp/taxonomy';
 import { ModernTaxonomyPicker } from '../controls/modernTaxonomyPicker';
-import { Shimmer, ShimmerElementType } from '@fluentui/react';
+import { MessageBar, MessageBarType, Shimmer, ShimmerElementType } from '@fluentui/react';
 
 import "@pnp/sp/webs";
 
 // export default class Termpicker extends React.Component<ITermpickerProps, ITermpickerState> {
-export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, iconSize, errorBorderColor, inputHeight, pageSize }: ITermpickerProps): JSX.Element {
+export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, iconSize, errorBorderColor, inputHeight, pageSize, hideDeprecatedTerms, checkService }: ITermpickerProps): JSX.Element {
 
   const [initialLoadCompleted, setInitialLoadCompleted] = React.useState(false);
 
@@ -26,7 +26,7 @@ export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onCh
   ];
 
   // Render
-  if (taxonomyService) {
+  if (checkService && taxonomyService) {
     return (
       <div>
         <ModernTaxonomyPicker
@@ -46,10 +46,22 @@ export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onCh
           iconColor={iconColor}
           iconSize={iconSize}
           pageSize={pageSize}
+          hideDeprecatedTerms={hideDeprecatedTerms}
         />
 
         {!initialLoadCompleted && <Shimmer width={'99%'} shimmerElements={shimmerElements} />}
       </div>
+    );
+  }
+  if (!checkService) {
+    return (
+      <MessageBar
+        messageBarType={MessageBarType.error}
+        isMultiline={false}
+        dismissButtonAriaLabel="Close"
+      >
+        Error when trying to reach the SPO service.
+      </MessageBar>
     );
   }
 }
