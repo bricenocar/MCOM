@@ -1,19 +1,15 @@
-using System.Collections.Generic;
 using System;
+using System.Diagnostics;
+using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
 using MCOM.Models;
 using MCOM.Services;
-using Newtonsoft.Json;
 using MCOM.Utilities;
-using System.Diagnostics;
-using MCOM.Models.Azure;
-using static System.Formats.Asn1.AsnWriter;
-using Microsoft.AspNetCore.Mvc;
+using System.IO;
 
 namespace MCOM.Functions
 {
@@ -27,7 +23,7 @@ namespace MCOM.Functions
         }
 
         [Function("GetSPOData")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req, FunctionContext context)
         {
             var logger = context.GetLogger("GetSPOData");
 
@@ -43,10 +39,22 @@ namespace MCOM.Functions
 
             Activity.Current?.AddTag("MCOMOperation", "GetSPOData");
 
-            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetSPOData", "Provisioning"))
+            using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetSPOData", "MCOM"))
             {
                 try
                 {
+                    // Read request body
+                    string url = await new StreamReader(req.Body).ReadToEndAsync();
+
+                    if (string.IsNullOrEmpty(url))
+                    {
+                        var missingParamResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                        missingParamResponse.Headers.Add("Content-Type", "application/json");
+                        missingParamResponse.WriteString("Missing url param!");
+
+                        return missingParamResponse;
+                    }
+
                     // Get SharePoint token using managed identity
                     var sharepointUri = new Uri(Global.SharePointUrl);
                     var azureAdToken = await _azureService.GetAzureServiceTokenAsync(sharepointUri);
@@ -54,6 +62,8 @@ namespace MCOM.Functions
                     // Validate
                     if (azureAdToken.Token != null)
                     {
+                        Global.Log.LogInformation("Sending request to Office 365...");
+
                         // Get data from Office 365
                         var data = await GetDataFromOffice365(url, azureAdToken.Token);
 

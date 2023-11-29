@@ -17,7 +17,7 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
     private container: HTMLDivElement;
     private context: ComponentFramework.Context<IInputs>;
     private taxonomyService: SPTaxonomyService;
-    private previousTermValues: string;;
+    private previousTermValues: string;
 
     constructor() {
 

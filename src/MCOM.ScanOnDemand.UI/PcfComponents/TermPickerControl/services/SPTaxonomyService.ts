@@ -19,7 +19,7 @@ export class SPTaxonomyService {
 
   // Get web info
   public getWebInfo = async () => {
-    const termInfo: IWebInfo = await getSPData(`&url=${this.siteUrl}/_api/web`);
+    const termInfo: IWebInfo = await getSPData(`${this.siteUrl}/_api/web`);
     return termInfo;
   }
 
@@ -66,17 +66,15 @@ export class SPTaxonomyService {
     try {
       let url = '';
       if (parentTermId && parentTermId !== Guid.empty) {
-        url = `&url=${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/terms/${parentTermId.toString()}/getLegacyChildren?`;
+        url = `${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/terms/${parentTermId.toString()}/getLegacyChildren?`;
       }
       else {
-        url = `&url=${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/getLegacyChildren?`;
+        url = `${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/getLegacyChildren?`;
       }
 
-      // skip = ?%24top=50&%24filter=isDeprecated+eq+false&%24skiptoken=MjAw
-      // no-skip = %24filter=isDeprecated+eq+false&%24top=50
-      const urlFormat = (skiptoken && skiptoken !== '') ? '{filter}{skiptoken}' : '{filter}{top}';
-      const skipTokenParam = (skiptoken && skiptoken !== '') ? `$skiptoken=${skiptoken}` : '';
-      const filterParam = '';//`$filter=isDeprecated+eq+false`;
+      const urlFormat = (skiptoken && skiptoken !== '') ? '{top}&{filter}&{skiptoken}' : '{top}&{filter}';
+      const skipTokenParam = `$skiptoken=${skiptoken}`;
+      const filterParam = `$filter=isDeprecated+eq+false`;
       const topParam = `$top=${pageSize}`;
 
       // Replace placeholders
@@ -121,7 +119,7 @@ export class SPTaxonomyService {
       return undefined;
     }
     try {
-      const termInfo = await getSPData(`&url=${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId}/terms/${termId}?%24expand=parent`);
+      const termInfo = await getSPData(`${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId}/terms/${termId}?%24expand=parent`);
       return termInfo;
     } catch (error) {
       console.error(`SPTaxonomyService.getTermById:`, error);
@@ -188,7 +186,7 @@ export class SPTaxonomyService {
       }
 
       // Get array of filtered items     
-      let filteredTerms: any = await getSPData(`&url=${this.siteUrl}/_api/v2.1/termstore/searchTerm(label='${label}',setId='${termSetId}',languageTag='${languageTag}',stringMatchOption='${stringMatchOption}')?%24expand=set`);
+      let filteredTerms: any = await getSPData(`${this.siteUrl}/_api/v2.1/termstore/searchTerm(label='${label}',setId='${termSetId}',languageTag='${languageTag}',stringMatchOption='${stringMatchOption}')?%24expand=set`);
       if (allowSelectingChildren === false) {
         const hasParentId = parentTermId !== Guid.empty;
         //const set = this.sp.termStore.sets.getById(termSetId.toString());
@@ -212,12 +210,12 @@ export class SPTaxonomyService {
   }
 
   public getTermSetInfoV2 = async (termSetId: Guid): Promise<ITermSetInfo | undefined> => {
-    const tsInfo: ITermSetInfo = await getSPData(`&url=${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId}`);
+    const tsInfo: ITermSetInfo = await getSPData(`${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId}`);
     return tsInfo;
   }
 
   public getTermStoreInfoV2 = async (): Promise<ITermStoreInfo | undefined> => {
-    const termStoreInfo: ITermStoreInfo = await getSPData(`&url=${this.siteUrl}/_api/v2.1/termstore`);
+    const termStoreInfo: ITermStoreInfo = await getSPData(`${this.siteUrl}/_api/v2.1/termstore`);
     return termStoreInfo;
   }
 

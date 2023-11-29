@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text;
 using System.Threading.Tasks;
 using MCOM.Models.Azure;
 using Newtonsoft.Json;
@@ -64,6 +66,31 @@ namespace MCOM.Utilities
 
             var content = new FormUrlEncodedContent(collection);
             httpRequest.Content = content;
+
+            return await httpClient.SendAsync(httpRequest);
+        }
+
+        /// <summary>
+        /// SendAsync a Post Http Request with FormUrlEncodedContent encoded body
+        /// </summary>
+        /// <param name="clientUrl"></param>
+        /// <param name="content"></param>
+        /// <param name="mediaType"></param>
+        /// <param name="headers"></param>
+        /// <returns></returns>
+        public static async Task<HttpResponseMessage> SendAsync(string clientUrl, string content, string mediaType, Dictionary<string, string> headers = null)
+        {
+            using var httpClient = new HttpClient();
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Post, clientUrl);
+            if (headers != null)
+            {
+                foreach (var header in headers)
+                {
+                    httpRequest.Headers.Add(header.Key, header.Value);
+                }
+            }
+                        
+            httpRequest.Content = new StringContent(content, Encoding.UTF8, mediaType);
 
             return await httpClient.SendAsync(httpRequest);
         }

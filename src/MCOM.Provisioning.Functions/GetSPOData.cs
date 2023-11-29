@@ -29,18 +29,8 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("GetSPOData")]
-        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url = "", [FromQuery] bool statucCheck = false)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, FunctionContext context, [FromQuery] bool statusCheck = false)
         {
-            // This is just a service check to comply with front end functionality
-            if (statucCheck)
-            {
-                var checkResponse = req.CreateResponse(HttpStatusCode.OK);
-                checkResponse.Headers.Add("Content-Type", "application/json");
-                checkResponse.WriteString("true");
-
-                return checkResponse;
-            }
-
             var logger = context.GetLogger("GetSPOData");
 
             try
@@ -59,14 +49,38 @@ namespace MCOM.Provisioning.Functions
             {
                 try
                 {
+                    // This is just a service check to comply with front end functionality
+                    if (statusCheck)
+                    {
+                        var checkResponse = req.CreateResponse(HttpStatusCode.OK);
+                        checkResponse.Headers.Add("Content-Type", "application/json");
+                        checkResponse.WriteString("true");
+
+                        return checkResponse;
+                    }
+
+                    // Read request body
+                    string url = await new StreamReader(req.Body).ReadToEndAsync();
+
+                    if (string.IsNullOrEmpty(url))
+                    {
+                        var missingParamResponse = req.CreateResponse(HttpStatusCode.BadRequest);
+                        missingParamResponse.Headers.Add("Content-Type", "application/json");
+                        missingParamResponse.WriteString("Missing url param!");
+
+                        return missingParamResponse;
+                    }
+
                     // Get JWT
                     var azureAdToken = await GetJWTAsync();
 
                     // Validate
                     if (azureAdToken != null && azureAdToken.access_token != null)
                     {
+                        Global.Log.LogInformation($"Sending request to MCOM SPO Service: {url}");
+
                         // Get data from Office 365
-                        var data = await GetDataFromOffice365($"{functionUrl}?url={url}", azureAdToken.access_token);
+                        var data = await GetDataFromOffice365(functionUrl, url, azureAdToken.access_token);
 
                         // Build and send response back
                         var response = req.CreateResponse(HttpStatusCode.OK);
@@ -78,14 +92,14 @@ namespace MCOM.Provisioning.Functions
                 }
                 catch (Exception ex)
                 {
-                    Global.Log.LogError(ex, "Error getting the JWT. Error: {ErrorMessage}", ex.Message);
+                    Global.Log.LogError(ex, "Error getting data from SPO Service. Error: {ErrorMessage}", ex.Message);
                 }
             }
 
             // Generate error response
             var failResponse = req.CreateResponse(HttpStatusCode.Forbidden);
             failResponse.Headers.Add("Content-Type", "application/json");
-            failResponse.WriteString("Error getting the JWT");
+            failResponse.WriteString("Error trying to reach the SPO service.");
 
             return failResponse;
         }
@@ -111,13 +125,14 @@ namespace MCOM.Provisioning.Functions
             return JsonConvert.DeserializeObject<BearerToken>(tokenObject);
         }
 
-        private async Task<string> GetDataFromOffice365(string url, string token)
+        private async Task<string> GetDataFromOffice365(string clientUrl, string url, string token)
         {
             var headers = new Dictionary<string, string>()
             {
                 {"Authorization",  $"Bearer {token}"}
             };
-            var httpResponse = await HttpClientUtilities.SendAsync(url, headers);
+
+            var httpResponse = await HttpClientUtilities.SendAsync(clientUrl, url, "text/plain", headers);
 
             // Check response
             httpResponse.EnsureSuccessStatusCode();
