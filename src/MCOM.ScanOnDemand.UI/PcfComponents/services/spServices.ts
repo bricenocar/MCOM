@@ -3,7 +3,7 @@ import { BearerToken, DefaultParse, BrowserFetch } from '@pnp/queryable';
 
 const spoServiceUrl = 'https://function-mcom-provisioning-inttest.azurewebsites.net/api/GetSPOData?code=nftcNjFYXkjVaJzkJWo4o1uQD9-NCM8hU_cCubUsOkk4AzFu_rQ4fQ==';
 
-// Get the spfi object
+// Get the spfi object in case working with jwt and spfi
 export const getSPFI = async (siteUrl: string): Promise<SPFI | undefined> => {
 
     try {
@@ -31,19 +31,31 @@ export const getSPFI = async (siteUrl: string): Promise<SPFI | undefined> => {
 }
 
 export const serviceStatusCheck = async (): Promise<boolean> => {
-    const flag = await getSPData(`${spoServiceUrl}&statucCheck=true`)
-    return (flag && flag === 'true') ? true : false;
+    return await getSPData('', true);
 }
 
 // Get the spfi object
-export const getSPData = async (params: string): Promise<any | undefined> => {
+export const getSPData = async (body: string, serviceCheck = false): Promise<any | undefined> => {
     try {
-        // Get response and json object
-        const response = await fetch(`${spoServiceUrl}${params}`);
-        const json = await response.json();
+        // Check if service check
+        const serviceCheckParam = serviceCheck ? '&statusCheck=true' : '';
 
-        if (json) {
-            return json;
+        // Build headers
+        const headers = new Headers();
+        headers.append("Accept", "text/html");
+        headers.append("Content-Type", "text/plain");
+
+        // Get response and json object
+        const response = await fetch(`${spoServiceUrl}${serviceCheckParam}`, {
+            method: 'POST',
+            headers,
+            body,
+            redirect: 'follow'
+        });
+
+        const data = await response.json();
+        if (data && response.ok === true) {
+            return data;
         } else {
             if (console) {
                 console.log('Error getting data from the service. Returning null.');
@@ -51,7 +63,8 @@ export const getSPData = async (params: string): Promise<any | undefined> => {
         }
     } catch (ex) {
         if (console) {
-            console.log('Error trying to reach the getSPO service.')
+            console.log(ex);
+            console.log('Error trying to reach the getSPO service.');
         }
     }
 
