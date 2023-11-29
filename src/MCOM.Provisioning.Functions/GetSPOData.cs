@@ -22,13 +22,10 @@ namespace MCOM.Provisioning.Functions
         private readonly string scope = "api://5e0a5f0a-db01-473c-b448-0e9711ed8f9a/.default";
         private readonly string grantType = "client_credentials";
 
-        private readonly ILogger _logger;
-
         // Constructor
         public GetSPOData(ILoggerFactory loggerFactory)
         {
             this.authUrl = this.authUrl.Replace("{tenantId}", tenantId);
-            _logger = loggerFactory.CreateLogger<GetSPOData>();
         }
 
         [Function("GetSPOData")]
