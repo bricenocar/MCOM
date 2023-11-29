@@ -22,7 +22,7 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("ValidateTemplate")]
-        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req, [FromBody] string blobTemplatePath, FunctionContext context)
+        public async Task<HttpResponseData> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req, [FromBody] string blobTemplatePath)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace MCOM.Provisioning.Functions
                     }
 
                     // Get template uri
-                    var fileUri = new Uri($"https://{Global.BlobStorageAccountName}.blob.core.windows.net/{blobTemplatePath}");
+                    var fileUri = new Uri(blobTemplatePath);
 
                     // Init blob service client
                     _blobService.GetBlobServiceClient();

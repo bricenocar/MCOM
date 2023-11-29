@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using MCOM.Models.Azure;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace MCOM.Utilities
 {
@@ -74,7 +76,7 @@ namespace MCOM.Utilities
         /// <returns></returns>
         public static async Task<HttpResponseMessage> SendAsync(string clientUrl, Dictionary<string, string> headers = null)
         {
-            // Get token to make calls agaisnt Office365
+            // Get token to make calls against Office365
             using var httpClient = new HttpClient();
             using var httpRequest = new HttpRequestMessage(HttpMethod.Get, clientUrl);
             if (headers != null)
@@ -86,6 +88,36 @@ namespace MCOM.Utilities
             }
 
             return await httpClient.SendAsync(httpRequest);
+        }
+
+        /// <summary>
+        /// Get Bearer token
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="clientSecret"></param>
+        /// <param name="scope"></param>
+        /// <param name="grantType"></param>
+        /// <param name="authUrl"></param>
+        /// <returns>Token deserialized</returns>
+        public static async Task<BearerToken> GetTokenAsync(string clientId, string clientSecret, string scope, string grantType, string authUrl)
+        {
+            var collection = new List<KeyValuePair<string, string>>
+            {
+                new("client_id", clientId),
+                new("client_secret", clientSecret),
+                new("scope", scope),
+                new("grant_type", grantType)
+            };
+
+            // Get AD token
+            var httpAzureADResponse = await SendAsync(authUrl, collection);
+
+            httpAzureADResponse.EnsureSuccessStatusCode();
+
+            // Get token object
+            var tokenObject = await httpAzureADResponse.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<BearerToken>(tokenObject);
         }
     }
 }

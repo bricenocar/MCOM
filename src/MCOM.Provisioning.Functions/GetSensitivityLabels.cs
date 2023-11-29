@@ -19,7 +19,7 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("GetSensitivityLabels")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req)
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
             try
             {
@@ -33,9 +33,9 @@ namespace MCOM.Provisioning.Functions
 
             System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "GetSensitivityLabels");
 
-            HttpResponseData? response = null;
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "GetSensitivityLabels", "Provisioning"))
             {
+                HttpResponseData? response = null;
                 try
                 {
                     // Temporary static code to build the the options
@@ -45,42 +45,42 @@ namespace MCOM.Provisioning.Functions
                     {
                         Id = "1a35b130-2a01-4e7b-9f60-ecd689a7c456",
                         Label = "Open site",
-                        SecurityClassification = "Open",
+                        SecurityClassification = "-1;#Open|7665b879-63a0-497a-a32e-f57a6d371b8b",
                         SiteClassification = "Open"
                     },
                     new SensitivityLabel()
                     {
                         Id = "b0f41c21-09d5-40bc-8a41-acdbce140f44",
                         Label = "Internal site",
-                        SecurityClassification = "Internal",
+                        SecurityClassification = "-1;#Internal|3361fef0-33ac-457d-8a1d-df19735ffcb1",
                         SiteClassification = "Internal"
                     },
                     new SensitivityLabel()
                     {
                         Id = "44d13a3e-a0d8-4432-b639-a59e40495802",
                         Label = "Restricted site - Allow guests",
-                        SecurityClassification = "Restricted",
+                        SecurityClassification = "-1;#Restricted|2778d0cb-d518-40da-b77b-8925576cf660",
                         SiteClassification = "Restricted"
                     },
                     new SensitivityLabel()
                     {
                         Id = "cf159781-f145-4602-8f2f-b029fcb74f84",
                         Label = "Restricted site - No guests",
-                        SecurityClassification = "Restricted",
+                        SecurityClassification = "-1;#Restricted|2778d0cb-d518-40da-b77b-8925576cf660",
                         SiteClassification = "Restricted"
                     },
                     new SensitivityLabel()
                     {
                         Id = "ea54145d-d4f5-4b40-a12b-a8302e5b0960",
                         Label = "Confidential site - Allow guests",
-                        SecurityClassification = "Confidential",
+                        SecurityClassification = "-1;#Confidential|ea5c4c07-1021-4ed5-8387-57b122f482d2",
                         SiteClassification = "Confidential"
                     },
                     new SensitivityLabel()
                     {
                         Id = "1b078699-150e-4fbb-a4f0-3b4e1ab18e07",
                         Label = "Confidential site - No guests",
-                        SecurityClassification = "Confidential",
+                        SecurityClassification = "-1;#Confidential|ea5c4c07-1021-4ed5-8387-57b122f482d2",
                         SiteClassification = "Confidential"
                     }
                 };

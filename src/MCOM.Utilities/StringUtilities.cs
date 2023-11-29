@@ -57,6 +57,13 @@ namespace MCOM.Utilities
             }            
         }
 
+
+        public static bool ValidateAliasText(string text)
+        {
+            const string unallowedCharacters = "[&,!@;:#¤`´~¨='%<>/\\\\\"\\$\\*\\^\\+\\|\\{\\}\\[\\]\\(\\)\\?\\s]";
+            return !Regex.IsMatch(text, unallowedCharacters);
+        }
+
         // / <summary>
         // / Normalize the site alias
         // / </summary>

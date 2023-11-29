@@ -154,7 +154,7 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owners">List of owners of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, 
+        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string alias, 
             string title, string description, Guid sensitivityLabel, bool externalSharingEnabled = false,
             PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true)
         {            
@@ -219,7 +219,6 @@ namespace MCOM.Services
                     Global.Log.LogInformation($"Group vissibility: {vissibility}");
 
                     ITeam team = null;
-
                     try
                     {
                         // Get the team Id
@@ -259,7 +258,7 @@ namespace MCOM.Services
                     errorMessage = gex.Message;
                 }
                 
-                throw new SiteCreationException(url, errorMessage);
+                throw new SiteCreationException(alias, errorMessage);
             }
             catch (SharePointRestServiceException spEx)
             {
@@ -274,12 +273,12 @@ namespace MCOM.Services
                 {
                     errorMessage = spEx.Message;
                 }
-                throw new SiteCreationException(url, errorMessage);
+                throw new SiteCreationException(alias, errorMessage);
             }
             catch (Exception ex)
             {
                 Global.Log.LogError(ex, ex.Message);
-                throw new SiteCreationException(url, ex.Message);
+                throw new SiteCreationException(alias, ex.Message);
             }            
         }
 
