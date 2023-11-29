@@ -22,7 +22,7 @@ namespace MCOM.Services
     public interface IMicrosoft365Service
     {
         Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null);
-        Task<CreatedSite> CreateTeamSite(PnPContext context, string url, string alias, string title, string description, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true);
+        Task<CreatedSite> CreateTeamSite(PnPContext context, string alias, string title, string description, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true);
         Task<CreatedTeam> CreateTeamFromGroup(PnPContext context, Guid groupId);
         ProvisioningTemplate GetProvisioningTemplate(Stream xmlTemplate);
         bool ApplyProvisioningTemplateAsync(PnPContext pnpContext, ProvisioningTemplate provisioningTemplate, string siteUrl);

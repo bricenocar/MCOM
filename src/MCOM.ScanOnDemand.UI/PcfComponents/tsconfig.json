@@ -1,0 +1,44 @@
+{
+  "extends": "./node_modules/pcf-scripts/tsconfig_base.json",
+  "compilerOptions": {
+    "target": "es5",
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "jsx": "react",
+    "declaration": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "inlineSources": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noUnusedLocals": false,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "lib": [
+      "es5",
+      "scripthost",
+      "dom",
+      "es2015.collection",
+      "es2015.promise",
+      "es2016.array.include",
+      "es2015.iterable"
+    ]
+  },
+  "typeRoots": [
+    "./node_modules/@types",
+    "./node_modules/@microsoft"
+  ],
+  "types": [
+    "webpack-env"
+  ],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "./node_modules",
+    "./out"
+  ]
+}
