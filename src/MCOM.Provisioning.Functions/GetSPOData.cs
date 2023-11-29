@@ -34,6 +34,7 @@ namespace MCOM.Provisioning.Functions
         [Function("GetSPOData")]
         public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext context, [FromQuery] string url, [FromQuery] bool statucCheck)
         {
+            // This is just a service check to comply with front end functionality
             if (statucCheck)
             {
                 var checkResponse = req.CreateResponse(HttpStatusCode.OK);
