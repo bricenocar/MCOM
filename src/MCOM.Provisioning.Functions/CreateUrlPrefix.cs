@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System.Net;
 
 namespace MCOM.Provisioning.Functions
@@ -34,6 +35,9 @@ namespace MCOM.Provisioning.Functions
             System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "CreateUrlPrefix");
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "CreateUrlPrefix", "Provisioning"))
             {
+                HttpResponseData? response = null;
+                var responseBody = new CreateUrlPrefixRespone();
+
                 // Parse query parameters
                 var query = QueryHelpers.ParseQuery(req.Url.Query);
 
@@ -41,7 +45,12 @@ namespace MCOM.Provisioning.Functions
                 string workloadId = query.Keys.Contains("workloadId") ? query["workloadId"] : string.Empty;
                 if (string.IsNullOrEmpty(workloadId))
                 {
-                    return HttpUtilities.HttpResponse(req, HttpStatusCode.BadRequest, "Missing workloadId as query string");
+                    responseBody.Valid = false;
+                    responseBody.Value = "Missing workloadId as query string"; 
+                    response = req.CreateResponse(HttpStatusCode.BadRequest);
+                    response.Headers.Add("Content-Type", "application/json");
+                    response.WriteString(JsonConvert.SerializeObject(responseBody));
+                    return response;
                 }
 
                 // Generate prefix from random number (REPLACE CODE WITH NUMBER GENERATOR TOOL)
@@ -73,8 +82,19 @@ namespace MCOM.Provisioning.Functions
                 }
 
                 // Code to generate prefix
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.OK, $"{prefix}-{randomNumber}-");
+                responseBody.Valid = true;
+                responseBody.Value = $"{prefix}-{randomNumber}-";
+                response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json");
+                response.WriteString(JsonConvert.SerializeObject(responseBody));
+                return response;
             }
         }
+    }
+
+    public class CreateUrlPrefixRespone
+    {
+        public string Value { get; set; }
+        public bool Valid { get; set; }
     }
 }
