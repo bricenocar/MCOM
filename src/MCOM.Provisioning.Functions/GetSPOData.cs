@@ -1,13 +1,13 @@
 using System.Net;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using MCOM.Models.Azure;
 using MCOM.Utilities;
-using Microsoft.Extensions.Logging;
 using MCOM.Models;
-using System.Diagnostics;
 
 namespace MCOM.Provisioning.Functions
 {
