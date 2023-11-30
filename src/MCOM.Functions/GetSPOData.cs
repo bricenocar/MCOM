@@ -1,19 +1,15 @@
-using System.Collections.Generic;
-using System;
-using System.Net;
-using System.Net.Http;
+using MCOM.Models;
+using MCOM.Services;
+using MCOM.Utilities;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using MCOM.Models;
-using MCOM.Services;
-using Newtonsoft.Json;
-using MCOM.Utilities;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using MCOM.Models.Azure;
-using static System.Formats.Asn1.AsnWriter;
-using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace MCOM.Functions
 {

@@ -65,7 +65,7 @@ namespace MCOM.Functions
                         ValidateGroupResponse responseBody = new ValidateGroupResponse();
                         responseBody.Valid = false;
                         responseBody.Message = "The group email name can't contain symbols other than underscores, dashes, single quotes, and periods (_, -, ', .), and can't start or end with a period.\r\n\r\n";
-                        response = req.CreateResponse(HttpStatusCode.BadRequest);
+                        response = req.CreateResponse(HttpStatusCode.Accepted);
                         response.Headers.Add("Content-Type", "application/json");
                         response.WriteString(JsonConvert.SerializeObject(responseBody));
                         return response;
@@ -88,7 +88,7 @@ namespace MCOM.Functions
                             Global.Log.LogWarning(siteException.Message);                           
                             responseBody.Valid = false;
                             responseBody.Message = siteException.Message;
-                            response = req.CreateResponse(HttpStatusCode.Conflict);                            
+                            response = req.CreateResponse(HttpStatusCode.Accepted);                            
                         } 
                         response.Headers.Add("Content-Type", "application/json");
                         response.WriteString(JsonConvert.SerializeObject(responseBody));
