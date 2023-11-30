@@ -5,7 +5,7 @@ import { ModernTaxonomyPicker } from '../controls/modernTaxonomyPicker';
 import { MessageBar, MessageBarType, Shimmer, ShimmerElementType } from '@fluentui/react';
 
 // export default class Termpicker extends React.Component<ITermpickerProps, ITermpickerState> {
-export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, iconSize, errorBorderColor, inputHeight, pageSize, hideDeprecatedTerms, checkService }: ITermpickerProps): JSX.Element {
+export function Termpicker({ taxonomyService, termSetId, anchorTermId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, iconSize, errorBorderColor, inputHeight, pageSize, hideDeprecatedTerms, checkService, validSiteUrl, validAnchorTermId, validTermSetId }: ITermpickerProps): JSX.Element {
 
   const [initialLoadCompleted, setInitialLoadCompleted] = React.useState(false);
 
@@ -45,6 +45,7 @@ export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onCh
           iconSize={iconSize}
           pageSize={pageSize}
           hideDeprecatedTerms={hideDeprecatedTerms}
+          anchorTermId={anchorTermId}
         />
 
         {!initialLoadCompleted && <Shimmer width={'99%'} shimmerElements={shimmerElements} />}
@@ -59,6 +60,39 @@ export function Termpicker({ taxonomyService, termSetId, label, panelTitle, onCh
         dismissButtonAriaLabel="Close"
       >
         Error when trying to reach the SPO service.
+      </MessageBar>
+    );
+  }
+  if (!validSiteUrl) {
+    return (
+      <MessageBar
+        messageBarType={MessageBarType.warning}
+        isMultiline={false}
+        dismissButtonAriaLabel="Close"
+      >
+        Invalid SiteUrl value
+      </MessageBar>
+    );
+  }
+  if (!validTermSetId) {
+    return (
+      <MessageBar
+        messageBarType={MessageBarType.warning}
+        isMultiline={false}
+        dismissButtonAriaLabel="Close"
+      >
+        Invalid TermSetId value
+      </MessageBar>
+    );
+  }
+  if (!validAnchorTermId) {
+    return (
+      <MessageBar
+        messageBarType={MessageBarType.warning}
+        isMultiline={false}
+        dismissButtonAriaLabel="Close"
+      >
+        Invalid AnchorTermId value
       </MessageBar>
     );
   }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.0.5" display-name-key="TermPickerControl" description-key="TermPickerControl description" control-type="standard" >
+  <control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.0.6" display-name-key="TermPickerControl" description-key="TermPickerControl description" control-type="standard" >
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -24,24 +24,31 @@
       of-type="SingleLine.Text"
       usage="input"
       required="true"
-      default-value="https://statoilintegrationtest.sharepoint.com/sites/ScanOnDemandTestSite"/>
+      default-value=""/>
     <property name="TermSetId"
       display-name-key="TermSetId"
       description-key="Term Store Management TermSetId"
       of-type="SingleLine.Text"
       usage="input"
       required="true"
-      default-value="dd8ea1ba-7897-47bf-ba2a-f94bff34ce6d"/>
+      default-value=""/>
+    <property name="AnchorTermId"
+      display-name-key="AnchorTermId"
+      description-key="Set the id of a child term in the TermSet to be able to select terms from that level and below"
+      of-type="SingleLine.Text"
+      usage="input"
+      required="false"
+      default-value=""/>
     <property name="Label"
       display-name-key="Label"
-      description-key="Label shown as a control title"
+      description-key="Text displayed above the Taxonomy Picker"
       of-type="SingleLine.Text"
       usage="input"
       required="false"
       default-value="Terms"/>
     <property name="PanelTitle"
       display-name-key="PanelTitle"
-      description-key="Title on the right panel when searching for terms"
+      description-key="TermSet Picker Panel title"
       of-type="SingleLine.Text"
       usage="input"
       required="false"

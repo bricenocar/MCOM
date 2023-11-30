@@ -13,7 +13,7 @@ export const getTermValuesArray = (input: string) => {
         if (currentSegment.startsWith('-1') && nextSegment) {
             let [name, id] = nextSegment.split('|');
             name = name.replace('-1;#', '');
-            resultArray.push({labels: [{name, isDefault: true, languageTag: "en-US"}], id});
+            resultArray.push({ labels: [{ name, isDefault: true, languageTag: "en-US" }], id });
             i++;
         }
     }
@@ -24,4 +24,15 @@ export const getTermValuesArray = (input: string) => {
 export const validTermValues = (inputString): boolean => {
     const regexPattern = /-1;#([^;|]+)\|([^;#]+)(?=;#|$)/g;
     return regexPattern.test(inputString);
+}
+
+export const isValidGuid = (value: string): boolean => {
+    const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return guidRegex.test(value);
+}
+
+export const isValidUrl = (url: string): boolean => {
+    // URL pattern
+    const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
+    return urlRegex.test(url);
 }

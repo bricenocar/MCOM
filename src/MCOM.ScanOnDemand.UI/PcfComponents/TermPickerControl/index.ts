@@ -6,7 +6,7 @@ import { ITermInfo } from '@pnp/sp/taxonomy';
 import { outPutSchema } from './utilities/schemas';
 import { SPTaxonomyService } from './services/SPTaxonomyService';
 import { Optional } from './controls/modernTaxonomyPicker';
-import { getTermValuesArray, validTermValues } from './utilities/common';
+import { getTermValuesArray, isValidGuid, isValidUrl, validTermValues } from './utilities/common';
 import { serviceStatusCheck } from '../services/spServices';
 
 export class TermPickerControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
@@ -51,8 +51,15 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
 
         // Get the current value of the property
         const siteUrl = context.parameters.SiteUrl.raw;
+        const termSetId = context.parameters.TermSetId.raw;
+        const anchorTermId = context.parameters.AnchorTermId.raw;
         const currentTermValues = context.parameters.TermValues.raw || '';
         const areTermValuesValid = validTermValues(currentTermValues);
+
+        // Validate terms
+        const validSiteUrl = isValidUrl(siteUrl);
+        const validTermSetId = isValidGuid(termSetId);
+        const validAnchorTermId = anchorTermId ? isValidGuid(anchorTermId) : true;
 
         // Check if the termValues have changed
         if (currentTermValues !== this.previousTermValues) {
@@ -70,13 +77,17 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
         // Get taxonomy service        
         if (!this.taxonomyService) {
             this.checkService = await serviceStatusCheck();
-            this.taxonomyService = new SPTaxonomyService(siteUrl);
+
+            if(validSiteUrl && validTermSetId && validAnchorTermId){
+                this.taxonomyService = new SPTaxonomyService(siteUrl);
+            }            
         }
 
         ReactDOM.render(
             React.createElement(Termpicker, {
                 taxonomyService: this.taxonomyService,
-                termSetId: context.parameters.TermSetId.raw,
+                termSetId,
+                anchorTermId,
                 label: context.parameters.Label.raw,
                 panelTitle: context.parameters.PanelTitle.raw,
                 allowMultipleSelections: context.parameters.AllowMultipleSelections.raw,
@@ -91,6 +102,9 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
                 pageSize: context.parameters.PageSize.raw,
                 hideDeprecatedTerms: context.parameters.HideDeprecatedTerms.raw,
                 checkService: this.checkService,
+                validSiteUrl,
+                validTermSetId,
+                validAnchorTermId,
                 onChange: this.onChange,
             }),
             this.container,
@@ -126,3 +140,4 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
         // Add code to cleanup control if necessary;
     }
 }
+
