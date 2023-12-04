@@ -52,7 +52,7 @@ export const outPutSchema1 = {
     }
 };
 
-export const outPutSchema = {
+export const stringOutPutSchema = {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "string"
 };

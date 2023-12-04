@@ -46,7 +46,7 @@ export declare const outPutSchema1: {
         type: string;
     };
 };
-export declare const outPutSchema: {
+export declare const stringOutPutSchema: {
     $schema: string;
     type: string;
 };

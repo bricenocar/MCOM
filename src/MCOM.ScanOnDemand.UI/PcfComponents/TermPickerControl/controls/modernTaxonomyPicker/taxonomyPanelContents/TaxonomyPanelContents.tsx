@@ -1,17 +1,19 @@
 import * as React from 'react';
 import styles from './TaxonomyPanelContents.module.scss';
-import { IBasePickerStyleProps,
-         IBasePickerStyles,
-         IPickerItemProps,
-         IStyleFunctionOrObject,
-         ISuggestionItemProps,
-         Label,
-         Selection,
-       } from 'office-ui-fabric-react';
-import { ITermInfo,
-         ITermSetInfo,
-         ITermStoreInfo
-       } from '@pnp/sp/taxonomy';
+import {
+  IBasePickerStyleProps,
+  IBasePickerStyles,
+  IPickerItemProps,
+  IStyleFunctionOrObject,
+  ISuggestionItemProps,
+  Label,
+  Selection,
+} from 'office-ui-fabric-react';
+import {
+  ITermInfo,
+  ITermSetInfo,
+  ITermStoreInfo
+} from '@pnp/sp/taxonomy';
 // import { Guid } from '@microsoft/sp-core-library';
 import * as strings from '../../../strings/en-us'; // TODO Language resx or any other...
 import { useForceUpdate } from '@uifabric/react-hooks';
@@ -28,10 +30,10 @@ export interface ITaxonomyPanelContentsProps {
   selectedPanelOptions: ITermInfo[];
   setSelectedPanelOptions: React.Dispatch<React.SetStateAction<ITermInfo[]>>;
   onResolveSuggestions: (filter: string, selectedItems?: ITermInfo[]) => ITermInfo[] | PromiseLike<ITermInfo[]>;
-  //onLoadMoreData: (termSetId: Guid, parentTermId?: Guid, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize?: number) => Promise<{ value: ITermInfo[], skiptoken: string }>;
   taxonomyService: SPTaxonomyService;
   anchorTermInfo: ITermInfo;
   termSetInfo: ITermSetInfo;
+  extraAnchorTermIds: string; // Custom property
   termStoreInfo: ITermStoreInfo;
   placeHolder: string;
   onRenderSuggestionsItem?: (props: ITermInfo, itemProps: ISuggestionItemProps<ITermInfo>) => JSX.Element;
@@ -77,7 +79,7 @@ export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React
     }
   };
 
-  const termPickerStyles: IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> = { root: {paddingTop: 4, paddingBottom: 4, paddingRight: 4, minheight: 34}, input: {minheight: 34}, text: { minheight: 34, borderStyle: 'none', borderWidth: '0px' } };
+  const termPickerStyles: IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> = { root: { paddingTop: 4, paddingBottom: 4, paddingRight: 4, minheight: 34 }, input: { minheight: 34 }, text: { minheight: 34, borderStyle: 'none', borderWidth: '0px' } };
 
   return (
     <div className={styles.taxonomyPanelContents}>
@@ -107,12 +109,12 @@ export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React
       <TaxonomyTree
         anchorTermInfo={props.anchorTermInfo}
         languageTag={props.languageTag}
-        //onLoadMoreData={props.onLoadMoreData}
         taxonomyService={props.taxonomyService}
         pageSize={props.pageSize}
         selection={selection}
         setTerms={setTerms}
         termSetInfo={props.termSetInfo}
+        extraAnchorTermIds={props.extraAnchorTermIds}
         termStoreInfo={props.termStoreInfo}
         terms={terms}
         allowMultipleSelections={props.allowMultipleSelections}

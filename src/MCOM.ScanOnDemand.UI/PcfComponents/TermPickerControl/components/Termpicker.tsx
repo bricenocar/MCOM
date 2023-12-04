@@ -4,8 +4,7 @@ import { ITermInfo } from '@pnp/sp/taxonomy';
 import { ModernTaxonomyPicker } from '../controls/modernTaxonomyPicker';
 import { MessageBar, MessageBarType, Shimmer, ShimmerElementType } from '@fluentui/react';
 
-// export default class Termpicker extends React.Component<ITermpickerProps, ITermpickerState> {
-export function Termpicker({ taxonomyService, termSetId, anchorTermId, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, iconSize, errorBorderColor, inputHeight, pageSize, hideDeprecatedTerms, checkService, validSiteUrl, validAnchorTermId, validTermSetId }: ITermpickerProps): JSX.Element {
+export function Termpicker({ taxonomyService, termSetId, anchorTermId, extraAnchorTermIds, label, panelTitle, onChange, allowMultipleSelections, initialValues, error, placeHolder, disabled, iconColor, iconSize, errorBorderColor, inputHeight, pageSize, hideDeprecatedTerms, checkService, validSiteUrl, validAnchorTermId, validTermSetId, validExtraAnchorTermIds }: ITermpickerProps): JSX.Element {
 
   const [initialLoadCompleted, setInitialLoadCompleted] = React.useState(false);
 
@@ -17,19 +16,56 @@ export function Termpicker({ taxonomyService, termSetId, anchorTermId, label, pa
     onChange(terms);
   }
 
+  /*const messageComponent = () => {
+    let message = '';
+    if (!checkService) {
+      message = 'Error when trying to reach the SPO service!';
+    } else if (!validSiteUrl) {
+      message = 'Invalid SiteUrl value!';
+    }
+    else if (!validTermSetId) {
+      message = 'Invalid TermSetId value!';
+    }
+    else if (!validAnchorTermId) {
+      message = 'Invalid AnchorTermId value!';
+    }
+    else if (!validExtraAnchorTermIds) {
+      message = 'Invalid ExtraAnchorTermIds value!';
+    }
+    else {
+      return null;
+    }
+
+    return (
+      <MessageBar
+        messageBarType={MessageBarType.error}
+        isMultiline={false}
+        dismissButtonAriaLabel="Close"
+      >
+        {message}
+      </MessageBar>
+    );
+  }*/
+
   const shimmerElements = [
     { type: ShimmerElementType.line, width: '96%', height: inputHeight },
     { type: ShimmerElementType.gap, width: '2%' },
     { type: ShimmerElementType.line, width: '2%', height: (inputHeight * 70) / 100 },
   ];
 
-  // Render
+  // const showMessageComponent = messageComponent();
+
+  
+
+  // Render modern taxonomy picker component
   if (checkService && taxonomyService) {
     return (
       <div>
         <ModernTaxonomyPicker
           allowMultipleSelections={allowMultipleSelections}
           termSetId={termSetId}
+          anchorTermId={anchorTermId}
+          extraAnchorTermIds={extraAnchorTermIds}
           panelTitle={panelTitle ? panelTitle : 'Select Term'}
           label={label}
           onChange={onModernTaxonomyPickerChange}
@@ -45,55 +81,18 @@ export function Termpicker({ taxonomyService, termSetId, anchorTermId, label, pa
           iconSize={iconSize}
           pageSize={pageSize}
           hideDeprecatedTerms={hideDeprecatedTerms}
-          anchorTermId={anchorTermId}
         />
 
         {!initialLoadCompleted && <Shimmer width={'99%'} shimmerElements={shimmerElements} />}
       </div>
     );
+  }else{
+    return (<div></div>);
   }
-  if (!checkService) {
-    return (
-      <MessageBar
-        messageBarType={MessageBarType.error}
-        isMultiline={false}
-        dismissButtonAriaLabel="Close"
-      >
-        Error when trying to reach the SPO service.
-      </MessageBar>
-    );
-  }
-  if (!validSiteUrl) {
-    return (
-      <MessageBar
-        messageBarType={MessageBarType.warning}
-        isMultiline={false}
-        dismissButtonAriaLabel="Close"
-      >
-        Invalid SiteUrl value
-      </MessageBar>
-    );
-  }
-  if (!validTermSetId) {
-    return (
-      <MessageBar
-        messageBarType={MessageBarType.warning}
-        isMultiline={false}
-        dismissButtonAriaLabel="Close"
-      >
-        Invalid TermSetId value
-      </MessageBar>
-    );
-  }
-  if (!validAnchorTermId) {
-    return (
-      <MessageBar
-        messageBarType={MessageBarType.warning}
-        isMultiline={false}
-        dismissButtonAriaLabel="Close"
-      >
-        Invalid AnchorTermId value
-      </MessageBar>
-    );
-  }
+
+  // Render message component
+  /*
+  if (showMessageComponent) {
+    return (showMessageComponent);
+  }*/
 }

@@ -60,21 +60,45 @@ export class SPTaxonomyService {
     }
   }
 
-  public getTermsV2 = async (termSetId: Guid, parentTermId?: Guid, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize: number = 50): Promise<{ value: ITermInfo[], skiptoken: string }> => {
+  public getTermsV2 = async (termSetId: Guid, parentTermId?: Guid, extraAnchorTermIds?: string, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize: number = 50): Promise<{ value: ITermInfo[], skiptoken: string }> => {
 
     // we need to use local sp context to provide JSONParse behavior    
     try {
       let url = '';
+      let extraTermsJsonResult = undefined;
+
+      // If parent term id (Anchor term id)
       if (parentTermId && parentTermId !== Guid.empty) {
+        // Check in case of extra terms are added to the tree
+        if (extraAnchorTermIds && extraAnchorTermIds !== '') {
+          // Split all ids into an array
+          const extraAnchorTermIdsList = extraAnchorTermIds.trim().split(',');
+
+          // Init filter by passing the parent term id
+          let extraFilter = '';
+
+          // Loop and build filters
+          extraAnchorTermIdsList.forEach(etId => {
+            extraFilter = (!extraFilter) ? `$filter=id eq '${etId}'` : `${extraFilter} or id eq '${etId}'`;
+          });
+
+          let extraUrl = `${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/terms?${extraFilter}`;
+
+          extraTermsJsonResult = await getSPData(extraUrl) as { '@odata.nextLink': string | undefined, value: ITermInfo[] };
+        }
+
         url = `${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/terms/${parentTermId.toString()}/getLegacyChildren?`;
       }
       else {
         url = `${this.siteUrl}/_api/v2.1/termstore/sets/${termSetId.toString()}/getLegacyChildren?`;
       }
 
+      // Default url format. The place of each param matters!
       const urlFormat = (skiptoken && skiptoken !== '') ? '{top}&{filter}&{skiptoken}' : '{top}&{filter}';
+
+      // Build params to be added to the url
       const skipTokenParam = `$skiptoken=${skiptoken}`;
-      const filterParam = `$filter=isDeprecated+eq+false`;
+      const filterParam = (hideDeprecatedTerms) ? '$filter=isDeprecated+eq+false' : '';
       const topParam = `$top=${pageSize}`;
 
       // Replace placeholders
@@ -84,9 +108,16 @@ export class SPTaxonomyService {
         .replace('{filter}', filterParam);
 
       // Build json result
+      //let termsJsonResult = await getSPData(url);
       const termsJsonResult = await getSPData(url) as { '@odata.nextLink': string | undefined, value: ITermInfo[] };
       let newSkiptoken = '';
 
+      // Add extra terms in case this is the case
+      if(extraTermsJsonResult && extraTermsJsonResult.value.length > 0){
+        //termsJsonResult.value = [...extraTermsJsonResult.value, ...termsJsonResult.value];
+      }
+
+      // Add skip token to the tree
       if (termsJsonResult['@odata.nextLink']) {
         const urlParams = new URLSearchParams(termsJsonResult['@odata.nextLink'].split('?')[1]);
         if (urlParams.has('$skiptoken')) {

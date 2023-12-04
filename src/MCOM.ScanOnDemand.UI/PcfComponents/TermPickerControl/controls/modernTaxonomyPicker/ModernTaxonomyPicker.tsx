@@ -44,6 +44,7 @@ export interface IModernTaxonomyPickerProps {
   isPathRendered?: boolean;
   termSetId: string;
   anchorTermId?: string;
+  extraAnchorTermIds?: string; // Custom property
   panelTitle: string;
   label: string;
   error: boolean; // Custom property
@@ -80,10 +81,10 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
   const [initialLoadCompleted, setInitialLoadCompleted] = React.useState(false);
   const [selectedOptions, setSelectedOptions] = React.useState<ITermInfo[]>([]);
   const [selectedPanelOptions, setSelectedPanelOptions] = React.useState<ITermInfo[]>([]);
-  const [currentTermStoreInfo, setCurrentTermStoreInfo] = React.useState<ITermStoreInfo>();
-  const [currentTermSetInfo, setCurrentTermSetInfo] = React.useState<ITermSetInfo>();
-  const [currentAnchorTermInfo, setCurrentAnchorTermInfo] = React.useState<ITermInfo>();
-  const [currentLanguageTag, setCurrentLanguageTag] = React.useState<string>("");
+  const [currentTermStoreInfo, setCurrentTermStoreInfo] = React.useState<ITermStoreInfo>(undefined);
+  const [currentTermSetInfo, setCurrentTermSetInfo] = React.useState<ITermSetInfo>(undefined);
+  const [currentAnchorTermInfo, setCurrentAnchorTermInfo] = React.useState<ITermInfo>(undefined);
+  const [currentLanguageTag, setCurrentLanguageTag] = React.useState<string>('');
 
   React.useEffect(() => {
     props.taxonomyService.getTermStoreInfoV2()
@@ -401,6 +402,7 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
                 onResolveSuggestions={props.termPickerProps?.onResolveSuggestions ?? onResolveSuggestions}
                 taxonomyService={props.taxonomyService}
                 anchorTermInfo={currentAnchorTermInfo!}
+                extraAnchorTermIds={props.extraAnchorTermIds}
                 termSetInfo={currentTermSetInfo!}
                 termStoreInfo={currentTermStoreInfo!}
                 pageSize={props.pageSize || 200}

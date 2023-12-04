@@ -14,6 +14,7 @@ export interface ITaxonomyPanelContentsProps {
     taxonomyService: SPTaxonomyService;
     anchorTermInfo: ITermInfo;
     termSetInfo: ITermSetInfo;
+    extraAnchorTermIds: string;
     termStoreInfo: ITermStoreInfo;
     placeHolder: string;
     onRenderSuggestionsItem?: (props: ITermInfo, itemProps: ISuggestionItemProps<ITermInfo>) => JSX.Element;

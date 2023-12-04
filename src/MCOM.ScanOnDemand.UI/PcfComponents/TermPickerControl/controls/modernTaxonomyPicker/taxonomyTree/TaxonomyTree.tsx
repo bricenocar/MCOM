@@ -48,10 +48,10 @@ import { SPTaxonomyService } from '../../../services/SPTaxonomyService';
 export interface ITaxonomyTreeProps {
   allowMultipleSelections?: boolean;
   pageSize: number;
-  //onLoadMoreData: (termSetId: Guid, parentTermId?: Guid, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize?: number) => Promise<{ value: ITermInfo[], skiptoken: string }>;
   taxonomyService: SPTaxonomyService;
   anchorTermInfo?: ITermInfo;
   termSetInfo: ITermSetInfo;
+  extraAnchorTermIds: string;
   termStoreInfo: ITermStoreInfo;
   languageTag: string;
   themeVariant?: IReadonlyTheme;
@@ -218,7 +218,7 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
     setGroupsLoading((prevGroupsLoading) => [...prevGroupsLoading, props.termSetInfo.id]);
     if (props.termSetInfo.childrenCount > 0) {
       // Call taxonomy service
-      props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), props.anchorTermInfo ? Guid.parse(props.anchorTermInfo.id) : Guid.empty, '', props.hideDeprecatedTerms, props.pageSize)
+      props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), props.anchorTermInfo ? Guid.parse(props.anchorTermInfo.id) : Guid.empty, props.extraAnchorTermIds, '', props.hideDeprecatedTerms, props.pageSize)
         .then((loadedTerms) => {
           const grps: IGroup[] = loadedTerms.value.map(term => {
             let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));
@@ -283,7 +283,7 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
         group.data.isLoading = true;
 
         // Call taxonomy service
-        props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), Guid.parse(group.key), '', props.hideDeprecatedTerms, props.pageSize)
+        props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), Guid.parse(group.key), '', '', props.hideDeprecatedTerms, props.pageSize)
           .then((loadedTerms) => {
             const grps: IGroup[] = loadedTerms.value.map(term => {
               let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));
@@ -525,7 +525,7 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
             setGroupsLoading((prevGroupsLoading) => [...prevGroupsLoading, footerProps.group.key]);
 
             // Call taxonomy service
-            props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), footerProps.group.key === props.termSetInfo.id ? Guid.empty : Guid.parse(footerProps.group.key), footerProps.group.data.skiptoken, props.hideDeprecatedTerms, props.pageSize)
+            props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), footerProps.group.key === props.termSetInfo.id ? Guid.empty : Guid.parse(footerProps.group.key), '', footerProps.group.data.skiptoken, props.hideDeprecatedTerms, props.pageSize)
               .then((loadedTerms) => {
                 const grps: IGroup[] = loadedTerms.value.map(term => {
                   let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));

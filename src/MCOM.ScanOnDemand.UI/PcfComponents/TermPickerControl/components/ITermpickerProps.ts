@@ -5,7 +5,8 @@ import { Optional } from "../controls/modernTaxonomyPicker";
 export interface ITermpickerProps {
   taxonomyService: SPTaxonomyService;
   termSetId: string;
-  anchorTermId: string;
+  anchorTermId?: string;
+  extraAnchorTermIds?: string;
   label: string;
   panelTitle: string;
   allowMultipleSelections: boolean;
@@ -23,5 +24,6 @@ export interface ITermpickerProps {
   validSiteUrl: boolean;
   validTermSetId: boolean;
   validAnchorTermId: boolean;
+  validExtraAnchorTermIds: boolean;
   onChange: (terms: ITermInfo[]) => void;
 }

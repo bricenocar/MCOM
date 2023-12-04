@@ -10,6 +10,7 @@ export interface IModernTaxonomyPickerProps {
     isPathRendered?: boolean;
     termSetId: string;
     anchorTermId?: string;
+    extraAnchorTermIds?: string;
     panelTitle: string;
     label: string;
     error: boolean;

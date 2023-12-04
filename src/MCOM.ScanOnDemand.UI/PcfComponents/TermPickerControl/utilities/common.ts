@@ -36,3 +36,14 @@ export const isValidUrl = (url: string): boolean => {
     const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
     return urlRegex.test(url);
 }
+
+export const areValidGuids = (value: string): boolean => {
+    // Regex pattern for a single GUID
+    const singleGuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  
+    // Regex pattern for a comma-separated list of GUIDs
+    const multipleGuidsPattern = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(,\s*[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})*$/;
+  
+    // Check if the value is a single GUID or a comma-separated list of GUIDs
+    return singleGuidPattern.test(value) || multipleGuidsPattern.test(value);
+  };

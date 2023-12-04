@@ -11,7 +11,7 @@ export declare class SPTaxonomyService {
         value: ITermInfo[];
         skiptoken: string;
     }>;
-    getTermsV2: (termSetId: Guid, parentTermId?: Guid, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize?: number) => Promise<{
+    getTermsV2: (termSetId: Guid, parentTermId?: Guid, extraAnchorTermIds?: string, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize?: number) => Promise<{
         value: ITermInfo[];
         skiptoken: string;
     }>;
