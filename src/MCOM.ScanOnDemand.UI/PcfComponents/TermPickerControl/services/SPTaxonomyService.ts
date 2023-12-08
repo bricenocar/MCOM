@@ -182,8 +182,6 @@ export class SPTaxonomyService {
       let filteredTerms: any = await this.sp.termStore.searchTerm(query);
       if (allowSelectingChildren === false) {
         const hasParentId = parentTermId !== Guid.empty;
-        const set = this.sp.termStore.sets.getById(termSetId.toString());
-        const collection = hasParentId ? set.terms.getById(parentTermId.toString()).children : set.children;
         const childrenIds = await collection.select("id")().then(children => children.map(c => c.id));
 
         filteredTerms = filteredTerms.filter(term => childrenIds.includes(term.id));
