@@ -14,8 +14,6 @@ import {
   ITermSetInfo,
   ITermStoreInfo
 } from '@pnp/sp/taxonomy';
-// import { Guid } from '@microsoft/sp-core-library';
-import * as strings from '../../../strings/en-us'; // TODO Language resx or any other...
 import { useForceUpdate } from '@uifabric/react-hooks';
 import { ModernTermPicker } from '../modernTermPicker/ModernTermPicker';
 import { IReadonlyTheme } from "@microsoft/sp-component-base";
@@ -23,6 +21,7 @@ import { IModernTermPickerProps } from '../modernTermPicker/ModernTermPicker.typ
 import { Optional } from '../ModernTaxonomyPicker';
 import { TaxonomyTree } from '../taxonomyTree/TaxonomyTree';
 import { SPTaxonomyService } from '../../../services/SPTaxonomyService';
+import { LanguageService } from '../../../../services/languageService';
 
 export interface ITaxonomyPanelContentsProps {
   allowMultipleSelections?: boolean;
@@ -50,6 +49,7 @@ export interface ITaxonomyPanelContentsProps {
 export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React.ReactElement<ITaxonomyPanelContentsProps> {
   const [terms, setTerms] = React.useState<ITermInfo[]>(props.selectedPanelOptions?.length > 0 ? [...props.selectedPanelOptions] : []);
 
+  const languageService = LanguageService.getInstance();
   const forceUpdate = useForceUpdate();
 
   const selection = React.useMemo(() => {
@@ -87,17 +87,17 @@ export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React
         <div>
           <ModernTermPicker
             {...props.termPickerProps}
-            removeButtonAriaLabel={strings.ModernTaxonomyPickerRemoveButtonText}
+            removeButtonAriaLabel={languageService.getResource('ModernTaxonomyPickerRemoveButtonText')}
             onResolveSuggestions={props.termPickerProps?.onResolveSuggestions ?? props.onResolveSuggestions}
             itemLimit={props.allowMultipleSelections ? undefined : 1}
             selectedItems={props.selectedPanelOptions}
             styles={props.termPickerProps?.styles ?? termPickerStyles}
             onChange={onPickerChange}
             getTextFromItem={props.getTextFromItem}
-            pickerSuggestionsProps={props.termPickerProps?.pickerSuggestionsProps ?? { noResultsFoundText: strings.ModernTaxonomyPickerNoResultsFound }}
+            pickerSuggestionsProps={props.termPickerProps?.pickerSuggestionsProps ?? { noResultsFoundText: languageService.getResource('ModernTaxonomyPickerNoResultsFound') }}
             inputProps={props.termPickerProps?.inputProps ?? {
-              'aria-label': props.placeHolder || strings.ModernTaxonomyPickerDefaultPlaceHolder,
-              placeholder: props.placeHolder || strings.ModernTaxonomyPickerDefaultPlaceHolder
+              'aria-label': props.placeHolder || languageService.getResource('ModernTaxonomyPickerDefaultPlaceHolder'),
+              placeholder: props.placeHolder || languageService.getResource('ModernTaxonomyPickerDefaultPlaceHolder')
             }}
             onRenderSuggestionsItem={props.termPickerProps?.onRenderSuggestionsItem ?? props.onRenderSuggestionsItem}
             onRenderItem={props.onRenderItem}
@@ -105,7 +105,7 @@ export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React
           />
         </div>
       </div>
-      <Label className={styles.taxonomyTreeLabel}>{props.allowMultipleSelections ? strings.ModernTaxonomyPickerTreeTitleMulti : strings.ModernTaxonomyPickerTreeTitleSingle}</Label>
+      <Label className={styles.taxonomyTreeLabel}>{props.allowMultipleSelections ? languageService.getResource('ModernTaxonomyPickerTreeTitleMulti') : languageService.getResource('ModernTaxonomyPickerTreeTitleSingle')}</Label>
       <TaxonomyTree
         anchorTermInfo={props.anchorTermInfo}
         languageTag={props.languageTag}

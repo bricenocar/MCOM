@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.0.8" display-name-key="TermPickerControl" description-key="TermPickerControl description" control-type="standard" >
+  <control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.2.2" display-name-key="TermPickerControl" description-key="TermPickerControl description" control-type="standard" >
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -18,6 +18,13 @@
       -->
     </external-service-usage>    
     <!-- property node identifies a specific, configurable piece of data that the control expects from CDS -->
+    <property name="ApiUrl"
+      display-name-key="ApiUrl"
+      description-key="Api url having access to get data from Graph/Office 365"
+      of-type="SingleLine.Text"
+      usage="input"
+      required="true"
+      default-value=""/>
     <property name="SiteUrl"
       display-name-key="SiteUrl"
       description-key="SharePoint Site Url"
@@ -81,6 +88,13 @@
       usage="input"
       required="true"
       default-value="true"/>  
+    <property name="AllowSelectingChildren"
+      display-name-key="AllowSelectingChildren"
+      description-key="Whether child terms can be selected. Default value is true"
+      of-type="TwoOptions"
+      usage="input"
+      required="true"
+      default-value="true"/>  
     <property name="Error"
       display-name-key="Error"
       description-key="True or False error flag. The Style changes to error in case of True"
@@ -135,6 +149,13 @@
       description-key="Term values selected in the term picker component"
       of-type="SingleLine.Text"
       usage="bound"
+      required="false"
+      default-value="" />
+    <property name="Terms"
+      display-name-key="Terms"
+      description-key="Terms array object built based on term selection"
+      of-type="Object"
+      usage="output"
       required="false"
       default-value="" />
     <resources>

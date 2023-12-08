@@ -3,6 +3,7 @@ import { IInputs, IOutputs } from "./generated/ManifestTypes";
 export declare class TermPickerControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private initialValues;
     private termValues;
+    private terms;
     private termSetId;
     private anchorTermId;
     private extraAnchorTermIds;

@@ -10,6 +10,7 @@
     "rebuild": "pcf-scripts rebuild",
     "start": "pcf-scripts start",
     "start:watch": "pcf-scripts start watch",
+    "start:watch:prod": "pcf-scripts start watch --buildMode production",
     "refreshTypes": "pcf-scripts refreshTypes"
   },
   "dependencies": {

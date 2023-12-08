@@ -38,12 +38,12 @@ import {
   Selection,
   Spinner
 } from 'office-ui-fabric-react';
-import * as strings from '../../../strings/en-us'; // TODO Language resx or any other...
 import { IReadonlyTheme } from '@microsoft/sp-component-base';
 import { Guid } from '@microsoft/sp-core-library';
 import { ITermInfo, ITermSetInfo, ITermStoreInfo } from '@pnp/sp/taxonomy';
 import styles from './TaxonomyTree.module.scss';
 import { SPTaxonomyService } from '../../../services/SPTaxonomyService';
+import { LanguageService } from '../../../../services/languageService';
 
 export interface ITaxonomyTreeProps {
   allowMultipleSelections?: boolean;
@@ -67,6 +67,8 @@ export interface ITaxonomyTreeProps {
 export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITaxonomyTreeProps> {
   const [groupsLoading, setGroupsLoading] = React.useState<string[]>([]);
   const [groups, setGroups] = React.useState<IGroup[]>([]);
+
+  const languageService = LanguageService.getInstance();
 
   const updateTaxonomyTreeViewWithNewTermItems = (newTermItems: ITermInfo[]): void => {
     for (const term of newTermItems) {
@@ -562,7 +564,7 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
               });
           }}
             styles={linkStyles}>
-            {strings.ModernTaxonomyPickerLoadMoreText}
+            {languageService.getResource('ModernTaxonomyPickerLoadMoreText')}
           </Link>
         </div>
       );

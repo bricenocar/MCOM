@@ -10,6 +10,7 @@ export interface ITermpickerProps {
   label: string;
   panelTitle: string;
   allowMultipleSelections: boolean;
+  allowSelectingChildren: boolean;
   initialValues: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
   placeHolder: string;
   inputHeight: number;
@@ -21,6 +22,7 @@ export interface ITermpickerProps {
   pageSize: number;
   hideDeprecatedTerms: boolean;
   checkService: boolean;
+  validApiUrl: boolean;
   validSiteUrl: boolean;
   validTermSetId: boolean;
   validAnchorTermId: boolean;
