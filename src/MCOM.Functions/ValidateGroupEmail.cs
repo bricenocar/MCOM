@@ -1,9 +1,3 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using MCOM.Models;
 using MCOM.Services;
 using MCOM.Utilities;
@@ -13,6 +7,11 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using PnP.Core.Services;
+using System;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace MCOM.Functions
 {
@@ -59,14 +58,17 @@ namespace MCOM.Functions
                     // Get url from query or body
                     string groupalias = query.Keys.Contains("groupalias") ? query["groupalias"] : data?.groupalias;
 
+                    Global.Log.LogWarning($"The groupalias is: {groupalias}");
+
                     // Validate group alias before continuing
                     bool valid = StringUtilities.ValidateAliasText(groupalias);
                     if (!valid)
                     {
+                        Global.Log.LogWarning($"The groupalias is not valid {groupalias}");
                         ValidateGroupResponse responseBody = new ValidateGroupResponse();
                         responseBody.Valid = false;
-                        responseBody.Message = "The group email name can't contain symbols other than underscores, dashes, single quotes, and periods (_, -, ', .), and can't start or end with a period.\r\n\r\n";
-                        response = req.CreateResponse(HttpStatusCode.BadRequest);
+                        responseBody.Message = "The site url can't contain symbols other than underscores, dashes, single quotes, and periods (_, -, ', .), and can't start or end with a period.\r\n\r\n";
+                        response = req.CreateResponse(HttpStatusCode.Accepted);
                         response.Headers.Add("Content-Type", "application/json");
                         response.WriteString(JsonConvert.SerializeObject(responseBody));
                         return response;
@@ -90,7 +92,7 @@ namespace MCOM.Functions
                             Global.Log.LogWarning(msg);
                             responseBody.Valid = false;
                             responseBody.Message = msg;
-                            response = req.CreateResponse(HttpStatusCode.Conflict);
+                            response = req.CreateResponse(HttpStatusCode.Accepted);
 
                         }
                         response.Headers.Add("Content-Type", "application/json");

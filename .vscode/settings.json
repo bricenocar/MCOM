@@ -5,5 +5,11 @@
     "azureLogicAppsStandard.projectRuntime": "~4",    
     "debug.internalConsoleOptions": "neverOpen",
     "azureFunctions.suppressProject": true,
-    "azurite.location": "C:\\Users\\carlos.briceno\\.azurelogicapps\\.azurite"
+    "azurite.location": "C:\\Users\\carlos.briceno\\.azurelogicapps\\.azurite",
+    "terminal.integrated.env.windows": {
+        "PATH": "C:\\Users\\carlos.briceno\\.azurelogicapps\\dependencies\\DotNetSDK;${env:PATH}"
+    },
+    "omnisharp.dotNetCliPaths": [
+        "C:\\Users\\carlos.briceno\\.azurelogicapps\\dependencies\\DotNetSDK"
+    ]
 }

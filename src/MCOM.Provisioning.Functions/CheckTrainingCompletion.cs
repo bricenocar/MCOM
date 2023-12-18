@@ -9,7 +9,7 @@ namespace MCOM.Provisioning.Functions
     public class CheckTrainingCompletion
     {
         [Function("CheckTrainingCompletion")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req, FunctionContext executionContext)
+        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req, FunctionContext executionContext)
         {
             var logger = executionContext.GetLogger("CheckTrainingCompletion");
             logger.LogInformation("C# HTTP trigger function processed a request.");

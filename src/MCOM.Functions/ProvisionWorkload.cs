@@ -12,7 +12,9 @@ using PnP.Core.Services;
 using PnP.Framework.Provisioning.Model;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace MCOM.Functions
 {
@@ -48,11 +50,13 @@ namespace MCOM.Functions
             }
 
             System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "ProvisionWorkload");
+            var workloadData = message.Body.ToString();
+            // Print the body of the message to the console
+            Global.Log.LogInformation($"Received: {workloadData}");
 
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "ProvisionWorkload", "Provisioning"))
             {
-                // Get the message body as a json and convert it to a WorkloadCreationRequestPayload object
-                var workloadData = message.Body.ToString();
+                // Get the message body as a json and convert it to a WorkloadCreationRequestPayload object                
                 WorkloadCreationRequestPayload workloadCreationRequestPayload = new WorkloadCreationRequestPayload();
                 try
                 {
@@ -90,21 +94,86 @@ namespace MCOM.Functions
                     // Create the PnP Context
                     using (var pnpContext = await _pnpContextFactory.CreateAsync("Default"))
                     {
-                        // Get the provisioning template from the blob item stream
-                        ProvisioningTemplate provisioningTemplate = _microsoft365Service.GetProvisioningTemplate(blobStream);
-                        Global.Log.LogInformation($"The provisioning template is found, data: {provisioningTemplate.DisplayName}");
-
-                        // Merge dictionaries with template parameters
-                        var dynamicParameters = StringUtilities.MergeDictionaries(workloadCreationRequestPayload.Site.SiteMetadata.EIMMetadata, workloadCreationRequestPayload.Site.SiteMetadata.OptionalMetadata);
-
-                        // Replace parameters with values from the request
-                        foreach (var kvp in dynamicParameters)
+                        try
                         {
-                            provisioningTemplate.Parameters.Add(kvp.Key, kvp.Value);
-                        }
+                            // Get the provisioning template from the blob item stream
+                            ProvisioningTemplate provisioningTemplate = _microsoft365Service.GetProvisioningTemplate(blobStream);
+                            Global.Log.LogInformation($"The provisioning template is found, data: {provisioningTemplate.Id}");
 
-                        // Apply the provisioning template to the target site
-                        var result = _microsoft365Service.ApplyProvisioningTemplateAsync(pnpContext, provisioningTemplate, urlSufix);
+                            // Get optional metadata
+                            var optionalMetadata = workloadCreationRequestPayload.Site.SiteMetadata.OptionalMetadata;
+
+                            // Convert optional metadata to data dictionary string string
+                            var dictionary = StringUtilities.ConvertToDictionary(optionalMetadata);
+
+                            // Merge dictionaries with template parameters
+                            var dynamicParameters = StringUtilities.MergeDictionaries(workloadCreationRequestPayload.Site.SiteMetadata.EIMMetadata, dictionary);
+
+                            // Replace default values with values from the request
+                            foreach (var parameter in dynamicParameters)
+                            {
+                                if (!string.IsNullOrEmpty(parameter.Value))
+                                {
+                                    // Replace default value in the site field
+                                    var siteField = provisioningTemplate.SiteFields.Find(f => f.SchemaXml.Contains(parameter.Key));
+                                    if (siteField != null)
+                                    {
+                                        string newXml = StringUtilities.ReplaceChildXmlNode(siteField.SchemaXml, "Default", parameter.Value);
+                                        siteField.SchemaXml = newXml;
+                                    }
+                                    Global.Log.LogInformation($"Added default value for field {parameter.Key} with value {parameter.Value}");
+                                }                                
+                            }
+
+                            // Add owners and members in case it is a communication site
+                            if(workloadCreationRequestPayload.Site.SiteConfig.SiteType == SiteType.CommunicationSite)
+                            {
+                                // owner.Value.Contains(";") ? owner.Value.Split(';')[1].Replace(",","") : owner.Value
+                                var members = workloadCreationRequestPayload.Site.SiteUsers.Members.Select(m => m.Value.Contains(";") ? m.Value.Split(';')[1].Replace(",", "") : m.Value).ToList();
+                                var owners = workloadCreationRequestPayload.Site.SiteUsers.Owners.Select(o => o.Value.Contains(";") ? o.Value.Split(';')[1].Replace(",", "") : o.Value).ToList();
+                                await _microsoft365Service.addUsersToUngroupedSiteInTemplate(pnpContext, provisioningTemplate, owners, members);
+                            }
+
+                            // Add optional fields to the content type
+                            if (provisioningTemplate.ContentTypes != null)
+                            {
+                                foreach (var contentType in provisioningTemplate.ContentTypes)
+                                {
+                                    // Find Equinor Document content type
+                                    if (contentType.Id == "0x01010021A623C39873404E8BA89587BD4428B401")
+                                    {
+                                        foreach (var field in optionalMetadata)
+                                        {
+                                            var siteField = provisioningTemplate.SiteFields.Find(f => f.SchemaXml.Contains(field.InternalName));
+                                            if (siteField != null)
+                                            {
+                                                string id = StringUtilities.GetAttributeFromXmlNode(siteField.SchemaXml, "Field", "ID");
+                                                if (!string.IsNullOrEmpty(id))
+                                                {
+                                                    var fieldRef = new FieldRef(field.InternalName);
+                                                    fieldRef.Id = new Guid(id);
+                                                    contentType.FieldRefs.Add(fieldRef);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Apply the provisioning template to the target site
+                            var result = _microsoft365Service.ApplyProvisioningTemplateAsync(pnpContext, provisioningTemplate, urlSufix);
+                        }
+                        catch (Exception ex)
+                        {
+                            if(ex.Message.Contains("duplicate"))
+                            {
+                                Global.Log.LogCritical(ex, $"There was a duplicated column already provisioned by another solution, could not apply provisioning template. Error message: {ex.Message}");
+                            }else
+                            {
+                                Global.Log.LogCritical(ex, $"There has been an error trying to provision site. Error message: {ex.Message}");
+                                throw new SiteCreationException(urlSufix, ex.Message);
+                            }
+                        }                        
                     }
                 } else
                 {
@@ -112,8 +181,7 @@ namespace MCOM.Functions
                 }
             }
 
-            var outputMessage = $"Output message created at {DateTime.Now}";
-            return outputMessage;
+            return workloadData;
         }
 
         private async Task<Stream> GetProvisioningTemplateBlobItem(WorkloadCreationRequestPayload workloadCreationRequestPayload)

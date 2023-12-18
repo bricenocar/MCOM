@@ -10,6 +10,7 @@ using PnP.Core.Admin.Model.SharePoint;
 using PnP.Core.Services;
 using System;
 using System.Linq;
+using System.Net.Mail;
 using System.Threading.Tasks;
 
 namespace MCOM.Functions
@@ -47,10 +48,16 @@ namespace MCOM.Functions
 
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "CreateWorkload", "Provisioning"))
             {
+                var siteUrl = string.Empty;
                 try
                 {
                     // Parse the JSON request body to get parameters
                     var body = message.Body.ToString();
+
+                    // Print body
+                    Global.Log.LogInformation($"Body: {body}");
+
+                    // Deserialize the request payload
                     WorkloadCreationRequestPayload workloadData = JsonConvert.DeserializeObject<WorkloadCreationRequestPayload>(body);
 
                     // Validate request before continuiung
@@ -66,6 +73,7 @@ namespace MCOM.Functions
 
                             if (workloadData.Site.SiteConfig.SiteType == SiteType.CommunicationSite)
                             {
+                                siteUrl = workloadData.Site.SiteConfig.SiteURL;
                                 // Create the SharePoint communication site
                                 var createdSite = await _microsoft365Service.CreateCommunicationSite(pnpContext,
                                     workloadData.Site.SiteConfig.SiteURL,
@@ -74,7 +82,7 @@ namespace MCOM.Functions
                                     workloadData.Site.SiteConfig.SiteClassification,
                                     workloadData.Site.SiteConfig.SensitivityLabel,
                                     workloadData.Site.SiteConfig.ExternalSharing,
-                                    Language.English, workloadData.Site.SiteUsers.Owners.First());
+                                    Language.English, workloadData.Site.SiteUsers.Owners.First().Value);
 
                                 // Add site information to the response
                                 if (createdSite.SiteId != Guid.Empty)
@@ -89,6 +97,7 @@ namespace MCOM.Functions
                             }
                             else if (workloadData.Site.SiteConfig.SiteType == SiteType.TeamSite)
                             {
+                                siteUrl = workloadData.Site.SiteConfig.Alias;
                                 // Create the SharePoint team site
                                 var createdSite = await _microsoft365Service.CreateTeamSite(pnpContext,
                                     workloadData.Site.SiteConfig.Alias,
@@ -97,7 +106,9 @@ namespace MCOM.Functions
                                     workloadData.Site.SiteConfig.SensitivityLabel,
                                     workloadData.Site.SiteConfig.ExternalSharing,
                                     Language.English,
-                                    workloadData.Site.GroupUsers.Owners);
+                                    workloadData.Site.GroupUsers.Owners,
+                                    workloadData.Site.GroupUsers.Members,
+                                    workloadData.Site.SiteConfig.IsPublic);
 
                                 // Add site information to the response
                                 if (createdSite.SiteId != Guid.Empty)
@@ -141,23 +152,28 @@ namespace MCOM.Functions
                 }                
                 catch(InvalidRequestException invEx)
                 {
-                    throw;
+                    Global.Log.LogError(invEx, invEx.Message);
+                    throw new SiteCreationException(siteUrl, invEx.Message);
                 }
                 catch(JsonSerializationException jex)
                 {
-                    throw;
+                    Global.Log.LogError(jex, jex.Message);
+                    throw new SiteCreationException(siteUrl, jex.Message);
                 }
                 catch (UnavailableUrlException siteException)
                 {
-                    throw;
+                    Global.Log.LogError(siteException, siteException.Message);
+                    throw new SiteCreationException(siteUrl, siteException.Message);
                 }
                 catch (SiteCreationException siteException)
                 {
-                    throw;
+                    Global.Log.LogError(siteException, siteException.Message);
+                    throw new SiteCreationException(siteUrl, siteException.Message);
                 }
                 catch (Exception ex)
                 {
-                    throw;
+                    Global.Log.LogError(ex, ex.Message);
+                    throw new SiteCreationException(siteUrl, ex.Message);
                 }
             }
         }

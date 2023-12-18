@@ -1,9 +1,12 @@
 using MCOM.Models;
 using MCOM.Utilities;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Graph;
+using Newtonsoft.Json;
 using System.Net;
 
 namespace MCOM.Provisioning.Functions
@@ -18,7 +21,7 @@ namespace MCOM.Provisioning.Functions
         }
 
         [Function("CreateUrlPrefix")]
-        public HttpResponseData Run([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
+        public async Task<HttpResponseData> RunAsync([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequestData req)
         {
             try
             {
@@ -34,6 +37,9 @@ namespace MCOM.Provisioning.Functions
             System.Diagnostics.Activity.Current?.AddTag("MCOMOperation", "CreateUrlPrefix");
             using (Global.Log.BeginScope("Operation {MCOMOperationTrace} processed request for {MCOMLogSource}.", "CreateUrlPrefix", "Provisioning"))
             {
+                HttpResponseData? response = null;
+                var responseBody = new CreateUrlPrefixRespone();
+
                 // Parse query parameters
                 var query = QueryHelpers.ParseQuery(req.Url.Query);
 
@@ -41,40 +47,61 @@ namespace MCOM.Provisioning.Functions
                 string workloadId = query.Keys.Contains("workloadId") ? query["workloadId"] : string.Empty;
                 if (string.IsNullOrEmpty(workloadId))
                 {
-                    return HttpUtilities.HttpResponse(req, HttpStatusCode.BadRequest, "Missing workloadId as query string");
+                    responseBody.Valid = false;
+                    responseBody.Value = "Missing workloadId as query string"; 
+                    response = req.CreateResponse(HttpStatusCode.BadRequest);
+                    response.Headers.Add("Content-Type", "application/json");
+                    response.WriteString(JsonConvert.SerializeObject(responseBody));
+                    return response;
                 }
-
-                // Generate prefix from random number (REPLACE CODE WITH NUMBER GENERATOR TOOL)
-                var random = new Random();
-                int randomNumber = random.Next(1000, 9999);
 
                 // Generate prefix based on workloadId
-                string prefix = string.Empty;
+                string prefixUrl = "https://uniquenumberfunctionapp.azurewebsites.net/api/GetNextUniqueNumber?code=sNB7J1UMlt4AjSw9CfymA_Mi59j2xADA-PH8qyqeVCNyAzFui5QKiA==&SEQUENCE=PRE_FIX_PRO_DAT&SCOPE=MCOM&STRREP=000000";
                 switch(workloadId)
                 {
-                    case "1":                        
-                        prefix = "SPT";
+                    case "1":
+                        prefixUrl += "&FIXSTR=SPT";
                         break;
                     case "2":
-                        prefix = "SPT";
+                        prefixUrl += "&FIXSTR=SPT";
                         break;
                     case "3":
-                        prefix = "SPT";
+                        prefixUrl += "&FIXSTR=SPT";
                         break;
                     case "4":
-                        prefix = "SPC";
+                        prefixUrl += "&FIXSTR=SPC";
                         break;
                     case "5":
-                        prefix = "SPT";
+                        prefixUrl += "&FIXSTR=SPT";
                         break;
                     case "6":
-                        prefix = "SPT";
+                        prefixUrl += "&FIXSTR=SPT";
                         break;
                 }
 
+                string prefix;
+                var httpResponse = await HttpClientUtilities.SendAsync(prefixUrl);
+
+                // Check response
+                httpResponse.EnsureSuccessStatusCode();
+
+                // Get data as string from response
+                prefix = await httpResponse.Content.ReadAsStringAsync();
+
                 // Code to generate prefix
-                return HttpUtilities.HttpResponse(req, HttpStatusCode.OK, $"{prefix}-{randomNumber}-");
+                responseBody.Valid = true;
+                responseBody.Value = prefix;
+                response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "application/json");
+                response.WriteString(JsonConvert.SerializeObject(responseBody));
+                return response;
             }
         }
+    }
+
+    public class CreateUrlPrefixRespone
+    {
+        public string Value { get; set; }
+        public bool Valid { get; set; }
     }
 }

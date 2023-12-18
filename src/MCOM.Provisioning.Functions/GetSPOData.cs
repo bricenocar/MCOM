@@ -16,7 +16,7 @@ namespace MCOM.Provisioning.Functions
         // TODO: Temp solution. Move to a secure place please!!!!!!!!!!!!!!!!!!!!!!!!!
         private readonly string functionUrl = "https://function-mcom-inttest.azurewebsites.net/api/GetSPOData";
         private readonly string tenantId = "e78a86b8-aa34-41fe-a537-9392c8870bf0";
-        private readonly string authUrl = "https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token";
+        private readonly string authUrl = "https://login.microsoftonline.com/e78a86b8-aa34-41fe-a537-9392c8870bf0/oauth2/v2.0/token";
         private readonly string clientId = "43db244a-1e1a-4414-b60c-8279f3f7e6ff";
         private readonly string clientSecret = "MFw8Q~y_zwrQvzrts3ggTBB0PWs64hj.qBy6QabY";
         private readonly string scope = "api://5e0a5f0a-db01-473c-b448-0e9711ed8f9a/.default";

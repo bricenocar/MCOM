@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using MCOM.Models;
+﻿using MCOM.Models;
 using MCOM.Models.Provisioning;
 using MCOM.Models.UnitTesting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace MCOM.Utilities
 {
@@ -38,7 +38,7 @@ namespace MCOM.Utilities
             {
                 Global.Log.LogError("Error removing special characters from string {String}", str);
                 return str.Trim();
-            }            
+            }
         }
 
         public static string GetFullUrl(string url)
@@ -47,14 +47,26 @@ namespace MCOM.Utilities
             {
                 var baseUrl = Global.SharePointUrl;
                 url = NormalizeSiteAlias(url);
-                var fullUrl = $"{baseUrl}/sites/{url}";
+                var fullUrl = string.Empty;
+                // Combine url with base url
+                if (baseUrl != null)
+                {
+                    if (baseUrl.ToString().EndsWith("/"))
+                    {
+                        fullUrl = $"{baseUrl}sites/{url}";
+                    }
+                    else
+                    {
+                        fullUrl = $"{baseUrl}/sites/{url}";
+                    }
+                }
                 return fullUrl;
             }
             catch (Exception)
             {
                 Global.Log.LogError("Error getting full url for site alias {SiteAlias}", url);
                 throw;
-            }            
+            }
         }
 
 
@@ -187,5 +199,78 @@ namespace MCOM.Utilities
             // Use Union to merge dictionaries, and ToDictionary to convert the result to a dictionary
             return dictionaries.Aggregate((dict1, dict2) => dict1.Union(dict2).ToDictionary(x => x.Key, x => x.Value));
         }
-    }
+
+        public static Dictionary<string, string> ConvertToDictionary(OptionalMetadata[] optionalMetadata)
+        {
+           var dictionary = new Dictionary<string, string>();
+            foreach (var item in optionalMetadata)
+            {
+                if(!string.IsNullOrEmpty(item.InternalName))
+                {
+                    dictionary.Add(item.InternalName, item.TermValues);
+                }                
+            }
+            return dictionary;
+        }
+
+        public static string GetAttributeFromXmlNode(string xmlString, string elementName, string attributeName)
+        {
+            string attributeValue = string.Empty;
+            try
+            {
+                // Load the XML string into an XmlDocument
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(xmlString);
+                XmlNodeList elements = xmlDoc.GetElementsByTagName(elementName);
+                if (elements.Count > 0)
+                {
+                    // Assuming there's only one matching element, you can access it
+                    XmlElement element = (XmlElement)elements[0];
+
+                    // Extract the value of the "Id" attribute
+                    attributeValue = element.GetAttribute(attributeName);
+                }
+            }
+            catch (Exception ex)
+            {
+                Global.Log.LogError(ex, $"There was an error trying to get a field attibute from the provisioning template. Error message: {ex.Message}");
+            }            
+
+            return attributeValue;
+        }
+
+        public static string ReplaceChildXmlNode(string xmlString, string childToReplace, string newElement)
+        {
+            string returnValue = xmlString;
+            try
+            {
+                // Load the XML string into an XmlDocument
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(xmlString);
+
+                // Select the node to replace
+                XmlNode nodeToreplace = xmlDoc.SelectSingleNode($"//{childToReplace}");
+
+                if(nodeToreplace != null)
+                {
+                    // Create new node
+                    XmlElement newValueNode = xmlDoc.CreateElement(childToReplace);
+                    newValueNode.InnerText = newElement;
+
+                    // Replace node
+                    nodeToreplace.ParentNode.ReplaceChild(newValueNode, nodeToreplace);
+
+                    // Get the new xml string
+                    returnValue = xmlDoc.OuterXml;
+                }                
+            }
+            catch (Exception ex)
+            {
+                Global.Log.LogError(ex, $"There was an error trying to replace child node from the provisioning template. Error message: {ex.Message}");
+            }
+
+            return returnValue;
+        }
+    }   
+
 }
