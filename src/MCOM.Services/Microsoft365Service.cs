@@ -1,9 +1,10 @@
 ﻿using MCOM.Models;
-using MCOM.Models.InformationProtection;
 using MCOM.Models.Provisioning;
 using MCOM.Utilities;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.News.DataModel;
 using PnP.Core;
 using PnP.Core.Admin.Model.SharePoint;
 using PnP.Core.Admin.Model.Teams;
@@ -15,6 +16,7 @@ using PnP.Framework.Provisioning.Providers.Xml;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace MCOM.Services
@@ -22,15 +24,16 @@ namespace MCOM.Services
     public interface IMicrosoft365Service
     {
         Task<CreatedSite> CreateCommunicationSite(PnPContext context, string url, string title, string description, string siteClassification, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, string owner = null);
-        Task<CreatedSite> CreateTeamSite(PnPContext context, string alias, string title, string description, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true);
+        Task addUsersToUngroupedSiteInTemplate(PnPContext context, ProvisioningTemplate provisioningTemplate, List<string> owners, List<string> members);
+        Task<CreatedSite> CreateTeamSite(PnPContext context, string alias, string title, string description, Guid sensitivityLabel, bool externalSharingEnabled, PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<Models.Provisioning.User> owners = null, List<Models.Provisioning.User> members = null, bool isPublic = true);
         Task<CreatedTeam> CreateTeamFromGroup(PnPContext context, Guid groupId);
         ProvisioningTemplate GetProvisioningTemplate(Stream xmlTemplate);
         bool ApplyProvisioningTemplateAsync(PnPContext pnpContext, ProvisioningTemplate provisioningTemplate, string siteUrl);
         Task<bool> CheckIfSiteExists(PnPContext context, string url);
         Task<bool> HideAddTeamsPrompt(PnPContext context, string siteUrl);
-        Task<List<Models.InformationProtection.SensitivityLabel>> GetSensitivityLabels(PnPContext context);        
+        Task<List<Models.InformationProtection.SensitivityLabel>> GetSensitivityLabels(PnPContext context);
     }
-    
+
     public class Microsoft365Service : IMicrosoft365Service
     {
         #region Site and Site collections
@@ -46,21 +49,23 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owner">Owner of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context, 
-            string url, string title, string description, string siteClassification, Guid sensitivityLabel, bool externalSharingEnabled = false, 
-            PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, 
+        public async Task<CreatedSite> CreateCommunicationSite(PnPContext context,
+            string url, string title, string description, string siteClassification, Guid sensitivityLabel, bool externalSharingEnabled = false,
+            PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English,
             string owner = null)
         {
             try
             {
+                var ownerValue = owner.Contains(";") ? owner.Split(';')[1] : owner;
+
                 // Create communication site
                 var fullUrl = StringUtilities.GetFullUrl(url);
                 var communicationSiteToCreate = new CommunicationSiteOptions(new Uri(fullUrl), title)
                 {
                     Description = description,
                     Language = language,
-                    SensitivityLabelId = sensitivityLabel, 
-                    Owner = owner,
+                    SensitivityLabelId = sensitivityLabel,
+                    Owner = ownerValue,
                     ShareByEmailEnabled = externalSharingEnabled
                     //Classification = ""
                 };
@@ -71,7 +76,7 @@ namespace MCOM.Services
                 // Create the site collection creation options
                 SiteCreationOptions siteCreationOptions = new SiteCreationOptions()
                 {
-                    WaitForAsyncProvisioning = true,                    
+                    WaitForAsyncProvisioning = true,
                 };
 
                 Global.Log.LogInformation($"Creating site: {communicationSiteToCreate.Url}");
@@ -91,6 +96,7 @@ namespace MCOM.Services
                     var createdSite = new CreatedSite();
                     createdSite.SiteId = newSiteId;
                     createdSite.SiteUrl = newSiteUrl.ToString();
+
 
                     // Log to application insights
                     Global.Log.LogInformation("Site created: {0}, Url of new site: {1}", newSiteTitle, newSiteUrl);
@@ -116,7 +122,6 @@ namespace MCOM.Services
                 {
                     errorMessage = gex.Message;
                 }
-
                 throw new SiteCreationException(url, errorMessage);
             }
             catch (SharePointRestServiceException spEx)
@@ -136,8 +141,59 @@ namespace MCOM.Services
             }
             catch (Exception ex)
             {
-                Global.Log.LogError(ex, ex.Message);
-                throw new SiteCreationException(url, ex.Message);
+                if (ex.Message.Contains("siteStatus = 3"))
+                {
+                    string exceptionMessage = $"The site url is not available, it still remains in deleted sites list. Error message: {ex.Message}";
+                    Global.Log.LogError(ex, exceptionMessage);
+                    throw new UnavailableUrlException(exceptionMessage);
+                }
+                else
+                {
+                    Global.Log.LogError(ex, ex.Message);
+                    throw new SiteCreationException(url, ex.Message);
+                }
+            }
+        }
+
+        public async Task addUsersToUngroupedSiteInTemplate(PnPContext context, ProvisioningTemplate provisioningTemplate, List<string> owners, List<string> members)
+        {
+            try
+            {
+                // Validate users before adding them
+                var existingMembersList = await context.Web.ValidateAndEnsureUsersAsync(members);
+                var existingOwnersList = await context.Web.ValidateAndEnsureUsersAsync(owners);
+
+                // Add members to the site
+                if (existingMembersList != null && existingMembersList.Count > 0)
+                {
+                    foreach (var member in existingMembersList)
+                    {
+                        if (member != null)
+                        {
+                            var user = new PnP.Framework.Provisioning.Model.User();
+                            user.Name = member.LoginName;
+                            provisioningTemplate.Security.AdditionalMembers.Add(user);
+                        }
+                    }
+                }
+
+                // Add owners to the site
+                if (existingOwnersList != null && existingOwnersList.Count > 0)
+                {
+                    foreach (var owner in existingOwnersList)
+                    {
+                        if (owner != null)
+                        {
+                            var user = new PnP.Framework.Provisioning.Model.User();
+                            user.Name = owner.LoginName;
+                            provisioningTemplate.Security.AdditionalOwners.Add(user);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Global.Log.LogCritical(ex, $"There has been an error adding members and owners to the site. Error message: {ex.Message}");
             }
         }
 
@@ -154,10 +210,10 @@ namespace MCOM.Services
         // / <param name="language">Language of the site to create</param>
         // / <param name="owners">List of owners of the site to create</param>
         // / <returns>Created site ID</returns>
-        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string alias, 
+        public async Task<CreatedSite> CreateTeamSite(PnPContext context, string alias,
             string title, string description, Guid sensitivityLabel, bool externalSharingEnabled = false,
-            PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<string> owners = null, bool isPublic = true)
-        {            
+            PnP.Core.Admin.Model.SharePoint.Language language = PnP.Core.Admin.Model.SharePoint.Language.English, List<Models.Provisioning.User> owners = null, List<Models.Provisioning.User> members = null, bool isPublic = true)
+        {
             try
             {
                 // Create communication site
@@ -167,15 +223,31 @@ namespace MCOM.Services
                     Description = description,
                     Language = language,
                     SensitivityLabelId = sensitivityLabel,
-                    WelcomeEmailDisabled = true,                    
+                    WelcomeEmailDisabled = true,
                     IsPublic = isPublic // Privacy: Check if it is public then the group vissibility should be public
                     //Classification = "Same as sensitivity label or its mapping"
                 };
 
                 // Add owners to the site
-                if (owners != null)
+                if (owners != null && owners.Count > 0)
                 {
-                    teamSiteToCreate.Owners = owners.ToArray();
+                    List<string> ownersList = new List<string>();
+                    foreach ( var owner in owners )
+                    {
+                        ownersList.Add(owner.Value.Contains(";") ? owner.Value.Split(';')[1].Replace(",","") : owner.Value);
+                    }
+                    teamSiteToCreate.Owners = ownersList.ToArray();
+                }
+
+                // Add members to the site
+                if (members != null && members.Count > 0)
+                {
+                    List<string> membersList = new List<string>();
+                    foreach (var member in members)
+                    {
+                        membersList.Add(member.Value.Contains(";") ? member.Value.Split(';')[1].Replace(",", "") : member.Value);
+                    }
+                    teamSiteToCreate.Members = membersList.ToArray();
                 }
 
                 // use pnp core admin to check if site collection already exists
@@ -185,36 +257,38 @@ namespace MCOM.Services
                 }
                 catch (UnavailableUrlException siteException)
                 {
-                    Global.Log.LogWarning("The site already exists, it will not be re-created");
+                    Global.Log.LogWarning($"The site already exists, it will not be re-created. Warning message: {siteException.Message}");
                 }
 
                 // Create the site collection creation options
                 SiteCreationOptions siteCreationOptions = new SiteCreationOptions()
                 {
-                    WaitForAsyncProvisioning = true                    
+                    WaitForAsyncProvisioning = true
                 };
 
                 Global.Log.LogInformation($"Creating site: {teamSiteToCreate.DisplayName}");
-               
+
                 // Create the site collection and get the context for the newly created site collection, this will be used to do the actual work
                 using (var newSiteContext = await context.GetSiteCollectionManager().CreateSiteCollectionAsync(teamSiteToCreate, siteCreationOptions))
                 {
+                    Global.Log.LogInformation("Site created...");
+
                     // use pnp to get web info
                     var web = await newSiteContext.Web.GetAsync(w => w.Url, w => w.Title, w => w.Id);
                     var newSiteUrl = web.Url;
-                    var newSiteTitle = web.Title;                    
+                    var newSiteTitle = web.Title;
 
                     // use pnp to get site info and set the external sharing option
                     var site = await newSiteContext.Site.GetAsync(s => s.Id);
                     var newSiteId = site.Id;
-                    site.ShareByEmailEnabled = externalSharingEnabled;                    
+                    site.ShareByEmailEnabled = externalSharingEnabled;
 
                     // Log to application insights
                     Global.Log.LogInformation("Site id({0}) created: {1}, Url of new site: {2}", newSiteId, newSiteTitle, newSiteUrl);
 
                     // use pnp to get site group id
                     var microsoft365Group = await newSiteContext.Group.GetAsync();
-                    var groupId = microsoft365Group.Id;                    
+                    var groupId = microsoft365Group.Id;
                     var vissibility = microsoft365Group.Visibility;
                     Global.Log.LogInformation($"Group vissibility: {vissibility}");
 
@@ -226,8 +300,19 @@ namespace MCOM.Services
                     }
                     catch (MicrosoftGraphServiceException gex)
                     {
-                        Global.Log.LogWarning(gex.Message);
-                    }                   
+                        var errorMessage = "";
+                        if (gex.Error != null)
+                        {
+                            MicrosoftGraphError error = gex.Error as MicrosoftGraphError;
+                            errorMessage = error.Message;
+                            Global.Log.LogWarning(gex, errorMessage);
+                        }
+                        else
+                        {
+                            errorMessage = gex.Message;
+                        }
+                        Global.Log.LogWarning(errorMessage);
+                    }
 
                     // Prepare output
                     var createdSite = new CreatedSite();
@@ -237,27 +322,29 @@ namespace MCOM.Services
                     if (team != null)
                     {
                         createdSite.TeamId = team.Id;
-                    } else
+                    }
+                    else
                     {
                         createdSite.TeamId = Guid.Empty;
                     }
 
                     return createdSite;
                 }
-            }            
+            }
             catch (MicrosoftGraphServiceException gex)
             {
                 var errorMessage = "";
-                if(gex.Error != null)
+                if (gex.Error != null)
                 {
                     MicrosoftGraphError error = gex.Error as MicrosoftGraphError;
                     errorMessage = error.Message;
                     Global.Log.LogError(gex, errorMessage);
-                }else
+                }
+                else
                 {
                     errorMessage = gex.Message;
                 }
-                
+
                 throw new SiteCreationException(alias, errorMessage);
             }
             catch (SharePointRestServiceException spEx)
@@ -266,6 +353,10 @@ namespace MCOM.Services
                 if (spEx.Error != null)
                 {
                     SharePointRestError error = spEx.Error as SharePointRestError;
+                    if (error.HttpResponseCode == 404)
+                    {
+                        errorMessage = $"The site address generated is not compatible with the group alias. The site address might have existed before and it was deleted, check recycle bin before using the same url. The site cannot be created. {error.Message}";
+                    }
                     errorMessage = error.Message;
                     Global.Log.LogError(spEx, errorMessage);
                 }
@@ -279,7 +370,7 @@ namespace MCOM.Services
             {
                 Global.Log.LogError(ex, ex.Message);
                 throw new SiteCreationException(alias, ex.Message);
-            }            
+            }
         }
 
         public ProvisioningTemplate GetProvisioningTemplate(Stream xmlTemplate)
@@ -296,7 +387,7 @@ namespace MCOM.Services
             {
                 Global.Log.LogError(ex, ex.Message);
                 throw;
-            }            
+            }
         }
 
         public bool ApplyProvisioningTemplateAsync(PnPContext pnpContext, ProvisioningTemplate provisioningTemplate, string siteUrl)
@@ -308,6 +399,10 @@ namespace MCOM.Services
                 // Define the site template applying options
                 var applyingInformation = new ProvisioningTemplateApplyingInformation();
                 applyingInformation.HandlersToProcess = Handlers.All;
+                applyingInformation.MessagesDelegate = (message, type) =>
+                {
+                    Global.Log.LogInformation($"{type} - {message}");
+                };
 
                 // Apply template to web
                 clientContext.Web.ApplyProvisioningTemplate(provisioningTemplate, applyingInformation);
@@ -385,7 +480,7 @@ namespace MCOM.Services
                     //await teamContext.Team.PrimaryChannel.Messages.AddAsync("Hi from the MCOM provisioning service!");
 
                     team.TeamId = teamContext.Team.Id;
-                    team.TeamName = teamContext.Team.DisplayName;                    
+                    team.TeamName = teamContext.Team.DisplayName;
                 };
             }
             catch (MicrosoftGraphServiceException gex)
@@ -436,7 +531,7 @@ namespace MCOM.Services
                 throw;
             }
             return sensitivityLabels;
-        }       
+        }
         #endregion
 
         #region Helper functions

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 
 namespace MCOM.Provisioning.Functions
@@ -41,15 +42,22 @@ namespace MCOM.Provisioning.Functions
 
             // Get parameters from body in case og POST
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-
-            // Get url from query or body
-            string groupalias = query.Keys.Contains("groupalias") ? query["groupalias"] : data?.groupalias;
+            dynamic? data = JsonConvert.DeserializeObject(requestBody);
 
             HttpResponseData? response;
+
+            // Get url from query or body
+            string? groupalias = query != null ? query.Keys.Contains("groupalias") ? query["groupalias"] : data?.groupalias : "";
+            if(groupalias.IsNullOrEmpty())
+            {
+                response = req.CreateResponse(HttpStatusCode.BadRequest);
+                response.Headers.Add("Content-Type", "application/json");
+                response.WriteString("The parameter groupalias is empty, could not validate group name");
+            }
+            
             try
             {
-                string functionUrl = $"https://function-mcom-inttest.azurewebsites.net/api/ValidateGroupEmail?groupalias={groupalias}";
+                string? functionUrl = $"https://function-mcom-inttest.azurewebsites.net/api/ValidateGroupEmail?groupalias={groupalias}";
                 // Get JWT
                 var azureAdToken = await HttpClientUtilities.GetTokenAsync(clientId, clientSecret, scope, grantType, authUrl);
 

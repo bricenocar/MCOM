@@ -40,8 +40,22 @@ namespace MCOM.Provisioning.Functions
             {
                 try
                 {
+                    // Get body from request
                     var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                    WorkloadCreationRequestPayload workloadData = JsonConvert.DeserializeObject<WorkloadCreationRequestPayload>(requestBody);
+                    if (requestBody == null)
+                    {
+                        throw new InvalidRequestException("body", "There is no body present");
+                    }
+
+                    // Print request
+                    Global.Log.LogInformation($"Body: {requestBody}");
+
+                    // Deserialize the request body
+                    WorkloadCreationRequestPayload? workloadData = JsonConvert.DeserializeObject<WorkloadCreationRequestPayload>(requestBody, new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        MissingMemberHandling = MissingMemberHandling.Ignore
+                    });
 
                     // Validate request before continuiung
                     ValidateRequestPayload(workloadData);
@@ -55,8 +69,15 @@ namespace MCOM.Provisioning.Functions
                         // Create a sender for the queue
                         ServiceBusSender sender = client.CreateSender("requested");
 
+                        // Format message before sending it to the queue
+                        var messageBody = JsonConvert.SerializeObject(workloadData, Formatting.Indented, new JsonSerializerSettings
+                        {                            
+                            NullValueHandling = NullValueHandling.Ignore,
+                            MissingMemberHandling = MissingMemberHandling.Ignore
+                        });
+
                         // Create a message and send it to the queue
-                        ServiceBusMessage message = new ServiceBusMessage(requestBody);
+                        ServiceBusMessage message = new ServiceBusMessage(messageBody);
                         await sender.SendMessageAsync(message);
                     }
 
@@ -69,7 +90,7 @@ namespace MCOM.Provisioning.Functions
                     }));
                     return response;
                 }
-                catch(JsonException jsonEx)
+                catch (JsonException jsonEx)
                 {
                     Global.Log.LogError(jsonEx, "Error deserializing the request body. Error: {ErrorMessage}", jsonEx.Message);
                     response = req.CreateResponse(HttpStatusCode.BadRequest);
@@ -90,7 +111,7 @@ namespace MCOM.Provisioning.Functions
                         Status = "Error"
                     }));
                     return response;
-                }               
+                }
             }
         }
 
@@ -119,6 +140,8 @@ namespace MCOM.Provisioning.Functions
             {
                 throw new InvalidRequestException("There are no group owners present in the request. It is mandatory when creating Teams");
             }
+
+            // Validate the quantity of owners and members based on requirements (configurable)
         }
     }
 }

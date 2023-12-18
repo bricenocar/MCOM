@@ -8,5 +8,12 @@
         {% endfor %}
     ],
     "approverEmail": "{{ content.Request.Approver.Email }}",
-    "approverComments": "{{ content.Request.Approver.Comments }}"    
+    "approverComments": "{{ content.Request.Approver.Comments }}",
+    "title": "{{ content.Site.SiteConfig.SiteName }}",
+    "workloadid": "{{ content.Request.WorkloadId }}",
+    {% if content.Site.SiteConfig.SiteType == 0 %}
+        "siteurl": "{{ content.Site.SiteConfig.SiteURL }}",
+    {% else %}
+        "siteurl": "{{ content.Site.SiteConfig.Alias }}",
+    {% endif %}
 }

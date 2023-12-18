@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace MCOM.Models.Provisioning
 {
@@ -18,7 +19,6 @@ namespace MCOM.Models.Provisioning
         public Requester Requester { get; set; }
         public string RequestDate { get; set; }
         public string RequestOrderedThrough { get; set; }
-        public List<string> Purposes { get; set; }
         public Approver Approver { get; set; }
         public bool Bulk { get; set; }
         public string ProvisioningTemplateUrl { get; set; }
@@ -59,8 +59,13 @@ namespace MCOM.Models.Provisioning
 
     public class GroupUsers
     {
-        public List<string> Members { get; set; }
-        public List<string> Owners { get; set; }
+        public List<User> Members { get; set; }
+        public List<User> Owners { get; set; }
+    }
+
+    public class User
+    {
+        public string Value { get; set; }
     }
 
     public class SiteConfig
@@ -84,16 +89,25 @@ namespace MCOM.Models.Provisioning
 
     public class SiteMetadata
     {
+        [JsonConverter(typeof(NullToEmptyStringDictionaryConverter))]
         public Dictionary<string, string> EIMMetadata { get; set; }
         public Dictionary<string, string> TemplateMetadata { get; set; }
-        public Dictionary<string, string> OptionalMetadata { get; set; }
+        public OptionalMetadata[] OptionalMetadata { get; set; }
+    }
+
+    public class OptionalMetadata
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string InternalName { get; set; }
+        public string TermValues { get; set; }
     }
 
     public class SiteUsers
     {
-        public List<string> Owners { get; set; }
-        public List<string> Members { get; set; }
-        public List<string> Visitors { get; set; }
+        public List<User> Owners { get; set; }
+        public List<User> Members { get; set; }
+        public List<User> Visitors { get; set; }
     }
 
     public class WorkloadCreationRequestResponse

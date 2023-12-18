@@ -1,115 +1,73 @@
 {
-    "Request": {
-        "WorkloadId": 2,
-        "Requester": {
-            "Email": "cabri@statoilintegrationtest.onmicrosoft.com",
-            "BusinessAreaId": 3,
-            "RoleId": 3
+  "Site": {
+    "GroupUsers": {
+      "Members": [],
+      "Owners": [
+        {
+          "Value": "Konrad Kolodziejak;KONK@statoilintegrationtest.onmicrosoft.com"
         },
-        "RequestDate": "",
-        "RequestOrderedThrough": "",
-        "Purposes": [
-            ""
-        ],
-        "Approver": {
-            "Email": "",
-            "Comments": ""
-        },
-        "Bulk": false,
-        "ExpSearchSite" : "https://statoilsrm.sharepoint.com/sites/simsearch"
-    },
-    "Site": {
-        "GroupUsers": {
-            "Members": [],
-            "Owners": [
-                "cabri@statoilintegrationtest.onmicrosoft.com"
-            ]
-        },
-        "SiteConfig": {
-            "SiteType": 1,
-            "TemplateId": 1,
-            "SiteGuid": "14f7a57d-2949-44b7-bb3a-2a8deacf8957",
-            "Description": "This is a site for Field development Grane Gas Export and Electrification Project Subsurface",
-            "Alias": "TeamSiteAlias2",
-            "GroupEmailAddress": "TeamSiteEmailAddress2",
-            "SiteName": "TeamSiteTestProvisioning2",
-            "SiteURL": "TeamSiteUrl2",
-            "SiteClassification": "Restricted",
-            "SensitivityLabel": "e0f5f7cd-0254-4430-a0f2-a7139dffb529",
-            "ExternalSharing": false,
-            "IsPublic": true
-        },
-        "SiteMetadata": {
-            "EIMMetadata": {
-                "BCL1": "-1;#Subsurface|802127e8-0262-4b48-989c-77ab55f45c91",
-                "BCL2": "-1;#Subsurface - N/A|2c3ce976-7d79-487a-a221-c4a36ea03bec",
-                "BusinessArea": "-1;#EXPLORATION & PRODUCTION NORWAY (EPN)|0a3a7019-e79a-4170-bc63-21ca50bf18ef",
-                "Country": "-1;#Norway|cd21f0fc-a0f3-48c6-8f36-ae1c60534e37",
-                "InformationType": "-1;#Subsurface document|f69f6bc9-d7f4-4b61-8bb3-208b4a1d7f7d",
-                "Block": "",
-                "LegalEntity": "-1;#Equinor ASA|98c35a5d-62b8-4578-be3d-53b9f4deec1f",
-                "SecurityClassification": "-1;#Restricted|2778d0cb-d518-40da-b77b-8925576cf660"
-            },
-            "TemplateMetadata": {
-            },
-            "OptionalMetadata": {
-                "AssetType": "-1;#Field development|0310aaf0-9de0-4bff-bfd8-40f940e768f1",
-                "Basin": "-1;#NO North Sea|bba030d3-3249-4bb4-a7db-9a5ffc0dc626",
-                "Continent": "-1;#Europe|68b4b685-d09b-4c08-b252-b770bcf4524d",
-                "Counterparty": "",
-                "Field": "",
-                "FieldStatus": "",
-                "ProspectStatus": "",
-                "License": "",
-                "LicenseStatus": "",
-                "AssetHubType": "",
-                "Well": "",
-                "WellType": "",
-                "Wellbore": "",
-                "GeoXID": "",
-                "Discipline": "",
-                "Responsible": "",
-                "ExpiryDate": "",
-                "ProjectStartDate": "",
-                "ProjectEndDate": "",
-                "DecisionGate": "",
-                "ProjectStatus": "",
-                "SurveyType": "",
-                "SurveyStatus": "",
-                "SeismicDimension": "",
-                "Year": "",
-                "ProtractionArea": "",
-                "BusinessArrangementArea": "",
-                "SeismicSurvey": ""
-            }
-        },
-        "SiteUsers": {
-            "Owners": [
-                "cabri@statoilintegrationtest.onmicrosoft.com"
-            ],
-            "Members": [],
-            "Visitors": []
+        {
+          "Value": "Elizabeth Pettersen;elpet@statoilintegrationtest.onmicrosoft.com"
         }
+      ]
     },
-    "Team": {
-        "Channels" : [
-            {
-                "DisplayName": "General",
-                "Description": "General channel",
-                "IsPrivate": false
-            },
-            {
-                "DisplayName": "Project",
-                "Description": "Project channel",
-                "IsPrivate": false
-            }
-        ],
-        "SharedChannels": [
-            {
-                "DisplayName": "Shared",
-                "Description": "Shared channel",
-                "IsPrivate": false
-            }
-        ]
+    "SiteConfig": {
+      "SiteType": 1,
+      "TemplateId": 1,
+      "Description": "A very long url",
+      "GroupEmailAddress": "SPT-000540-LoremipsumdolorsitametconsectetueradipiscingelitMaecenasporttitorconguemassaFusceposueremagnasedpulvinarultriciespuruslectusmalesuadaliberositametcommodomagnaerosquisurnaNuncviverraimperdietenimFusceestVivamusatellusPellentesquehabitantmorbitristiquesenectusetnetusetmalesuadafamesacturpisegestasProinpharetranonummypedeMaurisetorciAeneannecloremInporttitorDoneclaoreetnonummyaugueSuspendisseduipurusscelerisqueatvulputatevitaepretiummattisnuncMaurisegetnequeatsemvenenatiseleifendUtnonummyFuscealiquetpedenonpedeSuspendissedapibuslorempellentesquemagnaIntegernullaDonecblanditfeugiatligulaDonechendreritfelisetimperdieteuismodpurusipsumpretiummetusinlacinianullanislegetsapienDonecutestinlectusconsequatconsequatEtiamegetduiAliquameratvolutpatSedatloreminnuncportatristiqueProinnecaugueQuisquealiquamtempormagnaPellentesquehabitantmorbitristiquesenectusetnetusetmalesuadafamesacturpisegestas",
+      "SiteName": "Lorem ipsum dolor sit amet consectetuer adipiscing elit Maecenas porttitor congue massa Fusce posuere magna sed pulvinar ultricies purus lectus malesuada libero sit amet commodo magna eros quis urna Nunc viverra imperdiet enim Fusce est Vivamus a tellus Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas Proin pharetra nonummy pede Mauris et orci Aenean nec lorem In porttitor Donec laoreet nonummy augue Suspendisse dui purus scelerisque at vulputate vitae pretium mattis nunc Mauris eget neque at sem venenatis eleifend Ut nonummy Fusce aliquet pede non pede Suspendisse dapibus lorem pellentesque magna Integer nulla Donec blandit feugiat ligula Donec hendrerit felis et imperdiet euismod purus ipsum pretium metus in lacinia nulla nisl eget sapien Donec ut est in lectus consequat consequat Etiam eget dui Aliquam erat volutpat Sed at lorem in nunc porta tristique Proin nec augue Quisque aliquam tempor magna Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas",
+      "Alias": "SPT-000540-Loremipsumdolo",
+      "ExternalSharing": false,
+      "IsPublic": false,
+      "SiteURL": "SPT-000540-LoremipsumdolorsitametconsectetueradipiscingelitMaecenasporttitorconguemassaFusceposueremagnasedpulvinarultriciespuruslectusmalesuadaliberositametcommodomagnaerosquisurnaNuncviverraimperdietenimFusceestVivamusatellusPellentesquehabitantmorbitristiquesenectusetnetusetmalesuadafamesacturpisegestasProinpharetranonummypedeMaurisetorciAeneannecloremInporttitorDoneclaoreetnonummyaugueSuspendisseduipurusscelerisqueatvulputatevitaepretiummattisnuncMaurisegetnequeatsemvenenatiseleifendUtnonummyFuscealiquetpedenonpedeSuspendissedapibuslorempellentesquemagnaIntegernullaDonecblanditfeugiatligulaDonechendreritfelisetimperdieteuismodpurusipsumpretiummetusinlacinianullanislegetsapienDonecutestinlectusconsequatconsequatEtiamegetduiAliquameratvolutpatSedatloreminnuncportatristiqueProinnecaugueQuisquealiquamtempormagnaPellentesquehabitantmorbitristiquesenectusetnetusetmalesuadafamesacturpisegestas",
+      "SiteClassification": "Internal",
+      "SensitivityLabel": "4091b75e-2248-4fc3-b1e5-f8f7110a0f15",
+      "SiteGuid": "00000000-0000-0000-0000-000000000000",
+      "CreatedDate": "0001-01-01T00:00:00",
+      "GroupId": "00000000-0000-0000-0000-000000000000",
+      "TeamId": "00000000-0000-0000-0000-000000000000"
+    },
+    "SiteMetadata": {
+      "EIMMetadata": {
+        "BCL1": "-1;#Technology development and implementation (TDI)|01afcb3b-5eca-414e-9ead-1d3cb7205fcb",
+        "BCL2": "-1;#Not Applicable|b6a69bb1-4da6-4b3a-bc7f-2752c0395156",
+        "BusinessArea": "-1;#TECHNOLOGY DIGITAL ＆ INNOVATION (TDI)|aea1912c-4cae-4452-b8f5-267cd523b887",
+        "Country": "-1;#Norway|cd21f0fc-a0f3-48c6-8f36-ae1c60534e37",
+        "InformationType": "",
+        "LegalEntity": "-1;#Equinor ASA|98c35a5d-62b8-4578-be3d-53b9f4deec1f",
+        "SecurityClassification": "-1;#Internal|3361fef0-33ac-457d-8a1d-df19735ffcb1"
+      },
+      "OptionalMetadata": []
+    },
+    "SiteUsers": {
+      "Owners": [
+        {
+          "Value": "Konrad Kolodziejak;KONK@statoilintegrationtest.onmicrosoft.com"
+        },
+        {
+          "Value": "Elizabeth Pettersen;elpet@statoilintegrationtest.onmicrosoft.com"
+        }
+      ],
+      "Members": [],
+      "Visitors": []
     }
+  },
+  "Request": {
+    "WorkloadId": 1,
+    "Requester": {
+      "Email": "Konrad Kolodziejak;KONK@statoilintegrationtest.onmicrosoft.com",
+      "BusinessAreaId": 3,
+      "RoleId": 3
+    },
+    "RequestDate": "",
+    "RequestOrderedThrough": "",
+    "Approver": {
+      "Email": "",
+      "Comments": ""
+    },
+    "Bulk": false,
+    "MessageID": "6a25cd617147495386794fdb7980fd59",
+    "RequestId": 186
+  }
 }

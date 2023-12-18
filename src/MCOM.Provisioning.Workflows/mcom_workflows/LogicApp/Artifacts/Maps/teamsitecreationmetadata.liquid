@@ -15,7 +15,11 @@
   "siteTimeZone": "UTC",
   "siteLastActivity": "",
   "siteCreatedDate": "{{ content.Site.SiteConfig.CreatedDate }}",
-  "siteCreatedBy": "{{ content.Site.GroupUsers.Owners[0] }}",
+  {% if content.Site.SiteConfig.GroupId != blank %}
+    "siteCreatedBy": "{{ content.Site.GroupUsers.Owners[0].Value }}",
+  {% else %}
+    "siteCreatedBy": "{{ content.Site.SiteUsers.Owners[0].Value }}",
+  {% endif %}
   "siteProvisionedDate": "{{ content.Request.RequestDate }}",
   "siteProvisionedBy": "{{ content.Request.Requester.Email }}",
   "siteDeletedDate": "",
