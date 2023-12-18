@@ -4,6 +4,10 @@ Check all 3 backup files under configFiles folder in the root of the project:
 The webpack config is in the following path:  \node_modules\pcf-scripts\webpackConfig.js
 -backup_tsconfig: Make sure the tsconfig.json and this are the same
 
+Node Version --> 18.18.2 (Specified in package.json)
+NPM Version ---> 9.8.1 (Specified in package.json)
+Install and Use NVM to change node versions --> nvm install 18.18.2 and then nmv use 18.18.2
+
 To run the app locally:
 Dev mode: npm start watch
 Prod mode: npm run start:watch:prod

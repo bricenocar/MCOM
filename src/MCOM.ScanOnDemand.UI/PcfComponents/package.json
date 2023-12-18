@@ -2,6 +2,10 @@
   "name": "pcf-project",
   "version": "1.0.0",
   "description": "Project containing your PowerApps Component Framework (PCF) control.",
+  "engines" : { 
+    "npm" : "9.8.1",
+    "node" : "18.18.2"
+  },
   "scripts": {
     "build": "pcf-scripts build",
     "clean": "pcf-scripts clean",
