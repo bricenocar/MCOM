@@ -15,7 +15,8 @@
     "strictNullChecks": false,
     "noUnusedLocals": false,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
+    "allowJs": true,
+    "esModuleInterop": true,
     "lib": [
       "es5",
       "scripthost",
@@ -35,10 +36,10 @@
   ],
   "include": [
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
   ],
   "exclude": [
     "./node_modules",
-    "./out"
+    "./out",
   ]
 }

@@ -1,19 +1,19 @@
 import * as React from 'react';
 import styles from './TaxonomyPanelContents.module.scss';
-import { IBasePickerStyleProps,
-         IBasePickerStyles,
-         IPickerItemProps,
-         IStyleFunctionOrObject,
-         ISuggestionItemProps,
-         Label,
-         Selection,
-       } from 'office-ui-fabric-react';
-import { ITermInfo,
-         ITermSetInfo,
-         ITermStoreInfo
-       } from '@pnp/sp/taxonomy';
-// import { Guid } from '@microsoft/sp-core-library';
-import * as strings from '../../../strings/en-us'; // TODO Language resx or any other...
+import {
+  IBasePickerStyleProps,
+  IBasePickerStyles,
+  IPickerItemProps,
+  IStyleFunctionOrObject,
+  ISuggestionItemProps,
+  Label,
+  Selection,
+} from 'office-ui-fabric-react';
+import {
+  ITermInfo,
+  ITermSetInfo,
+  ITermStoreInfo
+} from '@pnp/sp/taxonomy';
 import { useForceUpdate } from '@uifabric/react-hooks';
 import { ModernTermPicker } from '../modernTermPicker/ModernTermPicker';
 import { IReadonlyTheme } from "@microsoft/sp-component-base";
@@ -21,6 +21,7 @@ import { IModernTermPickerProps } from '../modernTermPicker/ModernTermPicker.typ
 import { Optional } from '../ModernTaxonomyPicker';
 import { TaxonomyTree } from '../taxonomyTree/TaxonomyTree';
 import { SPTaxonomyService } from '../../../services/SPTaxonomyService';
+import { LanguageService } from '../../../../services/languageService';
 
 export interface ITaxonomyPanelContentsProps {
   allowMultipleSelections?: boolean;
@@ -28,10 +29,10 @@ export interface ITaxonomyPanelContentsProps {
   selectedPanelOptions: ITermInfo[];
   setSelectedPanelOptions: React.Dispatch<React.SetStateAction<ITermInfo[]>>;
   onResolveSuggestions: (filter: string, selectedItems?: ITermInfo[]) => ITermInfo[] | PromiseLike<ITermInfo[]>;
-  //onLoadMoreData: (termSetId: Guid, parentTermId?: Guid, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize?: number) => Promise<{ value: ITermInfo[], skiptoken: string }>;
   taxonomyService: SPTaxonomyService;
   anchorTermInfo: ITermInfo;
   termSetInfo: ITermSetInfo;
+  extraAnchorTermIds: string; // Custom property
   termStoreInfo: ITermStoreInfo;
   placeHolder: string;
   onRenderSuggestionsItem?: (props: ITermInfo, itemProps: ISuggestionItemProps<ITermInfo>) => JSX.Element;
@@ -48,6 +49,7 @@ export interface ITaxonomyPanelContentsProps {
 export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React.ReactElement<ITaxonomyPanelContentsProps> {
   const [terms, setTerms] = React.useState<ITermInfo[]>(props.selectedPanelOptions?.length > 0 ? [...props.selectedPanelOptions] : []);
 
+  const languageService = LanguageService.getInstance();
   const forceUpdate = useForceUpdate();
 
   const selection = React.useMemo(() => {
@@ -77,7 +79,7 @@ export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React
     }
   };
 
-  const termPickerStyles: IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> = { root: {paddingTop: 4, paddingBottom: 4, paddingRight: 4, minheight: 34}, input: {minheight: 34}, text: { minheight: 34, borderStyle: 'none', borderWidth: '0px' } };
+  const termPickerStyles: IStyleFunctionOrObject<IBasePickerStyleProps, IBasePickerStyles> = { root: { paddingTop: 4, paddingBottom: 4, paddingRight: 4, minheight: 34 }, input: { minheight: 34 }, text: { minheight: 34, borderStyle: 'none', borderWidth: '0px' } };
 
   return (
     <div className={styles.taxonomyPanelContents}>
@@ -85,17 +87,17 @@ export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React
         <div>
           <ModernTermPicker
             {...props.termPickerProps}
-            removeButtonAriaLabel={strings.ModernTaxonomyPickerRemoveButtonText}
+            removeButtonAriaLabel={languageService.getResource('ModernTaxonomyPickerRemoveButtonText')}
             onResolveSuggestions={props.termPickerProps?.onResolveSuggestions ?? props.onResolveSuggestions}
             itemLimit={props.allowMultipleSelections ? undefined : 1}
             selectedItems={props.selectedPanelOptions}
             styles={props.termPickerProps?.styles ?? termPickerStyles}
             onChange={onPickerChange}
             getTextFromItem={props.getTextFromItem}
-            pickerSuggestionsProps={props.termPickerProps?.pickerSuggestionsProps ?? { noResultsFoundText: strings.ModernTaxonomyPickerNoResultsFound }}
+            pickerSuggestionsProps={props.termPickerProps?.pickerSuggestionsProps ?? { noResultsFoundText: languageService.getResource('ModernTaxonomyPickerNoResultsFound') }}
             inputProps={props.termPickerProps?.inputProps ?? {
-              'aria-label': props.placeHolder || strings.ModernTaxonomyPickerDefaultPlaceHolder,
-              placeholder: props.placeHolder || strings.ModernTaxonomyPickerDefaultPlaceHolder
+              'aria-label': props.placeHolder || languageService.getResource('ModernTaxonomyPickerDefaultPlaceHolder'),
+              placeholder: props.placeHolder || languageService.getResource('ModernTaxonomyPickerDefaultPlaceHolder')
             }}
             onRenderSuggestionsItem={props.termPickerProps?.onRenderSuggestionsItem ?? props.onRenderSuggestionsItem}
             onRenderItem={props.onRenderItem}
@@ -103,16 +105,16 @@ export function TaxonomyPanelContents(props: ITaxonomyPanelContentsProps): React
           />
         </div>
       </div>
-      <Label className={styles.taxonomyTreeLabel}>{props.allowMultipleSelections ? strings.ModernTaxonomyPickerTreeTitleMulti : strings.ModernTaxonomyPickerTreeTitleSingle}</Label>
+      <Label className={styles.taxonomyTreeLabel}>{props.allowMultipleSelections ? languageService.getResource('ModernTaxonomyPickerTreeTitleMulti') : languageService.getResource('ModernTaxonomyPickerTreeTitleSingle')}</Label>
       <TaxonomyTree
         anchorTermInfo={props.anchorTermInfo}
         languageTag={props.languageTag}
-        //onLoadMoreData={props.onLoadMoreData}
         taxonomyService={props.taxonomyService}
         pageSize={props.pageSize}
         selection={selection}
         setTerms={setTerms}
         termSetInfo={props.termSetInfo}
+        extraAnchorTermIds={props.extraAnchorTermIds}
         termStoreInfo={props.termStoreInfo}
         terms={terms}
         allowMultipleSelections={props.allowMultipleSelections}

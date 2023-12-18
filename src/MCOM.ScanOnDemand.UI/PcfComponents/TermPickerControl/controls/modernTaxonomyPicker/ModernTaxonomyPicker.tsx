@@ -7,7 +7,6 @@ import {
   ITermStoreInfo
 } from '@pnp/sp/taxonomy';
 import { useId } from '@uifabric/react-hooks';
-import * as strings from '../../strings/en-us'; // TODO Language resx or any other...
 import {
   DefaultButton, IButtonStyles, IconButton, PrimaryButton
 } from 'office-ui-fabric-react/lib/Button';
@@ -36,6 +35,8 @@ import { IModernTermPickerProps, ITermItemProps } from './modernTermPicker/Moder
 import { TaxonomyPanelContents } from './taxonomyPanelContents';
 import { TermItem } from './termItem/TermItem';
 import { TermItemSuggestion } from './termItem/TermItemSuggestion';
+import { Shimmer, ShimmerElementType } from '@fluentui/react';
+import { LanguageService } from '../../../services/languageService';
 
 export type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
@@ -44,6 +45,7 @@ export interface IModernTaxonomyPickerProps {
   isPathRendered?: boolean;
   termSetId: string;
   anchorTermId?: string;
+  extraAnchorTermIds?: string; // Custom property
   panelTitle: string;
   label: string;
   error: boolean; // Custom property
@@ -57,7 +59,6 @@ export interface IModernTaxonomyPickerProps {
   disabled?: boolean;
   required?: boolean;
   onChange?: (newValue?: ITermInfo[]) => void;
-  onLoadCompleted?: (value?: boolean) => void;
   onRenderItem?: (itemProps: ITermItemProps) => JSX.Element;
   onRenderSuggestionsItem?: (term: ITermInfo, itemProps: ISuggestionItemProps<ITermInfo>) => JSX.Element;
   placeHolder?: string;
@@ -73,18 +74,19 @@ export interface IModernTaxonomyPickerProps {
 
 export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Element {
 
-  // TODO: Get from context
-  const languageTag = "en-US";
+  const languageService = LanguageService.getInstance();
+  const languageTag = languageService.getLocale();
 
   const [panelIsOpen, setPanelIsOpen] = React.useState(false);
-  const [initialLoadCompleted, setInitialLoadCompleted] = React.useState(false);
+  const [loadCompleted, setLoadCompleted] = React.useState(false);
   const [selectedOptions, setSelectedOptions] = React.useState<ITermInfo[]>([]);
   const [selectedPanelOptions, setSelectedPanelOptions] = React.useState<ITermInfo[]>([]);
-  const [currentTermStoreInfo, setCurrentTermStoreInfo] = React.useState<ITermStoreInfo>();
-  const [currentTermSetInfo, setCurrentTermSetInfo] = React.useState<ITermSetInfo>();
-  const [currentAnchorTermInfo, setCurrentAnchorTermInfo] = React.useState<ITermInfo>();
-  const [currentLanguageTag, setCurrentLanguageTag] = React.useState<string>("");
+  const [currentTermStoreInfo, setCurrentTermStoreInfo] = React.useState<ITermStoreInfo>(undefined);
+  const [currentTermSetInfo, setCurrentTermSetInfo] = React.useState<ITermSetInfo>(undefined);
+  const [currentAnchorTermInfo, setCurrentAnchorTermInfo] = React.useState<ITermInfo>(undefined);
+  const [currentLanguageTag, setCurrentLanguageTag] = React.useState<string>('');
 
+  // On load event
   React.useEffect(() => {
     props.taxonomyService.getTermStoreInfoV2()
       .then((termStoreInfo) => {
@@ -93,49 +95,79 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
         setSelectedOptions(Array.isArray(props.initialValues) ?
           props.initialValues.map(term => { return { ...term, languageTag: languageTag, termStoreInfo: termStoreInfo } as ITermInfo; }) :
           []);
-        setInitialLoadCompleted(true);
       })
       .catch((e) => {
-        console.log('getTermStoreInfo error: ', e);
+        console.error('getTermStoreInfo error: ', e);
         // no-op;
       });
     props.taxonomyService.getTermSetInfoV2(Guid.parse(props.termSetId))
       .then((termSetInfo) => {
         setCurrentTermSetInfo(termSetInfo);
+        if (!props.anchorTermId) {
+          setLoadCompleted(true);
+        }
       })
       .catch((e) => {
         // no-op;
-        console.log('getTermSetInfo error: ', e);
+        console.error('getTermSetInfo error: ', e);
       });
     if (props.anchorTermId && props.anchorTermId !== Guid.empty.toString()) {
       props.taxonomyService.getTermByIdV2(Guid.parse(props.termSetId), props.anchorTermId ? Guid.parse(props.anchorTermId) : Guid.empty)
         .then((anchorTermInfo) => {
           setCurrentAnchorTermInfo(anchorTermInfo);
+          setLoadCompleted(true);
         })
         .catch((e) => {
-          console.log('getTermById error: ', e);
+          console.error('getTermById error: ', e);
           // no-op;
         });
     }
   }, []);
 
+  // Send changed options to the parent
   React.useEffect(() => {
-    if (props.onChange && initialLoadCompleted) {
+    if (props.onChange && loadCompleted) {
       props.onChange(selectedOptions);
     }
   }, [selectedOptions]);
 
-  React.useEffect(() => {
-    if (props.onLoadCompleted && initialLoadCompleted) {
-      props.onLoadCompleted(initialLoadCompleted);
-    }
-  }, [initialLoadCompleted]);
-
+  // Set initial values to the termpicker component
   React.useEffect(() => {
     setSelectedOptions(Array.isArray(props.initialValues) ?
       props.initialValues.map(term => { return { ...term, languageTag: languageTag } as ITermInfo; }) :
       []);
   }, [props.initialValues]);
+
+  // In case of any of the term properties change so reload the whole component
+  React.useEffect(() => {
+    const getTermSetInfoV2 = async () => {
+      try {
+        const termSetInfo = await props.taxonomyService.getTermSetInfoV2(Guid.parse(props.termSetId));
+        setCurrentTermSetInfo(termSetInfo);
+
+        if (props.anchorTermId && props.anchorTermId !== Guid.empty.toString()) {
+          const anchorTermInfo = await props.taxonomyService.getTermByIdV2(Guid.parse(props.termSetId), props.anchorTermId ? Guid.parse(props.anchorTermId) : Guid.empty);
+          setCurrentAnchorTermInfo(anchorTermInfo);
+        } else {
+          setCurrentAnchorTermInfo(undefined);
+        }
+
+        // Move the isMounted check closer to where you set loadCompleted
+      } catch (error) {
+        console.error('Error fetching term set info:', error);
+      }
+
+      // Hide Shimmer
+      setLoadCompleted(true);
+    };
+
+    // Show shimmer
+    setLoadCompleted(false);
+
+    // Call local function
+    getTermSetInfoV2();
+
+  }, [props.termSetId, props.anchorTermId, props.extraAnchorTermIds]);
 
   function onOpenPanel(): void {
     if (props.disabled === true) {
@@ -244,11 +276,12 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
     isDefault: boolean;
     languageTag: string;
   }[] {
-    let labels = item.labels.filter((name) => name.languageTag === currentLanguageTag && name.isDefault);
-    if (labels.length === 0) {
-      labels = item.labels.filter((name) => name.languageTag === currentTermStoreInfo?.defaultLanguageTag && name.isDefault);
+    let labels = item.labels.filter((name) => name?.languageTag?.toLowerCase() === currentLanguageTag && name?.isDefault);
+    if (labels.length === 0 && currentTermStoreInfo?.defaultLanguageTag) {
+      labels = item.labels.filter((name) => name?.languageTag?.toLowerCase() === currentTermStoreInfo.defaultLanguageTag.toLowerCase() && name?.isDefault);
     }
-    return labels;
+
+    return (labels && labels.length > 0) ? labels : item.labels;
   }
 
   function onRenderItem(itemProps: ITermItemProps): JSX.Element | null {
@@ -321,6 +354,9 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
           selectors: {
             '.ms-BasePicker-text': {
               borderColor: props.errorBorderColor,
+            },
+            '.ms-BasePicker-text:after': {
+              borderColor: props.errorBorderColor,
             }
           },
         },
@@ -331,16 +367,23 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
     }
   }
 
+  // Buils shimmer elements
+  const shimmerElements = [
+    { type: ShimmerElementType.line, width: '96%', height: props.inputHeight },
+    { type: ShimmerElementType.gap, width: '2%' },
+    { type: ShimmerElementType.line, width: '2%', height: (props.inputHeight * 70) / 100 },
+  ];
+
   return (
 
     <div className={styles.modernTaxonomyPicker}>
       {props.label && <Label required={props.required}>{props.label}</Label>}
-      {initialLoadCompleted &&
+      {loadCompleted &&
         <div className={styles.termField}>
           <div className={styles.termFieldInput}>
             <ModernTermPicker
               {...props.termPickerProps}
-              removeButtonAriaLabel={strings.ModernTaxonomyPickerRemoveButtonText}
+              removeButtonAriaLabel={languageService.getResource('ModernTaxonomyPickerRemoveButtonText')}
               onResolveSuggestions={props.termPickerProps?.onResolveSuggestions ?? onResolveSuggestions}
               itemLimit={props.allowMultipleSelections ? undefined : 1}
               selectedItems={selectedOptions}
@@ -348,10 +391,10 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
               styles={props.termPickerProps?.styles ?? termPickerStyles}
               onChange={onTermPickerChange}
               getTextFromItem={getTextFromItem}
-              pickerSuggestionsProps={props.termPickerProps?.pickerSuggestionsProps ?? { noResultsFoundText: strings.ModernTaxonomyPickerNoResultsFound }}
+              pickerSuggestionsProps={props.termPickerProps?.pickerSuggestionsProps ?? { noResultsFoundText: languageService.getResource('ModernTaxonomyPickerNoResultsFound') }}
               inputProps={props.termPickerProps?.inputProps ?? {
-                'aria-label': props.placeHolder || strings.ModernTaxonomyPickerDefaultPlaceHolder,
-                placeholder: props.placeHolder || strings.ModernTaxonomyPickerDefaultPlaceHolder
+                'aria-label': props.placeHolder || languageService.getResource('ModernTaxonomyPickerDefaultPlaceHolder'),
+                placeholder: props.placeHolder || languageService.getResource('ModernTaxonomyPickerDefaultPlaceHolder')
               }}
               onRenderSuggestionsItem={props.onRenderSuggestionsItem ?? onRenderSuggestionsItem}
               onRenderItem={props.onRenderItem as any ?? onRenderItem} // FIXING LINT ISSUE as any
@@ -360,7 +403,7 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
           </div>
           <div className={styles.termFieldButton}>
             <TooltipHost
-              content={strings.ModernTaxonomyPickerAddTagButtonTooltip}
+              content={languageService.getResource('ModernTaxonomyPickerAddTagButtonTooltip')}
               id={tooltipId}
               calloutProps={calloutProps}
               styles={hostStyles}
@@ -371,10 +414,12 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
         </div>
       }
 
+      {!loadCompleted && <Shimmer width={'99%'} shimmerElements={shimmerElements} />}
+
       <Panel
         isOpen={panelIsOpen}
         hasCloseButton={true}
-        closeButtonAriaLabel={strings.ModernTaxonomyPickerPanelCloseButtonText}
+        closeButtonAriaLabel={languageService.getResource('ModernTaxonomyPickerPanelCloseButtonText')}
         onDismiss={onClosePanel}
         isLightDismiss={props.isLightDismiss}
         isBlocking={props.isBlocking}
@@ -387,8 +432,8 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
           };
           return (
             <Stack horizontal disableShrink tokens={horizontalGapStackTokens}>
-              <PrimaryButton text={strings.ModernTaxonomyPickerApplyButtonText} value='Apply' onClick={onApply} />
-              <DefaultButton text={strings.ModernTaxonomyPickerCancelButtonText} value='Cancel' onClick={onClosePanel} />
+              <PrimaryButton text={languageService.getResource('ModernTaxonomyPickerApplyButtonText')} value='Apply' onClick={onApply} />
+              <DefaultButton text={languageService.getResource('ModernTaxonomyPickerCancelButtonText')} value='Cancel' onClick={onClosePanel} />
             </Stack>
           );
         }}>
@@ -401,12 +446,13 @@ export function ModernTaxonomyPicker(props: IModernTaxonomyPickerProps): JSX.Ele
                 onResolveSuggestions={props.termPickerProps?.onResolveSuggestions ?? onResolveSuggestions}
                 taxonomyService={props.taxonomyService}
                 anchorTermInfo={currentAnchorTermInfo!}
+                extraAnchorTermIds={props.extraAnchorTermIds}
                 termSetInfo={currentTermSetInfo!}
                 termStoreInfo={currentTermStoreInfo!}
                 pageSize={props.pageSize || 200}
                 selectedPanelOptions={selectedPanelOptions}
                 setSelectedPanelOptions={setSelectedPanelOptions}
-                placeHolder={props.placeHolder || strings.ModernTaxonomyPickerDefaultPlaceHolder}
+                placeHolder={props.placeHolder || languageService.getResource('ModernTaxonomyPickerDefaultPlaceHolder')}
                 onRenderSuggestionsItem={props.onRenderSuggestionsItem ?? onRenderSuggestionsItem}
                 onRenderItem={props.onRenderItem as any ?? onRenderItem} // FIXING LINT ISSUE as any
                 getTextFromItem={getTextFromItem}

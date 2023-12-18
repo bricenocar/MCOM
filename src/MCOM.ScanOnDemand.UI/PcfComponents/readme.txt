@@ -4,6 +4,10 @@ Check all 3 backup files under configFiles folder in the root of the project:
 The webpack config is in the following path:  \node_modules\pcf-scripts\webpackConfig.js
 -backup_tsconfig: Make sure the tsconfig.json and this are the same
 
+To run the app locally:
+Dev mode: npm start watch
+Prod mode: npm run start:watch:prod
+
 Build and Deploy Solution:
 -npm run build -- --buildMode production
 

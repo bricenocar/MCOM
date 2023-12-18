@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.0.5" display-name-key="TermPickerControl" description-key="TermPickerControl description" control-type="standard" >
+  <control namespace="Mcom.Pcf.Components" constructor="TermPickerControl" version="1.0.0" display-name-key="TermPickerControl" description-key="TermPickerControl description" control-type="standard" >
     <!--external-service-usage node declares whether this 3rd party PCF control is using external service or not, if yes, this control will be considered as premium and please also add the external domain it is using.
     If it is not using any external service, please set the enabled="false" and DO NOT add any domain below. The "enabled" will be false by default.
     Example1:
@@ -18,30 +18,51 @@
       -->
     </external-service-usage>    
     <!-- property node identifies a specific, configurable piece of data that the control expects from CDS -->
+    <property name="ApiUrl"
+      display-name-key="ApiUrl"
+      description-key="Api url having access to get data from Graph/Office 365"
+      of-type="SingleLine.Text"
+      usage="input"
+      required="true"
+      default-value=""/>
     <property name="SiteUrl"
       display-name-key="SiteUrl"
       description-key="SharePoint Site Url"
       of-type="SingleLine.Text"
       usage="input"
       required="true"
-      default-value="https://statoilintegrationtest.sharepoint.com/sites/ScanOnDemandTestSite"/>
+      default-value=""/>
     <property name="TermSetId"
       display-name-key="TermSetId"
       description-key="Term Store Management TermSetId"
       of-type="SingleLine.Text"
-      usage="input"
+      usage="bound"
       required="true"
-      default-value="dd8ea1ba-7897-47bf-ba2a-f94bff34ce6d"/>
+      default-value=""/>
+    <property name="AnchorTermId"
+      display-name-key="AnchorTermId"
+      description-key="Set the id of a child term in the TermSet to be able to select terms from that level and below"
+      of-type="SingleLine.Text"
+      usage="bound"
+      required="false"
+      default-value=""/>
+    <property name="ExtraAnchorTermIds"
+      display-name-key="ExtraAnchorTermIds"
+      description-key="Set the ids of a extra children terms in the TermSet (comma separated) to be able to select terms from those levels and below"
+      of-type="SingleLine.Text"
+      usage="bound"
+      required="false"
+      default-value=""/>
     <property name="Label"
       display-name-key="Label"
-      description-key="Label shown as a control title"
+      description-key="Text displayed above the Taxonomy Picker"
       of-type="SingleLine.Text"
       usage="input"
       required="false"
       default-value="Terms"/>
     <property name="PanelTitle"
       display-name-key="PanelTitle"
-      description-key="Title on the right panel when searching for terms"
+      description-key="TermSet Picker Panel title"
       of-type="SingleLine.Text"
       usage="input"
       required="false"
@@ -63,6 +84,13 @@
     <property name="AllowMultipleSelections"
       display-name-key="AllowMultipleSelections"
       description-key="Allow multiple Term Selections"
+      of-type="TwoOptions"
+      usage="input"
+      required="true"
+      default-value="true"/>  
+    <property name="AllowSelectingChildren"
+      display-name-key="AllowSelectingChildren"
+      description-key="Whether child terms can be selected. Default value is true"
       of-type="TwoOptions"
       usage="input"
       required="true"
@@ -121,6 +149,13 @@
       description-key="Term values selected in the term picker component"
       of-type="SingleLine.Text"
       usage="bound"
+      required="false"
+      default-value="" />
+    <property name="TermLabels"
+      display-name-key="TermLabels"
+      description-key="Terms labes selected in the term picker component"
+      of-type="SingleLine.Text"
+      usage="output"
       required="false"
       default-value="" />
     <resources>

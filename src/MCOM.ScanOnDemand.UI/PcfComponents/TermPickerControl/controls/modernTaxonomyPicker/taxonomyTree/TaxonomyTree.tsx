@@ -38,20 +38,20 @@ import {
   Selection,
   Spinner
 } from 'office-ui-fabric-react';
-import * as strings from '../../../strings/en-us'; // TODO Language resx or any other...
 import { IReadonlyTheme } from '@microsoft/sp-component-base';
 import { Guid } from '@microsoft/sp-core-library';
 import { ITermInfo, ITermSetInfo, ITermStoreInfo } from '@pnp/sp/taxonomy';
 import styles from './TaxonomyTree.module.scss';
 import { SPTaxonomyService } from '../../../services/SPTaxonomyService';
+import { LanguageService } from '../../../../services/languageService';
 
 export interface ITaxonomyTreeProps {
   allowMultipleSelections?: boolean;
   pageSize: number;
-  //onLoadMoreData: (termSetId: Guid, parentTermId?: Guid, skiptoken?: string, hideDeprecatedTerms?: boolean, pageSize?: number) => Promise<{ value: ITermInfo[], skiptoken: string }>;
   taxonomyService: SPTaxonomyService;
   anchorTermInfo?: ITermInfo;
   termSetInfo: ITermSetInfo;
+  extraAnchorTermIds: string;
   termStoreInfo: ITermStoreInfo;
   languageTag: string;
   themeVariant?: IReadonlyTheme;
@@ -67,6 +67,8 @@ export interface ITaxonomyTreeProps {
 export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITaxonomyTreeProps> {
   const [groupsLoading, setGroupsLoading] = React.useState<string[]>([]);
   const [groups, setGroups] = React.useState<IGroup[]>([]);
+
+  const languageService = LanguageService.getInstance();
 
   const updateTaxonomyTreeViewWithNewTermItems = (newTermItems: ITermInfo[]): void => {
     for (const term of newTermItems) {
@@ -218,7 +220,7 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
     setGroupsLoading((prevGroupsLoading) => [...prevGroupsLoading, props.termSetInfo.id]);
     if (props.termSetInfo.childrenCount > 0) {
       // Call taxonomy service
-      props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), props.anchorTermInfo ? Guid.parse(props.anchorTermInfo.id) : Guid.empty, '', props.hideDeprecatedTerms, props.pageSize)
+      props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), props.anchorTermInfo ? Guid.parse(props.anchorTermInfo.id) : Guid.empty, props.extraAnchorTermIds, '', props.hideDeprecatedTerms, props.pageSize)
         .then((loadedTerms) => {
           const grps: IGroup[] = loadedTerms.value.map(term => {
             let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));
@@ -283,7 +285,7 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
         group.data.isLoading = true;
 
         // Call taxonomy service
-        props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), Guid.parse(group.key), '', props.hideDeprecatedTerms, props.pageSize)
+        props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), Guid.parse(group.key), '', '', props.hideDeprecatedTerms, props.pageSize)
           .then((loadedTerms) => {
             const grps: IGroup[] = loadedTerms.value.map(term => {
               let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));
@@ -525,7 +527,7 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
             setGroupsLoading((prevGroupsLoading) => [...prevGroupsLoading, footerProps.group.key]);
 
             // Call taxonomy service
-            props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), footerProps.group.key === props.termSetInfo.id ? Guid.empty : Guid.parse(footerProps.group.key), footerProps.group.data.skiptoken, props.hideDeprecatedTerms, props.pageSize)
+            props.taxonomyService.getTermsV2(Guid.parse(props.termSetInfo.id), footerProps.group.key === props.termSetInfo.id ? Guid.empty : Guid.parse(footerProps.group.key), '', footerProps.group.data.skiptoken, props.hideDeprecatedTerms, props.pageSize)
               .then((loadedTerms) => {
                 const grps: IGroup[] = loadedTerms.value.map(term => {
                   let termNames = term.labels.filter((termLabel) => (termLabel.languageTag === props.languageTag && termLabel.isDefault === true));
@@ -562,7 +564,7 @@ export function TaxonomyTree(props: ITaxonomyTreeProps): React.ReactElement<ITax
               });
           }}
             styles={linkStyles}>
-            {strings.ModernTaxonomyPickerLoadMoreText}
+            {languageService.getResource('ModernTaxonomyPickerLoadMoreText')}
           </Link>
         </div>
       );

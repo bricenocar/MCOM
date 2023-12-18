@@ -9,6 +9,7 @@ export interface ITaxonomyTreeProps {
     taxonomyService: SPTaxonomyService;
     anchorTermInfo?: ITermInfo;
     termSetInfo: ITermSetInfo;
+    extraAnchorTermIds: string;
     termStoreInfo: ITermStoreInfo;
     languageTag: string;
     themeVariant?: IReadonlyTheme;

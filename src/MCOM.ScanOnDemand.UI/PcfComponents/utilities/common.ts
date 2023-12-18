@@ -1,0 +1,46 @@
+// Get term values string and convert to a TermInfo array object
+export const getTermValuesArray = (input: string) => {
+    const resultArray = [];
+    const segments = input.split(';#');
+
+    for (let i = 0; i < segments.length; i++) {
+        const currentSegment = segments[i];
+        const nextSegment = segments[i + 1];
+
+        if (currentSegment.startsWith('-1') && nextSegment) {
+            let [name, id] = nextSegment.split('|');
+            name = name.replace('-1;#', '');
+            resultArray.push({ labels: [{ name, isDefault: true, languageTag: "en-US" }], id });
+            i++;
+        }
+    }
+
+    return resultArray;
+}
+
+export const validTermValues = (inputString): boolean => {
+    const regexPattern = /-1;#([^;|]+)\|([^;#]+)(?=;#|$)/g;
+    return regexPattern.test(inputString);
+}
+
+export const isValidGuid = (value: string): boolean => {
+    const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return guidRegex.test(value);
+}
+
+export const isValidUrl = (url: string): boolean => {
+    // URL pattern
+    const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
+    return urlRegex.test(url);
+}
+
+export const areValidGuids = (value: string): boolean => {
+    // Regex pattern for a single GUID
+    const singleGuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  
+    // Regex pattern for a comma-separated list of GUIDs
+    const multipleGuidsPattern = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})(,\s*[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})*$/;
+  
+    // Check if the value is a single GUID or a comma-separated list of GUIDs
+    return singleGuidPattern.test(value) || multipleGuidsPattern.test(value);
+  };

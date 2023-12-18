@@ -10,6 +10,7 @@ export interface IModernTaxonomyPickerProps {
     isPathRendered?: boolean;
     termSetId: string;
     anchorTermId?: string;
+    extraAnchorTermIds?: string;
     panelTitle: string;
     label: string;
     error: boolean;
@@ -23,7 +24,6 @@ export interface IModernTaxonomyPickerProps {
     disabled?: boolean;
     required?: boolean;
     onChange?: (newValue?: ITermInfo[]) => void;
-    onLoadCompleted?: (value?: boolean) => void;
     onRenderItem?: (itemProps: ITermItemProps) => JSX.Element;
     onRenderSuggestionsItem?: (term: ITermInfo, itemProps: ISuggestionItemProps<ITermInfo>) => JSX.Element;
     placeHolder?: string;

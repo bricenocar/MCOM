@@ -3,16 +3,21 @@ import * as ReactDOM from 'react-dom';
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 import { Termpicker } from './components/Termpicker';
 import { ITermInfo } from '@pnp/sp/taxonomy';
-import { outPutSchema } from './utilities/schemas';
+import { stringOutPutSchema, termsOutPutSchema } from '../utilities/schemas';
 import { SPTaxonomyService } from './services/SPTaxonomyService';
 import { Optional } from './controls/modernTaxonomyPicker';
-import { getTermValuesArray, validTermValues } from './utilities/common';
-import { serviceStatusCheck } from '../services/spServices';
+import { areValidGuids, getTermValuesArray, isValidGuid, isValidUrl, validTermValues } from '../utilities/common';
+import { LanguageService } from '../services/languageService';
+import { SPService } from '../services/spService';
 
 export class TermPickerControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
 
     private initialValues: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
     private termValues: string; // type (ITermInfo) or Array in case the whole object is needed
+    private termLabels: string;
+    private termSetId: string;
+    private anchorTermId: string;
+    private extraAnchorTermIds: string;
     private notifyOutputChanged: () => void;
     private container: HTMLDivElement;
     private context: ComponentFramework.Context<IInputs>;
@@ -20,8 +25,8 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
     private previousTermValues: string;
     private checkService: boolean;
 
-    constructor() {
 
+    constructor() {
     }
 
     /**
@@ -38,6 +43,18 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
         this.container = container;
         this.context = context;
         this.context.mode.trackContainerResize(true);
+
+        // Get the user's locale from userSettings. Not getting locale property in current version...
+        const userLocale = (context.userSettings as any).locale || 'en-us';
+        // Initialize LanguageService with the user's locale
+        const languageService = LanguageService.getInstance();
+        // Set the default language
+        languageService.initializeLocale(userLocale);
+
+        // Get the SPO service URL from the configuration
+        const spoServiceUrl = context.parameters.ApiUrl.raw;
+        // Initialize the SPService instance
+        SPService.initialize(spoServiceUrl);
     }
 
     /**
@@ -46,13 +63,24 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
      */
     public async updateView(context: ComponentFramework.Context<IInputs>): Promise<void> {
 
-        // storing the latest context from the control.
+        // storing the latest context and terms
         this.context = context;
+        this.termSetId = context.parameters.TermSetId.raw;
+        this.anchorTermId = context.parameters.AnchorTermId.raw;
+        this.extraAnchorTermIds = context.parameters.ExtraAnchorTermIds.raw;
 
         // Get the current value of the property
+        const apiUrl = context.parameters.ApiUrl.raw;
         const siteUrl = context.parameters.SiteUrl.raw;
         const currentTermValues = context.parameters.TermValues.raw || '';
         const areTermValuesValid = validTermValues(currentTermValues);
+
+        // Validate terms
+        const validApiUrl = isValidUrl(apiUrl);
+        const validSiteUrl = isValidUrl(siteUrl);
+        const validTermSetId = isValidGuid(this.termSetId);
+        const validAnchorTermId = this.anchorTermId ? isValidGuid(this.anchorTermId) : true;
+        const validExtraAnchorTermIds = this.extraAnchorTermIds ? areValidGuids(this.extraAnchorTermIds) : true;
 
         // Check if the termValues have changed
         if (currentTermValues !== this.previousTermValues) {
@@ -69,17 +97,31 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
 
         // Get taxonomy service        
         if (!this.taxonomyService) {
-            this.checkService = await serviceStatusCheck();
-            this.taxonomyService = new SPTaxonomyService(siteUrl);
+            // Check if the SPO service URL is defined
+            const spService = SPService.getInstance();
+            if (!spService.getSpoServiceUrl()) {
+                // Get the SPO service URL from the configuration
+
+                // Initialize the SPService instance with the URL
+                SPService.initialize(apiUrl);
+            }
+
+            this.checkService = await spService.serviceStatusCheck();
+            if (validSiteUrl && validTermSetId && validAnchorTermId && validExtraAnchorTermIds) {
+                this.taxonomyService = new SPTaxonomyService(siteUrl);
+            }
         }
 
         ReactDOM.render(
             React.createElement(Termpicker, {
                 taxonomyService: this.taxonomyService,
-                termSetId: context.parameters.TermSetId.raw,
+                termSetId: this.termSetId,
+                anchorTermId: this.anchorTermId,
+                extraAnchorTermIds: this.extraAnchorTermIds,
                 label: context.parameters.Label.raw,
                 panelTitle: context.parameters.PanelTitle.raw,
                 allowMultipleSelections: context.parameters.AllowMultipleSelections.raw,
+                allowSelectingChildren: context.parameters.AllowSelectingChildren.raw,
                 initialValues: this.initialValues,
                 inputHeight: context.parameters.InputHeight.raw,
                 error: context.parameters.Error.raw,
@@ -91,6 +133,11 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
                 pageSize: context.parameters.PageSize.raw,
                 hideDeprecatedTerms: context.parameters.HideDeprecatedTerms.raw,
                 checkService: this.checkService,
+                validApiUrl,
+                validSiteUrl,
+                validTermSetId,
+                validAnchorTermId,
+                validExtraAnchorTermIds,
                 onChange: this.onChange,
             }),
             this.container,
@@ -98,8 +145,17 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
     }
 
     private onChange = (terms: ITermInfo[]): void => {
-        this.termValues = terms.map((t) => { return `-1;#${t.labels[0]?.name}|${t.id}` }).join(';#');
-        this.notifyOutputChanged();
+        // Get values
+        const termValues = terms.map((t) => { return `-1;#${t.labels[0]?.name}|${t.id}` }).join(';#');
+        const termLabels = terms.map((t) => { return t.labels[0]?.name }).join(', ');
+
+        // check whether term values have change
+        if (this.termValues !== termValues) {
+            this.termValues = termValues;
+            this.termLabels = termLabels;
+
+            this.notifyOutputChanged();
+        }
     }
 
     /**
@@ -109,12 +165,20 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
     public getOutputs(): IOutputs {
         return {
             TermValues: this.termValues,
+            TermSetId: this.termSetId,
+            AnchorTermId: this.anchorTermId,
+            ExtraAnchorTermIds: this.extraAnchorTermIds,
+            TermLabels: this.termLabels,
         };
     }
 
     public async getOutputSchema(context: ComponentFramework.Context<IInputs>): Promise<Record<string, unknown>> {
         return Promise.resolve({
-            TermValues: outPutSchema,
+            TermValues: stringOutPutSchema,
+            TermSetId: stringOutPutSchema,
+            AnchorTermId: stringOutPutSchema,
+            ExtraAnchorTermIds: stringOutPutSchema,
+            TermLabels: stringOutPutSchema,
         });
     }
 
@@ -126,3 +190,4 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
         // Add code to cleanup control if necessary;
     }
 }
+
