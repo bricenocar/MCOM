@@ -14,7 +14,7 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
 
     private initialValues: Optional<ITermInfo, "childrenCount" | "createdDateTime" | "lastModifiedDateTime" | "descriptions" | "customSortOrder" | "properties" | "localProperties" | "isDeprecated" | "isAvailableForTagging" | "topicRequested">[];
     private termValues: string; // type (ITermInfo) or Array in case the whole object is needed
-    private terms: { id: string, labels: { isDefault: boolean, languageTag: string, name: string }[] }[];
+    private termLabels: string;
     private termSetId: string;
     private anchorTermId: string;
     private extraAnchorTermIds: string;
@@ -145,15 +145,17 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
     }
 
     private onChange = (terms: ITermInfo[]): void => {
-        if (terms && terms.length > 0) {
-            this.termValues = terms.map((t) => { return `-1;#${t.labels[0]?.name}|${t.id}` }).join(';#');
-            this.terms = terms.map((t) => { return { id: t.id, labels: t.labels.map((l) => { return { isDefault: l.isDefault, languageTag: l.languageTag, name: l.name } }) } });
-        } else {
-            // Handle empty array case
-            this.termValues = '';
-            this.terms = [];
+        // Get values
+        const termValues = terms.map((t) => { return `-1;#${t.labels[0]?.name}|${t.id}` }).join(';#');
+        const termLabels = terms.map((t) => { return t.labels[0]?.name }).join(', ');
+
+        // check whether term values have change
+        if (this.termValues !== termValues) {
+            this.termValues = termValues;
+            this.termLabels = termLabels;
+
+            this.notifyOutputChanged();
         }
-        this.notifyOutputChanged();
     }
 
     /**
@@ -166,7 +168,7 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
             TermSetId: this.termSetId,
             AnchorTermId: this.anchorTermId,
             ExtraAnchorTermIds: this.extraAnchorTermIds,
-            Terms: this.terms,
+            TermLabels: this.termLabels,
         };
     }
 
@@ -176,7 +178,7 @@ export class TermPickerControl implements ComponentFramework.StandardControl<IIn
             TermSetId: stringOutPutSchema,
             AnchorTermId: stringOutPutSchema,
             ExtraAnchorTermIds: stringOutPutSchema,
-            Terms: termsOutPutSchema,
+            TermLabels: stringOutPutSchema,
         });
     }
 

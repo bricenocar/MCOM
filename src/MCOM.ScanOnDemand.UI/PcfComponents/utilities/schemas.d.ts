@@ -1,31 +1,36 @@
 export declare const termsOutPutSchema: {
     $schema: string;
     type: string;
-    items: {
-        type: string;
-        properties: {
-            id: {
+    properties: {
+        terms: {
+            type: string;
+            items: {
                 type: string;
-            };
-            labels: {
-                type: string;
-                items: {
-                    type: string;
-                    properties: {
-                        isDefault: {
+                properties: {
+                    id: {
+                        type: string;
+                    };
+                    labels: {
+                        type: string;
+                        items: {
                             type: string;
-                        };
-                        languageTag: {
-                            type: string;
-                        };
-                        name: {
-                            type: string;
+                            properties: {
+                                isDefault: {
+                                    type: string;
+                                };
+                                languageTag: {
+                                    type: string;
+                                };
+                                name: {
+                                    type: string;
+                                };
+                            };
                         };
                     };
+                    languageTag: {
+                        type: string;
+                    };
                 };
-            };
-            languageTag: {
-                type: string;
             };
         };
     };
