@@ -6,14 +6,4 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="PcfComponents\Pcf-Components.pcfproj" />
-    <None Include="PcfComponents\TermPickerControl\solutions\TermPickerControl.cdsproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="PcfComponents\out\controls\TermPickerControl\node_modules\%40microsoft\sp-core-library\lib-commonjs\" />
-    <Folder Include="PcfComponents\TermPickerControl\solutions\bin\Debug\" />
-  </ItemGroup>
-
 </Project>
