@@ -167,7 +167,7 @@ namespace MCOM.Functions
                         {
                             if(ex.Message.Contains("duplicate"))
                             {
-                                Global.Log.LogCritical(ex, $"There was a duplicated column already provisioned by another solution, could not apply provisioning template. Error message: {ex.Message}");
+                                Global.Log.LogCritical(ex, $"There was a duplicated column already provisioned by another solution, retrying to apply provisioning template. Error message: {ex.Message}");
                                 throw new SiteCreationException(urlSufix, ex.Message);
                             }
                             else

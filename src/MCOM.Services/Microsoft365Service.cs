@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Mail;
 using System.Threading.Tasks;
 
 namespace MCOM.Services
@@ -216,6 +217,7 @@ namespace MCOM.Services
         {
             try
             {
+                Global.Log.LogInformation($"Preconfiguring site with name: {title}, url: {alias}, and sensitivity label: {sensitivityLabel}");
                 // Create communication site
                 var fullUrl = StringUtilities.GetFullUrl(alias);
                 var teamSiteToCreate = new TeamSiteOptions(StringUtilities.NormalizeSiteAlias(alias), title)
