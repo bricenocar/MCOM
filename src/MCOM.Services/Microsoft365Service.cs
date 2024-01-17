@@ -286,6 +286,11 @@ namespace MCOM.Services
                     var label = site.SensitivityLabel;
                     var labelId = site.SensitivityLabelId;
                     site.ShareByEmailEnabled = externalSharingEnabled;
+                    if (site.SensitivityLabelId == null)
+                    {
+                        site.SensitivityLabelId = sensitivityLabel;
+                    }
+                    
 
                     // Log to application insights
                     Global.Log.LogInformation("Site id({0}) created: {1}, Url of new site: {2}", newSiteId, newSiteTitle, newSiteUrl);
