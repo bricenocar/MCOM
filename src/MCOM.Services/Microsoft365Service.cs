@@ -223,7 +223,7 @@ namespace MCOM.Services
                 var teamSiteToCreate = new TeamSiteOptions(StringUtilities.NormalizeSiteAlias(alias), title)
                 {                    
                     Description = description,
-                    Language = language,
+                    Language = language,                    
                     SensitivityLabelId = sensitivityLabel,
                     WelcomeEmailDisabled = true,
                     IsPublic = isPublic // Privacy: Check if it is public then the group vissibility should be public
@@ -281,8 +281,10 @@ namespace MCOM.Services
                     var newSiteTitle = web.Title;
 
                     // use pnp to get site info and set the external sharing option
-                    var site = await newSiteContext.Site.GetAsync(s => s.Id);
+                    var site = await newSiteContext.Site.GetAsync(s => s.Id, s => s.SensitivityLabel, s => s.SensitivityLabelId);
                     var newSiteId = site.Id;
+                    var label = site.SensitivityLabel;
+                    var labelId = site.SensitivityLabelId;
                     site.ShareByEmailEnabled = externalSharingEnabled;
 
                     // Log to application insights

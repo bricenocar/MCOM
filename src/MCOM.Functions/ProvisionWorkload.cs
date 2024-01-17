@@ -128,7 +128,6 @@ namespace MCOM.Functions
                             // Add owners and members in case it is a communication site
                             if(workloadCreationRequestPayload.Site.SiteConfig.SiteType == SiteType.CommunicationSite)
                             {
-                                // owner.Value.Contains(";") ? owner.Value.Split(';')[1].Replace(",","") : owner.Value
                                 var members = workloadCreationRequestPayload.Site.SiteUsers.Members.Select(m => m.Value.Contains(";") ? m.Value.Split(';')[1].Replace(",", "") : m.Value).ToList();
                                 var owners = workloadCreationRequestPayload.Site.SiteUsers.Owners.Select(o => o.Value.Contains(";") ? o.Value.Split(';')[1].Replace(",", "") : o.Value).ToList();
                                 await _microsoft365Service.addUsersToUngroupedSiteInTemplate(pnpContext, provisioningTemplate, owners, members);

@@ -120,7 +120,7 @@ namespace MCOM.Provisioning.Functions
         private static void ValidateRequestPayload(WorkloadCreationRequestPayload workloadData)
         {
             // Validate the request
-            if (workloadData == null)
+            if (workloadData == null || workloadData.Request == null)
             {
                 throw new InvalidRequestException("body", "There is no body present");
             }
@@ -128,6 +128,11 @@ namespace MCOM.Provisioning.Functions
             if (workloadData.Site == null || workloadData.Site.SiteConfig == null)
             {
                 throw new InvalidRequestException("There is no site object or site config present in the request");
+            }
+
+            if (workloadData.Request.WorkloadId == 0)
+            {
+                throw new InvalidRequestException("Workload id is null or empty");
             }
 
             if (workloadData.Site.SiteConfig.SiteType == SiteType.CommunicationSite &&
