@@ -290,9 +290,7 @@ namespace MCOM.Services
                     site.ShareByEmailEnabled = externalSharingEnabled;
                     if (site.SensitivityLabelId == Guid.Empty)
                     {
-                        //site.SensitivityLabelId = sensitivityLabel;
-
-                        //await site.UpdateAsync();
+                      
                     }
 
                     // Log to application insights
