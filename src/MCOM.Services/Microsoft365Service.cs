@@ -270,6 +270,8 @@ namespace MCOM.Services
 
                 Global.Log.LogInformation($"Creating site: {teamSiteToCreate.DisplayName}");
 
+                //context.GraphAlwaysUseBeta = true;
+
                 // Create the site collection and get the context for the newly created site collection, this will be used to do the actual work
                 using (var newSiteContext = await context.GetSiteCollectionManager().CreateSiteCollectionAsync(teamSiteToCreate, siteCreationOptions))
                 {
@@ -286,11 +288,12 @@ namespace MCOM.Services
                     var label = site.SensitivityLabel;
                     var labelId = site.SensitivityLabelId;
                     site.ShareByEmailEnabled = externalSharingEnabled;
-                    if (site.SensitivityLabelId == null)
+                    if (site.SensitivityLabelId == Guid.Empty)
                     {
-                        site.SensitivityLabelId = sensitivityLabel;
+                        //site.SensitivityLabelId = sensitivityLabel;
+
+                        //await site.UpdateAsync();
                     }
-                    
 
                     // Log to application insights
                     Global.Log.LogInformation("Site id({0}) created: {1}, Url of new site: {2}", newSiteId, newSiteTitle, newSiteUrl);
